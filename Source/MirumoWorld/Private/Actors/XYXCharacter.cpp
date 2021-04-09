@@ -15,6 +15,7 @@
 #include "Components/XYXMontageManagerComponent.h"
 #include "Components/XYXInputBufferComponent.h"
 #include "Components/XYXStateManagerComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 
@@ -58,7 +59,7 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	InputBufferComp = CreateDefaultSubobject<UXYXInputBufferComponent>(TEXT("Input Buffer Component"));
 	MontageManagerComp = CreateDefaultSubobject<UXYXMontageManagerComponent>(TEXT("Montage Manager Component"));
 	StateManagerComp = CreateDefaultSubobject<UXYXStateManagerComponent>(TEXT("State Manager Component"));
-
+	MovementSpeedComp = CreateDefaultSubobject<UXYXMovementSpeedComponent>(TEXT("Movement Speed Component"));
 
 }
 
@@ -81,6 +82,9 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("Roll", IE_Pressed, this, &AXYXCharacter::RollAction);
 		PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AXYXCharacter::JumpAction);
 		PlayerInputComponent->BindAction("Jump", IE_Released, this, &AXYXCharacter::StopJumpAction);
+		PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AXYXCharacter::SprintAction);
+		PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AXYXCharacter::StopSprintAction);
+		PlayerInputComponent->BindAction("ToggleMovement", IE_Pressed, this, &AXYXCharacter::ToggleMovementAction);
 	}
 }
 
@@ -107,6 +111,12 @@ void AXYXCharacter::InitialzeCharacter()
 	{
 		InputBufferComp->OnInputBufferConsumed.AddDynamic(this, &AXYXCharacter::HandleInputBufferConsumed);
 		InputBufferComp->OnInputBufferClose.AddDynamic(this, &AXYXCharacter::HandleInputBufferClose);
+	}
+
+	if (MovementSpeedComp)
+	{
+		MovementSpeedComp->OnMovementStateStart.AddDynamic(this, &AXYXCharacter::HandleMovementStateStart);
+		MovementSpeedComp->OnMovementStateEnd.AddDynamic(this, &AXYXCharacter::HandleMovementStateEnd);
 	}
 
 	bInitialized = true;
@@ -151,6 +161,22 @@ void AXYXCharacter::HandleInputBufferClose()
 	if (StateManagerComp && StateManagerComp->GetState() != EState::EDisabled)
 	{
 		StateManagerComp->ResetState(0.f);
+	}
+}
+
+void AXYXCharacter::HandleMovementStateStart(EMovementState State)
+{
+	if (State == EMovementState::ESprint)
+	{
+		GetWorld()->GetTimerManager().SetTimer(SprintLoopTimer, this, &AXYXCharacter::SprintLoop, 0.016f, true);
+	}
+}
+
+void AXYXCharacter::HandleMovementStateEnd(EMovementState State)
+{
+	if (State == EMovementState::ESprint)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(SprintLoopTimer);
 	}
 }
 
@@ -385,6 +411,24 @@ void AXYXCharacter::ParryAction()
 	}
 }
 
+void AXYXCharacter::SprintAction()
+{
+	SetSprint(true);
+}
+
+void AXYXCharacter::StopSprintAction()
+{
+	SetSprint(false);
+}
+
+void AXYXCharacter::ToggleMovementAction()
+{
+	if (MovementSpeedComp)
+	{
+		MovementSpeedComp->ToggleState();
+	}
+}
+
 void AXYXCharacter::Roll()
 {
 	if (!CanRoll())
@@ -440,6 +484,43 @@ bool AXYXCharacter::HasMovementInput()
 	}
 
 	return false;
+}
+
+void AXYXCharacter::SetSprint(bool bActivate)
+{
+	if (bActivate)
+	{
+		if (MovementSpeedComp)
+		{
+			StoredMovementState = MovementSpeedComp->GetMovementState();
+			MovementSpeedComp->SetMovementState(EMovementState::ESprint);
+		}
+	}
+	else
+	{
+		if (UKismetSystemLibrary::K2_IsTimerActive(nullptr, "SprintLoop"))
+		{
+			if (MovementSpeedComp)
+			{
+				MovementSpeedComp->SetMovementState(StoredMovementState);
+			}
+		}
+	}
+}
+
+void AXYXCharacter::SprintLoop()
+{
+	if (MovementSpeedComp && MovementSpeedComp->GetMovementState() == EMovementState::ESprint)
+	{
+		if (GetVelocity().Size() > 10.f && IsIdleAndNotFalling())
+		{
+			// ÒÆ³ýÌåÁ¦Öµ
+		}
+	}
+	else
+	{
+		SetSprint(false);
+	}
 }
 
 void AXYXCharacter::CustomJump()

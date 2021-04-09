@@ -6,7 +6,6 @@
 #include "Components/ActorComponent.h"
 #include "XYXMontageManagerComponent.generated.h"
 
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MIRUMOWORLD_API UXYXMontageManagerComponent : public UActorComponent
 {

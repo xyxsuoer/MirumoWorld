@@ -8,6 +8,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "Interfaces/XYXInterfaceMontageManagerComp.h"
 #include "Interfaces/XYXInterfaceEntity.h"
+#include "Components/XYXMovementSpeedComponent.h"
 #include "XYXCharacter.generated.h"
 
 #define ECC_ACFHeroesChannel  ECollisionChannel::ECC_GameTraceChannel1
@@ -57,6 +58,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXStateManagerComponent* StateManagerComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXMovementSpeedComponent* MovementSpeedComp;
+
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXInputBufferComponent* GetInputBufferComponent() const { return InputBufferComp; }
 
@@ -65,6 +69,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXStateManagerComponent* GetStateManagerComponent() const { return StateManagerComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXMovementSpeedComponent* GetMovementSpeedComponent() const { return MovementSpeedComp; }
 
 	// =================================================
 
@@ -229,6 +236,13 @@ public:
 		void HandleInputBufferClose();
 
 	UFUNCTION()
+		void HandleMovementStateStart(EMovementState State);
+
+	UFUNCTION()
+		void HandleMovementStateEnd(EMovementState State);
+
+
+	UFUNCTION()
 		void MeleeAttack(EMeleeAttackType AttackType);
 
 	UFUNCTION()
@@ -283,6 +297,15 @@ public:
 		void ParryAction();
 
 	UFUNCTION()
+		void SprintAction();
+
+	UFUNCTION()
+		void StopSprintAction();
+
+	UFUNCTION()
+		void ToggleMovementAction();
+
+	UFUNCTION()
 		void CustomJump();
 
 	UFUNCTION()
@@ -303,6 +326,12 @@ public:
 	UFUNCTION()
 		bool HasMovementInput();
 
+	UFUNCTION()
+		void SetSprint(bool bActivate);
+
+	UFUNCTION()
+		void SprintLoop();
+
 
 private:
 	bool bInitialized = false;
@@ -311,5 +340,8 @@ private:
 
 	UPROPERTY()
 		FTimerHandle ResetMeleeAttackCounterTimer;
+
+	UPROPERTY()
+		FTimerHandle SprintLoopTimer;
 
 };
