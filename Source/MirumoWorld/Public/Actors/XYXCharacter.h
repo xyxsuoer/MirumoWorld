@@ -303,6 +303,12 @@ public:
 		void StopSprintAction();
 
 	UFUNCTION()
+		void CrouchAction();
+
+	UFUNCTION()
+		void StopCrouchAction();
+
+	UFUNCTION()
 		void ToggleMovementAction();
 
 	UFUNCTION()
@@ -327,10 +333,13 @@ public:
 		bool HasMovementInput();
 
 	UFUNCTION()
-		void SetSprint(bool bActivate);
+		void SetSprintOrCrouch(bool bActivate, EMovementState MovementState);
 
 	UFUNCTION()
 		void SprintLoop();
+
+	UFUNCTION()
+		void CrouchLoop();
 
 
 private:
@@ -343,5 +352,8 @@ private:
 
 	UPROPERTY()
 		FTimerHandle SprintLoopTimer;
+
+	UPROPERTY()
+		FTimerHandle CrouchLoopTimer;
 
 };

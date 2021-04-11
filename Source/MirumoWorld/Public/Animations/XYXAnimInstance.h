@@ -84,17 +84,17 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsLookingForward = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		bool bIsInCombat = true;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsTwoHandedWeaponEquipped = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		ECombatType combatType = ECombatType::EUnarmed;
+		ECombatType CombatType = ECombatType::EUnarmed;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		EWeaponType weaponType = EWeaponType::ENone;
+		EWeaponType WeaponType = EWeaponType::ENone;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		EKatanaStance KatanaStance = EKatanaStance::EKatanaS1;
@@ -114,6 +114,15 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		FRotator Rotation;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		EMovementState MovementState = EMovementState::EIdle;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bIsSprinting = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bIsCrouching = false;
 
 private:
 

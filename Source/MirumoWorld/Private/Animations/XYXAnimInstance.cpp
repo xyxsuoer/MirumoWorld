@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/NavMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/XYXMovementSpeedComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "Kismet/GameplayStatics.h"
 
@@ -54,13 +55,19 @@ void UXYXAnimInstance::StoreCharacterInfo()
 		BlockAlpha = XYXCharacter->GetBlockAlpha();
 		AimAlpha = XYXCharacter->GetAimAlpha();
 		KatanaStance = XYXCharacter->GetKatanaStance();
+		if (XYXCharacter->GetMovementSpeedComponent()) 
+		{
+			MovementState = XYXCharacter->GetMovementSpeedComponent()->GetMovementState();
+			bIsSprinting = (MovementState == EMovementState::ESprint && XYXCharacter->HasMovementInput())? true : false;
+			bIsCrouching = (MovementState == EMovementState::ECrouch && XYXCharacter->HasMovementInput())? true : false;
+		}
 
-		APlayerController* playerController = UGameplayStatics::GetPlayerController(this, 0);
-		if (playerController)
+		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+		if (PlayerController)
 		{
 			float MouseX = 0.0f;
 			float MouseY = 0.0f;
-			playerController->GetInputMouseDelta(MouseX, MouseY);
+			PlayerController->GetInputMouseDelta(MouseX, MouseY);
 			MouseDeltaX = MouseX;
 		}
 	}

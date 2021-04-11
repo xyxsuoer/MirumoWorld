@@ -46,6 +46,9 @@ void UXYXMovementSpeedComponent::SetMovementState(EMovementState State)
 		case EMovementState::EIdle:
 			TargetSpeed = 0.f;
 			break;
+		case EMovementState::ECrouch:
+			TargetSpeed = CrouchSpeed;
+			break;
 		case EMovementState::EWalk:
 			TargetSpeed = WalkSpeed;
 			break;

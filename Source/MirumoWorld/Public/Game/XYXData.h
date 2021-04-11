@@ -104,7 +104,9 @@ enum class EMontageAction : uint8
 	EParry												UMETA(DisplayName = "EParry"),									// ÕÐ¼Ü
 	EParried											UMETA(DisplayName = "EParried"),								// ±»ÕÐ¼Ü
 	EBackstab											UMETA(DisplayName = "EBackstab"),							// ±³´Ì
-	EBackstabbed									UMETA(DisplayName = "EBackstabbed")						// ±»±³´Ì
+	EBackstabbed									UMETA(DisplayName = "EBackstabbed"),						// ±»±³´Ì
+	ESprint												UMETA(DisplayName = "ESprint"),								// ³å´Ì
+	ECrouch												UMETA(DisplayName = "ECrouch")								// ÏÂ¶×
 };
 
 

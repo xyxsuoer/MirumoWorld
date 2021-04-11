@@ -38,13 +38,16 @@ public:
 		EMovementState StartMovementState = EMovementState::EJog;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		float CrouchSpeed = 100.f;
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		float WalkSpeed = 200.f;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		float JogSpeed = 400.f;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
-		float SprintSpeed = 600.f;
+		float SprintSpeed = 700.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		float TargetSpeed = 0.f;
@@ -55,7 +58,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TArray<EMovementState> StateToToggle = { 
 			EMovementState::EWalk, 
-			EMovementState::ESprint,
+			EMovementState::EJog,
 		};
 
 protected:

@@ -84,6 +84,8 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("Jump", IE_Released, this, &AXYXCharacter::StopJumpAction);
 		PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AXYXCharacter::SprintAction);
 		PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AXYXCharacter::StopSprintAction);
+		PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AXYXCharacter::CrouchAction);
+		PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AXYXCharacter::StopCrouchAction);
 		PlayerInputComponent->BindAction("ToggleMovement", IE_Pressed, this, &AXYXCharacter::ToggleMovementAction);
 	}
 }
@@ -166,17 +168,35 @@ void AXYXCharacter::HandleInputBufferClose()
 
 void AXYXCharacter::HandleMovementStateStart(EMovementState State)
 {
+	if (!GetWorld())
+	{
+		return;
+	}
+
 	if (State == EMovementState::ESprint)
 	{
 		GetWorld()->GetTimerManager().SetTimer(SprintLoopTimer, this, &AXYXCharacter::SprintLoop, 0.016f, true);
+	}
+	else if(State == EMovementState::ECrouch)
+	{
+		GetWorld()->GetTimerManager().SetTimer(CrouchLoopTimer, this, &AXYXCharacter::CrouchLoop, 0.016f, true);
 	}
 }
 
 void AXYXCharacter::HandleMovementStateEnd(EMovementState State)
 {
+	if (!GetWorld())
+	{
+		return;
+	}
+
 	if (State == EMovementState::ESprint)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(SprintLoopTimer);
+	}
+	else if(State == EMovementState::ECrouch)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(CrouchLoopTimer);
 	}
 }
 
@@ -413,12 +433,22 @@ void AXYXCharacter::ParryAction()
 
 void AXYXCharacter::SprintAction()
 {
-	SetSprint(true);
+	SetSprintOrCrouch(true, EMovementState::ESprint);
 }
 
 void AXYXCharacter::StopSprintAction()
 {
-	SetSprint(false);
+	SetSprintOrCrouch(false, EMovementState::ESprint);
+}
+
+void AXYXCharacter::CrouchAction()
+{
+	SetSprintOrCrouch(true, EMovementState::ECrouch);
+}
+
+void AXYXCharacter::StopCrouchAction()
+{
+	SetSprintOrCrouch(false, EMovementState::ECrouch);
 }
 
 void AXYXCharacter::ToggleMovementAction()
@@ -486,20 +516,27 @@ bool AXYXCharacter::HasMovementInput()
 	return false;
 }
 
-void AXYXCharacter::SetSprint(bool bActivate)
+void AXYXCharacter::SetSprintOrCrouch(bool bActivate, EMovementState MovementState)
 {
 	if (bActivate)
 	{
 		if (MovementSpeedComp)
 		{
 			StoredMovementState = MovementSpeedComp->GetMovementState();
-			MovementSpeedComp->SetMovementState(EMovementState::ESprint);
+			if(StoredMovementState == EMovementState::ECrouch ||
+				StoredMovementState == EMovementState::ESprint)
+			{
+				StoredMovementState = EMovementState::EJog;
+			}
+			MovementSpeedComp->SetMovementState(MovementState);
 		}
 	}
 	else
 	{
-		if (UKismetSystemLibrary::K2_IsTimerActive(nullptr, "SprintLoop"))
-		{
+		if (GetWorld() &&
+			(GetWorld()->GetTimerManager().IsTimerActive(SprintLoopTimer) ||
+				GetWorld()->GetTimerManager().IsTimerActive(CrouchLoopTimer))
+		) {
 			if (MovementSpeedComp)
 			{
 				MovementSpeedComp->SetMovementState(StoredMovementState);
@@ -510,16 +547,27 @@ void AXYXCharacter::SetSprint(bool bActivate)
 
 void AXYXCharacter::SprintLoop()
 {
-	if (MovementSpeedComp && MovementSpeedComp->GetMovementState() == EMovementState::ESprint)
+	if (MovementSpeedComp && 
+		MovementSpeedComp->GetMovementState() == EMovementState::ESprint)
 	{
-		if (GetVelocity().Size() > 10.f && IsIdleAndNotFalling())
-		{
-			// ÒÆ³ýÌåÁ¦Öµ
-		}
+
 	}
 	else
 	{
-		SetSprint(false);
+		SetSprintOrCrouch(false, EMovementState::ESprint);
+	}
+}
+
+void AXYXCharacter::CrouchLoop()
+{
+	if (MovementSpeedComp && 
+		MovementSpeedComp->GetMovementState() == EMovementState::ECrouch)
+	{
+
+	}
+	else
+	{
+		SetSprintOrCrouch(false, EMovementState::ECrouch);
 	}
 }
 
