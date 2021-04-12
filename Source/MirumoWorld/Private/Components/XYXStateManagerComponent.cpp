@@ -15,7 +15,9 @@ UXYXStateManagerComponent::UXYXStateManagerComponent()
 
 void UXYXStateManagerComponent::SetState(EState State)
 {
-	GetWorld()->GetTimerManager().ClearTimer(SetIdleStateTimer);
+	UWorld* World = GetWorld();
+	check(World);
+	World->GetTimerManager().ClearTimer(SetIdleStateTimer);
 	EState PrevState = CurrentState;
 	CurrentState = State;
 	if (CurrentState != PrevState)
@@ -58,7 +60,9 @@ void UXYXStateManagerComponent::ResetState(float InTime)
 	}
 	else
 	{
-		GetWorld()->GetTimerManager().SetTimer(SetIdleStateTimer, this, &UXYXStateManagerComponent::SetIdleState, InTime, false);
+		UWorld* World = GetWorld();
+		check(World);
+		World->GetTimerManager().SetTimer(SetIdleStateTimer, this, &UXYXStateManagerComponent::SetIdleState, InTime, false);
 	}
 }
 

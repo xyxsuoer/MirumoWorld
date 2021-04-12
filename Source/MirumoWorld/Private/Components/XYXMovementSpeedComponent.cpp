@@ -66,7 +66,7 @@ void UXYXMovementSpeedComponent::SetMovementState(EMovementState State)
 
 void UXYXMovementSpeedComponent::UpdateMaxSpeed()
 {
-	if (!bIsUpdatingSpeed || !GetWorld())
+	if (!bIsUpdatingSpeed)
 	{
 		return;
 	}
@@ -77,8 +77,9 @@ void UXYXMovementSpeedComponent::UpdateMaxSpeed()
 		if (MovementComp)
 		{
 			float CurMaxWalkSpeed = MovementComp->MaxWalkSpeed;
-			MovementComp->MaxWalkSpeed = FMath::FInterpTo(CurMaxWalkSpeed, TargetSpeed, GetWorld()->GetDeltaSeconds(), SpeedChangeInterpSpeed);
-
+			UWorld* World = GetWorld();
+			check(World);
+			MovementComp->MaxWalkSpeed = FMath::FInterpTo(CurMaxWalkSpeed, TargetSpeed, World->GetDeltaSeconds(), SpeedChangeInterpSpeed);
 			if (FMath::IsNearlyEqual(MovementComp->MaxWalkSpeed, TargetSpeed, 1.f))
 			{
 				MovementComp->MaxWalkSpeed = TargetSpeed;

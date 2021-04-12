@@ -3,15 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
-#include "XYXGameModeBase.generated.h"
+#include "GameFramework/GameMode.h"
+#include "XYXGameMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MIRUMOWORLD_API AXYXGameModeBase : public AGameModeBase
+class MIRUMOWORLD_API AXYXGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+public:
+
+	AXYXGameMode();
 };

@@ -168,41 +168,37 @@ void AXYXCharacter::HandleInputBufferClose()
 
 void AXYXCharacter::HandleMovementStateStart(EMovementState State)
 {
-	if (!GetWorld())
-	{
-		return;
-	}
+	UWorld* World = GetWorld();
+	check(World);
 
 	if (State == EMovementState::ESprint)
 	{
-		GetWorld()->GetTimerManager().SetTimer(SprintLoopTimer, this, &AXYXCharacter::SprintLoop, 0.016f, true);
+		World->GetTimerManager().SetTimer(SprintLoopTimer, this, &AXYXCharacter::SprintLoop, 0.016f, true);
 	}
 	else if(State == EMovementState::ECrouch)
 	{
-		GetWorld()->GetTimerManager().SetTimer(CrouchLoopTimer, this, &AXYXCharacter::CrouchLoop, 0.016f, true);
+		World->GetTimerManager().SetTimer(CrouchLoopTimer, this, &AXYXCharacter::CrouchLoop, 0.016f, true);
 	}
 }
 
 void AXYXCharacter::HandleMovementStateEnd(EMovementState State)
 {
-	if (!GetWorld())
-	{
-		return;
-	}
+	UWorld* World = GetWorld();
+	check(World);
 
 	if (State == EMovementState::ESprint)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(SprintLoopTimer);
+		World->GetTimerManager().ClearTimer(SprintLoopTimer);
 	}
 	else if(State == EMovementState::ECrouch)
 	{
-		GetWorld()->GetTimerManager().ClearTimer(CrouchLoopTimer);
+		World->GetTimerManager().ClearTimer(CrouchLoopTimer);
 	}
 }
 
 void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 {
-	if (!CanMeleeAttack() || !GetWorld())
+	if (!CanMeleeAttack())
 	{
 		return;
 	}
@@ -219,7 +215,10 @@ void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 	if (StateManagerComp)
 		StateManagerComp->SetState(EState::EAttacking);
 
-	GetWorld()->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
+	UWorld* World = GetWorld();
+	check(World);
+
+	World->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
 	
 	UAnimMontage* Montage = GetMeleeAttackMontage(MeleeAttackType);
 	if (Montage)
@@ -232,7 +231,7 @@ void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 			if (Duration > 0.f)
 			{
 				Duration *= 0.99f;
-				GetWorld()->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration, false);
+				World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration, false);
 			}
 		}
 	}
@@ -533,10 +532,11 @@ void AXYXCharacter::SetSprintOrCrouch(bool bActivate, EMovementState MovementSta
 	}
 	else
 	{
-		if (GetWorld() &&
-			(GetWorld()->GetTimerManager().IsTimerActive(SprintLoopTimer) ||
-				GetWorld()->GetTimerManager().IsTimerActive(CrouchLoopTimer))
-		) {
+		UWorld* World = GetWorld();
+		check(World);
+
+		if (World->GetTimerManager().IsTimerActive(SprintLoopTimer) ||
+			World->GetTimerManager().IsTimerActive(CrouchLoopTimer)) {
 			if (MovementSpeedComp)
 			{
 				MovementSpeedComp->SetMovementState(StoredMovementState);
@@ -672,7 +672,10 @@ UDataTable* AXYXCharacter::GetMontages_Implementation(EMontageAction Action)
 		EMontageAction::ERollRight
 	};
 
-	UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(GetWorld()->GetGameInstance());
+	UWorld* World = GetWorld();
+	check(World);
+
+	UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
 	if (GameInstance)
 	{
 		if (CommonMontages.Contains(Action)) 
@@ -776,18 +779,24 @@ void AXYXCharacter::MoveForward(float Val)
 
 void AXYXCharacter::AddControllerYawInput(float Val)
 {
-	if (Val != 0.f && GetWorld())
+	UWorld* World = GetWorld();
+	check(World);
+
+	if (Val != 0.f)
 	{
-		Val = Val * HorizontalLookRate * GetWorld()->GetDeltaSeconds();
+		Val = Val * HorizontalLookRate * World->GetDeltaSeconds();
 		APawn::AddControllerYawInput(Val);
 	}
 }
 
 void AXYXCharacter::AddControllerPitchInput(float Val)
 {
-	if (Val != 0.f && GetWorld())
+	UWorld* World = GetWorld();
+	check(World);
+
+	if (Val != 0.f)
 	{
-		Val = Val * VerticalLookRate * GetWorld()->GetDeltaSeconds();
+		Val = Val * VerticalLookRate * World->GetDeltaSeconds();
 		APawn::AddControllerPitchInput(Val);
 	}
 }

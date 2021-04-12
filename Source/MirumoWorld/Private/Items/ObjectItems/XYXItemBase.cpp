@@ -3,3 +3,7 @@
 
 #include "Items/ObjectItems/XYXItemBase.h"
 
+void UXYXItemBase::UseItem(AActor* Caller)
+{
+
+}

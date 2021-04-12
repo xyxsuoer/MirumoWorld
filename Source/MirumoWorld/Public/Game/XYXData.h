@@ -448,6 +448,14 @@ struct FStoredItem
 
 public:
 
+	FStoredItem() {};
+
+	FStoredItem(FGuid id,TSubclassOf<class UXYXItemBase> itembase, int32 amount) {
+		Id = id;
+		ItemBase = itembase;
+		Amount = amount;
+	};
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		FGuid Id;
 
