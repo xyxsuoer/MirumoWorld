@@ -73,17 +73,68 @@ void UXYXInventoryManagerComponent::AddItem(TSubclassOf<UXYXItemBase> ItemClass,
 
 void UXYXInventoryManagerComponent::RemoveItem(TSubclassOf<class UXYXItemBase> ItemClass, int32 Amount)
 {
+	if (Amount <= 0)
+	{
+		return;
+	}
+
+	const UXYXItemBase* const ItemBase = ItemClass.GetDefaultObject();
+	if (ItemBase->Item.bIsStackable)
+	{
+		int32 Index = FindIndexByClass(ItemClass);
+		if (Index >= 0)
+		{
+			Inventory[Index].Amount = Inventory[Index].Amount - Amount;
+			ClearInventory();
+		}
+	}
+	else
+	{
+		for (int i = 1; i < Amount; ++i)
+		{
+			int32 Index = FindIndexByClass(ItemClass);
+			if (Index >= 0)
+			{
+				Inventory[Index] = {};
+			}
+		}
+		ClearInventory();
+	}
 
 }
 
 void UXYXInventoryManagerComponent::ClearInventory()
 {
-
+	int32 Index = 0;
+	for (auto & e : Inventory)
+	{
+		if (IsSlotEmpty(Index))
+		{
+			Inventory.RemoveAt(Index);
+		}
+		else
+		{
+			const UXYXItemBase* const ItemBase = e.ItemBase.GetDefaultObject();
+			if (!ItemBase->Item.bIsStackable)
+			{
+				Inventory[Index].Amount = 1;
+			}
+		}
+		Index++;
+	}
 }
 
 void UXYXInventoryManagerComponent::RemoveItemAtIndex(int32 Index, int32 Amount)
 {
-
+	if (Amount <= 0 || IsSlotEmpty(Index))
+	{
+		return;
+	}
+	
+	Inventory[Index].Amount = Inventory[Index].Amount - Amount;
+	FStoredItem RemoveItem = Inventory[Index];
+	ClearInventory();
+	OnItemRemoved.Broadcast(RemoveItem);
 }
 
 void UXYXInventoryManagerComponent::DropItem(FStoredItem Item)
