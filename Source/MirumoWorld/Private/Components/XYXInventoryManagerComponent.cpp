@@ -58,7 +58,7 @@ void UXYXInventoryManagerComponent::AddItem(TSubclassOf<UXYXItemBase> ItemClass,
 			{
 				if (Amount > 1)
 				{
-					//UE_LOG(LogTemp, Warning, TEXT("Warning! Tried to add more than 1 unstuckable item: %s"),ItemClass->GetDefaultObjectName().ToString());
+					UE_LOG(LogTemp, Warning, TEXT("Warning! Tried to add more than 1 unstuckable item: %s"),*ItemClass->GetDefaultObjectName().ToString());
 				}
 				FStoredItem Item;
 				Item.Amount = Amount;
