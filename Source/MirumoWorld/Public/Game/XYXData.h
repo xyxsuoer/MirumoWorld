@@ -450,9 +450,9 @@ public:
 
 	FStoredItem() {};
 
-	FStoredItem(FGuid id,TSubclassOf<class UXYXItemBase> itembase, int32 amount) {
+	FStoredItem(FGuid id,TSubclassOf<class UXYXItemBase> itemclass, int32 amount) {
 		Id = id;
-		ItemBase = itembase;
+		ItemClass = itemclass;
 		Amount = amount;
 	};
 
@@ -460,7 +460,7 @@ public:
 		FGuid Id;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
-		TSubclassOf<class UXYXItemBase> ItemBase;
+		TSubclassOf<class UXYXItemBase> ItemClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		int32 Amount = 0;

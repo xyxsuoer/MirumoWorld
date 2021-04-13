@@ -23,10 +23,6 @@ void UXYXInventoryManagerComponent::BeginPlay()
 	ClearInventory();
 
 	CharacterOwner = Cast<AXYXCharacter>(GetOwner());
-	if (CharacterOwner)
-	{
-
-	}
 }
 
 void UXYXInventoryManagerComponent::AddItem(TSubclassOf<UXYXItemBase> ItemClass, int32 Amount)
@@ -49,7 +45,7 @@ void UXYXInventoryManagerComponent::AddItem(TSubclassOf<UXYXItemBase> ItemClass,
 					FStoredItem Item;
 					Item.Amount = Amount;
 					Item.Id = FGuid::NewGuid();
-					Item.ItemBase = ItemClass;
+					Item.ItemClass = ItemClass;
 					Inventory.Add(Item);
 					OnItemAdded.Broadcast(Item);
 				}
@@ -63,7 +59,7 @@ void UXYXInventoryManagerComponent::AddItem(TSubclassOf<UXYXItemBase> ItemClass,
 				FStoredItem Item;
 				Item.Amount = Amount;
 				Item.Id = FGuid::NewGuid();
-				Item.ItemBase = ItemClass;
+				Item.ItemClass = ItemClass;
 				Inventory.Add(Item);
 				OnItemAdded.Broadcast(Item);
 			}
@@ -114,7 +110,7 @@ void UXYXInventoryManagerComponent::ClearInventory()
 		}
 		else
 		{
-			const UXYXItemBase* const ItemBase = e.ItemBase.GetDefaultObject();
+			const UXYXItemBase* const ItemBase = e.ItemClass.GetDefaultObject();
 			if (!ItemBase->Item.bIsStackable)
 			{
 				Inventory[Index].Amount = 1;
@@ -153,13 +149,13 @@ void UXYXInventoryManagerComponent::UseItem(FGuid ItemId)
 	UWorld* World = GetWorld();
 	check(World);
 
-	UXYXItemBase* Item = Cast<UXYXItemBase>(World->SpawnActor(Inventory[Index].ItemBase));
+	UXYXItemBase* Item = Cast<UXYXItemBase>(World->SpawnActor(Inventory[Index].ItemClass));
 	if (Item)
 	{
 		Item->UseItem(GetOwner());
 	}
 
-	if (Inventory[Index].ItemBase.GetDefaultObject()->Item.bIsConsumable)
+	if (Inventory[Index].ItemClass.GetDefaultObject()->Item.bIsConsumable)
 	{
 		RemoveItemAtIndex(Index, 1);
 	}
@@ -192,7 +188,7 @@ int32 UXYXInventoryManagerComponent::FindIndexByClass(TSubclassOf<class UXYXItem
 
 	for (int32 i = 0; i < Inventory.Num(); ++i)
 	{
-		if (Inventory[i].ItemBase == ItemClass && Inventory[i].Amount >= 1)
+		if (Inventory[i].ItemClass == ItemClass && Inventory[i].Amount >= 1)
 		{
 			Index = i;
 			break;
@@ -219,7 +215,7 @@ int32 UXYXInventoryManagerComponent::FindIndexById(FGuid Id)
 
 bool UXYXInventoryManagerComponent::IsItemValid(FStoredItem Item)
 {
-	return Item.Id.IsValid() && UKismetSystemLibrary::IsValidClass(Item.ItemBase) && Item.Amount > 0;
+	return Item.Id.IsValid() && UKismetSystemLibrary::IsValidClass(Item.ItemClass) && Item.Amount > 0;
 }
 
 

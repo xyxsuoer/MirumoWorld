@@ -221,7 +221,7 @@ void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 	World->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
 	
 	UAnimMontage* Montage = GetMeleeAttackMontage(MeleeAttackType);
-	if (Montage)
+	if (IsValid(Montage))
 	{
 		if (GetMesh() && GetMesh()->GetAnimInstance())
 		{
@@ -318,7 +318,7 @@ UAnimMontage* AXYXCharacter::GetStunMontage(EDirection Direction)
 	if (MontageManagerComp)
 		Montage = MontageManagerComp->GetMontageForAction(StunDirection, 0);
 	
-	if (!Montage && StunDirection != EMontageAction::EStunFront)
+	if (!IsValid(Montage) && StunDirection != EMontageAction::EStunFront)
 	{
 		if (MontageManagerComp)
 			Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EStunFront, 0);
@@ -469,7 +469,7 @@ void AXYXCharacter::Roll()
 		StateManagerComp->SetState(EState::ERolling);
 	
 	UAnimMontage* Montage = GetRollMontage();
-	if (Montage)
+	if (IsValid(Montage))
 	{
 		PlayAnimMontage(Montage);
 	}

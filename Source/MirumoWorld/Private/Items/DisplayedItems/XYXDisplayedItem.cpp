@@ -25,3 +25,8 @@ void AXYXDisplayedItem::Tick(float DeltaTime)
 
 }
 
+bool AXYXDisplayedItem::Attach()
+{
+	return true;
+}
+

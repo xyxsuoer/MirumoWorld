@@ -30,8 +30,8 @@ UAnimMontage* UXYXMontageManagerComponent::GetMontageForAction(EMontageAction Ac
 	LastRequestedAction = Action;
 	if (CharacterOwner)
 	{
-		UDataTable* pDataTable = CharacterOwner->GetMontages(Action);
-		if (pDataTable)
+		UDataTable* DataTable = CharacterOwner->GetMontages(Action);
+		if (IsValid(DataTable))
 		{
 			UEnum* Enum = StaticEnum<EMontageAction>();
 			if (Enum)
@@ -40,12 +40,15 @@ UAnimMontage* UXYXMontageManagerComponent::GetMontageForAction(EMontageAction Ac
 				if (!ActionStr.IsEmpty())
 				{
 					FName name = FName(*ActionStr);
-					FMontageAction* pRow = pDataTable->FindRow<FMontageAction>(name, "");
+					FMontageAction* pRow = DataTable->FindRow<FMontageAction>(name, "");
 					if (pRow && pRow->Montages.IsValidIndex(Index))
 					{
 						/*FString filePath = FString::FromInt(Index);
 						GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("%s"), *filePath));*/
-						AnimMontage = pRow->Montages[Index];
+						if (IsValid(pRow->Montages[Index]))
+						{
+							AnimMontage = pRow->Montages[Index];
+						}
 					}
 				}
 			}

@@ -21,5 +21,14 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		FItem Item;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bIsTwoHand = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		float BlockValue = 0.f;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bNoShield = true;
 	
 };
