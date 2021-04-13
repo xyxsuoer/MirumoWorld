@@ -27,7 +27,7 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bCanEverTick = true;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->AttachTo(RootComponent);
+	CameraBoom->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	CameraBoom->TargetArmLength = 450;
 	CameraBoom->bUsePawnControlRotation = true;
 	CameraBoom->SocketOffset.Z = 180.f;
@@ -35,7 +35,7 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	CameraBoom->bEnableCameraRotationLag = true;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->AttachTo(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::KeepRelativeTransform, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 	FollowCamera->SetRelativeRotation(FRotator(-15.f, 0.f, 0.f));
 
@@ -297,7 +297,7 @@ UAnimMontage* AXYXCharacter::GetRollMontage()
 UAnimMontage* AXYXCharacter::GetStunMontage(EDirection Direction)
 {
 	UAnimMontage* Montage = nullptr;
-	EMontageAction StunDirection;
+	EMontageAction StunDirection = EMontageAction::EStunFront;
 
 	switch (Direction) 
 	{

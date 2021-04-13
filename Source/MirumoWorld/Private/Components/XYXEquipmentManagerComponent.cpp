@@ -239,6 +239,7 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 		EquipmentCopy.Emplace(e);
 	}
 
+	// Clear and rebuild displayed items array
 	for (auto& e : DisplayedItems)
 	{
 		for (auto& o : e.Value.DisplayedItems)
@@ -261,15 +262,95 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 		DisplayedItems.Add(e.Type, TempDisplayedItems);
 	}
 
-	int32 EqSlotsIndex = 0;
-	int32 SlotIndex = 0;
-	int32 ItemIndex = 0;
-	for (auto& e: EquipmentSlots)
+	// Unequip all items
+	for (int i = 0; i<EquipmentSlots.Num(); ++i)
 	{
-		
+		EItemType Type = EquipmentSlots[i].Type;
+		for (int j = 0; j<EquipmentSlots[i].Slots.Num(); ++j)
+		{
+			int32 SlotIndex = j;
+			for (int k = 0; k < EquipmentSlots[i].Slots[j].Items.Num(); ++k)
+			{
+				int32 ItemIndex = k;
+				FStoredItem Item = EquipmentSlots[i].Slots[j].Items[k];
+				if (IsItemValid(Item) && IsItemEquipped(Item.Id))
+				{
+					FStoredItem EmptyItem;
+					UpdateItemInSlot(Type, SlotIndex, ItemIndex, EmptyItem, EHandleSameItemMethod::EUnequip);
+				}
+				else
+				{
+					FStoredItem EmptyItem;
+					SetItemInSlot(Type, SlotIndex, ItemIndex, EmptyItem);
+				}
+			}
+		}
 	}
 
+	// Hide not selected main hand slot types 
+	// (hide all and show only active to make sure OnSlotHiddenChanged event dispatcher will be triggered)
+	for (int i = 0; i<MainHandTypes.Num(); ++i)
+	{
+		int32 EqSlotsIndex = GetEquipmentSlotsIndex(MainHandTypes[i]);
+		if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
+		{
+			for (int j = 0; j < EquipmentSlots[EqSlotsIndex].Slots.Num(); ++j)
+			{
+				EItemType Type = EquipmentSlots[EqSlotsIndex].Type;
+				if (Type == SelectMainHandType)
+				{
+					SetSlotHidden(Type, j, false);
+				}
+				else
+				{
+					SetSlotHidden(Type, j, true);
+				}
+			}
+		}
+	}
 
+	// Equip new items
+	for (int i = 0; i < EquipmentCopy.Num(); ++i)
+	{
+		EItemType Type = EquipmentCopy[i].Type;
+		for (int j = 0; j < EquipmentCopy[i].Slots.Num(); ++j)
+		{
+			int32 SlotIndex = j;
+			SetSlotActiveIndex(Type, SlotIndex, EquipmentCopy[i].Slots[j].ActiveItemIndex);
+			for (int k = 0; k < EquipmentCopy[i].Slots[j].Items.Num(); ++k)
+			{
+				int32 ItemIndex = k;
+				FStoredItem Item = EquipmentCopy[i].Slots[j].Items[k];
+				if (IsValid(InventoryComp))
+				{
+					if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
+					{
+						int32 FoundItemIndex;
+						if (Item.Id.IsValid())
+							FoundItemIndex = InventoryComp->FindIndexById(Item.Id);
+						else
+							FoundItemIndex = InventoryComp->FindIndexByClass(Item.ItemClass);
+
+						if (FoundItemIndex >= 0)
+						{
+							FStoredItem FoundItem = InventoryComp->GetItemAtIndex(FoundItemIndex);
+							UpdateItemInSlot(Type, SlotIndex, ItemIndex, FoundItem, EHandleSameItemMethod::EUpdate);
+						}
+					}
+				}
+				else
+				{
+					if (IsItemValid(Item))
+					{
+						UpdateItemInSlot(Type, SlotIndex, ItemIndex, Item, EHandleSameItemMethod::EUpdate);
+					}
+				}
+			}
+		}
+	}
+
+	// Update Combat Type
+	UpdateCombatType();
 }
 
 FStoredItem UXYXEquipmentManagerComponent::GetItemInSlot(EItemType Type, int32 SlotIndex, int32 ItemIndex)
