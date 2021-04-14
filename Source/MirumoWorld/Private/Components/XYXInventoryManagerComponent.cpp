@@ -37,7 +37,7 @@ void UXYXInventoryManagerComponent::AddItem(TSubclassOf<UXYXItemBase> ItemClass,
 				int32 Index = FindIndexByClass(ItemClass);
 				if (Index >= 0)
 				{
-					Inventory[Index].Amount = Inventory[Index].Amount + Amount;
+					Inventory[Index].Amount += Amount;
 					OnItemAdded.Broadcast(Inventory[Index]);
 				}
 				else
@@ -80,7 +80,7 @@ void UXYXInventoryManagerComponent::RemoveItem(TSubclassOf<class UXYXItemBase> I
 		int32 Index = FindIndexByClass(ItemClass);
 		if (Index >= 0)
 		{
-			Inventory[Index].Amount = Inventory[Index].Amount - Amount;
+			Inventory[Index].Amount -= Amount;
 			ClearInventory();
 		}
 	}
@@ -127,7 +127,7 @@ void UXYXInventoryManagerComponent::RemoveItemAtIndex(int32 Index, int32 Amount)
 		return;
 	}
 	
-	Inventory[Index].Amount = Inventory[Index].Amount - Amount;
+	Inventory[Index].Amount -= Amount;
 	FStoredItem RemoveItem = Inventory[Index];
 	ClearInventory();
 	OnItemRemoved.Broadcast(RemoveItem);
@@ -146,10 +146,7 @@ void UXYXInventoryManagerComponent::UseItem(FGuid ItemId)
 		return;
 	}
 
-	UWorld* World = GetWorld();
-	check(World);
-
-	UXYXItemBase* Item = Cast<UXYXItemBase>(World->SpawnActor(Inventory[Index].ItemClass));
+	UXYXItemBase* Item = NewObject<UXYXItemBase>(GetOwner());
 	if (Item)
 	{
 		Item->UseItem(GetOwner());

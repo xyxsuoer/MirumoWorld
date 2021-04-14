@@ -428,7 +428,6 @@ public:
 
 };
 
-
 USTRUCT(BlueprintType)
 struct FDisplayedItems 
 {
@@ -447,14 +446,6 @@ struct FStoredItem
 	GENERATED_BODY()
 
 public:
-
-	FStoredItem() {};
-
-	FStoredItem(FGuid id,TSubclassOf<class UXYXItemBase> itemclass, int32 amount) {
-		Id = id;
-		ItemClass = itemclass;
-		Amount = amount;
-	};
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		FGuid Id;

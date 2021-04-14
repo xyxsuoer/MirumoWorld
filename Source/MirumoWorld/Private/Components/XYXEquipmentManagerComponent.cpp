@@ -8,13 +8,18 @@
 #include "Actors/XYXCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Items/ObjectItems/XYXItemWeapon.h"
+#include "Interfaces/XYXInterfaceItemDisplayed.h"
+#include "Interfaces/XYXInterfaceItemCanBeTwoHanded.h"
+#include "Interfaces/XYXInterfaceItemCanBlock.h"
+#include "Game/XYXData.h"
+
 
 // Sets default values for this component's properties
 UXYXEquipmentManagerComponent::UXYXEquipmentManagerComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
 	// ...
 }
@@ -116,119 +121,512 @@ bool UXYXEquipmentManagerComponent::IsItemTwoHanded(FStoredItem Item)
 {
 	if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
 	{
-		UWorld* World = GetWorld();
-		check(World);
-		UXYXItemBase* ItemBase = Cast<UXYXItemBase>(World->SpawnActor(Item.ItemClass));
+		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(GetOwner());
 		if (ItemBase)
 		{
-			return ItemBase->bIsTwoHand;
+			IXYXInterfaceItemCanBeTwoHanded* myInterface = Cast<IXYXInterfaceItemCanBeTwoHanded>(ItemBase);
+			if (myInterface)
+				return myInterface->IsTwoHanded();
 		}
 	}
 
 	return false;
 }
 
-bool UXYXEquipmentManagerComponent::IsItemNoShield(FStoredItem Item)
+void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 SlotIndex)
 {
-	if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
+	TArray<EItemType>   DIKeys;
+	TArray<FDisplayedItems> DIValues;
+	DisplayedItems.GenerateKeyArray(DIKeys); //生成key、value数组
+	DisplayedItems.GenerateValueArray(DIValues);
+
+	int32 FoundIndex;
+	if (DIKeys.Find(Type, FoundIndex))
 	{
-		UWorld* World = GetWorld();
-		check(World);
-		UXYXItemBase* ItemBase = Cast<UXYXItemBase>(World->SpawnActor(Item.ItemClass));
-		if (ItemBase)
+		if (FoundIndex < 0)
 		{
-			return ItemBase->bNoShield;
+			return;
 		}
 	}
 
-	return true;
-}
+	// Destroy displayed item in slot index
+	if (DIValues[FoundIndex].DisplayedItems.IsValidIndex(SlotIndex))
+	{
+		auto& o = DIValues[FoundIndex].DisplayedItems[SlotIndex];
+		if (IsValid(o))
+		{
+			GetWorld()->DestroyActor(o);
+		}
+	}
 
-void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 SlotIndex)
-{
+	// Spawn displayed item if possible
+	FStoredItem Item = GetActiveItem(Type, SlotIndex);
+	if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
+	{
+		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(GetOwner());
+		if (ItemBase)
+		{
+			IXYXInterfaceItemDisplayed* myInterface = Cast<IXYXInterfaceItemDisplayed>(ItemBase);
+			if (myInterface)
+			{
+				TArray<AXYXDisplayedItem*>  TempArray;
+				TempArray = DIValues[FoundIndex].DisplayedItems;
 
+				auto DIClass = myInterface->GetDisplayedItem();
+				if (UKismetSystemLibrary::IsValidClass(DIClass))
+				{
+					UWorld* const World = GetWorld(); // get a reference to the world
+					check(World);
+					FActorSpawnParameters ActorSpawnParams;
+					ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					ActorSpawnParams.Owner = GetOwner();
+					
+					AXYXDisplayedItem* DisplayedItem = Cast<AXYXDisplayedItem>(World->SpawnActor(DIClass));
+					if (DisplayedItem)
+					{
+
+					}
+				}
+			}
+		}
+	}
 }
 
 AXYXDisplayedItem* UXYXEquipmentManagerComponent::GetDisplayedItem(EItemType Type, int32 SlotIndex)
 {
-	return nullptr;
+	AXYXDisplayedItem* DisplayItem = nullptr;
+	if (DisplayedItems.Contains(Type))
+	{
+		auto& FItems = DisplayedItems[Type];
+		if (FItems.DisplayedItems.IsValidIndex(SlotIndex))
+		{
+			DisplayItem = FItems.DisplayedItems[SlotIndex];
+		}
+	}
+
+	return DisplayItem;
 }
 
 bool UXYXEquipmentManagerComponent::IsItemEquipped(FGuid ItemId)
 {
+	int32 Index;
+	if (EquippedItems.Find(ItemId, Index))
+	{
+		if (Index >= 0)
+		{
+			return true;
+		}
+	}
+
 	return false;
 }
 
 FStoredItem UXYXEquipmentManagerComponent::GetActiveItem(EItemType Type, int32 SlotIndex)
 {
-	 FStoredItem Item;
+	FStoredItem Item;
+	if (IsSlotIndexValid(Type, SlotIndex))
+	{
+		int32 EqSlotsIndex = GetEquipmentSlotsIndex(Type);
+		if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
+		{
+			if (EquipmentSlots[EqSlotsIndex].Slots.IsValidIndex(SlotIndex))
+			{
+				auto& Slots = EquipmentSlots[EqSlotsIndex].Slots[SlotIndex];
+				int32 ActiveItemIndex = Slots.ActiveItemIndex;
+				if (Slots.Items.IsValidIndex(ActiveItemIndex))
+				{
+					Item = Slots.Items[ActiveItemIndex];
+				}
+			}
+		}
+	}
+
 	 return Item;
 }
 
 bool UXYXEquipmentManagerComponent::IsSlotHidden(EItemType Type, int32 SlotIndex)
 {
+	if (IsSlotIndexValid(Type, SlotIndex))
+	{
+		int32 EqSlotsIndex = GetEquipmentSlotsIndex(Type);
+		if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
+		{
+			if (EquipmentSlots[EqSlotsIndex].Slots.IsValidIndex(SlotIndex))
+			{
+				return EquipmentSlots[EqSlotsIndex].Slots[SlotIndex].bIsHidden;
+			}
+		}
+	}
+
 	return false;
 }
 
 void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden)
 {
-
+	if (IsSlotHidden(Type, SlotIndex) != bIsHidden)
+	{
+		int32 EqSlotsIndex = GetEquipmentSlotsIndex(Type);
+		if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
+		{
+			if (EquipmentSlots[EqSlotsIndex].Slots.IsValidIndex(SlotIndex))
+			{
+				EquipmentSlots[EqSlotsIndex].Slots[SlotIndex].bIsHidden = bIsHidden;
+				int32 ActiveIndex = GetActiveItemIndex(Type, SlotIndex);
+				FStoredItem ActiveItem = GetItemInSlot(Type, SlotIndex, ActiveIndex);
+				OnSlotHiddenChanged.Broadcast(Type, SlotIndex, ActiveItem, bIsHidden);
+			}
+		}
+	}
 }
 
 void UXYXEquipmentManagerComponent::UpdateItemInSlot(EItemType Type, int32 SlotIndex, int32 ItemIndex, FStoredItem Item, EHandleSameItemMethod HandleSameItemMethod)
 {
+	if(!IsItemIndexValid(Type, SlotIndex, ItemIndex))
+	{
+		return;
+	}
+
+	if (IsItemValid(Item))
+	{
+		if (Type == GetItemType(Item))
+		{
+			FStoredItem OldItem = GetItemInSlot(Type, SlotIndex, ItemIndex);
+			bool bEquipNewItem = false;
+			if (Item.Id == OldItem.Id)
+			{
+				// if item is the same, unequip it
+				if(HandleSameItemMethod == EHandleSameItemMethod::EUnequip)
+				{
+					FStoredItem EmptyItem;
+					SetItemInSlot(Type, SlotIndex, ItemIndex, EmptyItem);
+					EquippedItems.Remove(OldItem.Id);
+					OnItemInSlotChanged.Broadcast(OldItem, EmptyItem, Type, SlotIndex, ItemIndex);
+					if (IsActiveItemIndex(Type, SlotIndex, ItemIndex))
+					{
+						ActiveItemChanged(OldItem, EmptyItem, Type, SlotIndex, ItemIndex);
+					}
+				}
+				else if(HandleSameItemMethod == EHandleSameItemMethod::EUpdate)
+				{
+					bEquipNewItem = true;
+				}
+			}
+			else
+			{
+				bEquipNewItem = true;
+				// check if that item was already equipped in other slot index, if so, unequip it
+				int32 EqSlotsIndex = GetEquipmentSlotsIndex(Type);
+				if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
+				{
+					auto& Slots = EquipmentSlots[EqSlotsIndex].Slots;
+					for (int i = 0; i < Slots.Num(); ++i)
+					{
+						for (int j = 0; j < Slots[i].Items.Num(); ++j)
+						{
+							if (Slots[i].Items[j].Id == Item.Id)
+							{
+								OldItem = Slots[i].Items[j];
+								FStoredItem EmptyItem;
+								SetItemInSlot(Type, i, j, EmptyItem);
+								EquippedItems.Remove(OldItem.Id);
+								OnItemInSlotChanged.Broadcast(OldItem, EmptyItem, Type, i, j);
+								if (IsActiveItemIndex(Type, i, j))
+								{
+									ActiveItemChanged(OldItem, EmptyItem, Type, i, j);
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if (bEquipNewItem)
+			{
+				OldItem = GetItemInSlot(Type, SlotIndex, ItemIndex);
+				SetItemInSlot(Type, SlotIndex, ItemIndex, Item);
+				EquippedItems.Remove(OldItem.Id);
+				EquippedItems.Add(Item.Id);
+				OnItemInSlotChanged.Broadcast(OldItem, Item, Type, SlotIndex, ItemIndex);
+				if (IsActiveItemIndex(Type, SlotIndex, ItemIndex))
+				{
+					ActiveItemChanged(OldItem, Item, Type, SlotIndex, ItemIndex);
+				}
+			}
+		}
+	}
+	else
+	{
+		FStoredItem OldItem = GetItemInSlot(Type, SlotIndex, ItemIndex);
+		if (IsItemValid(OldItem))
+		{
+			FStoredItem EmptyItem;
+			SetItemInSlot(Type, SlotIndex, ItemIndex, EmptyItem);
+			EquippedItems.Remove(OldItem.Id);
+			OnItemInSlotChanged.Broadcast(OldItem, EmptyItem, Type, SlotIndex, ItemIndex);
+			if (IsActiveItemIndex(Type, SlotIndex, ItemIndex))
+			{
+				ActiveItemChanged(OldItem, EmptyItem, Type, SlotIndex, ItemIndex);
+			}
+		}
+	}
 
 }
 
 int32 UXYXEquipmentManagerComponent::GetEquipmentSlotsIndex(EItemType Type)
 {
-	return 0;
+	int32 EqSlotsIndex = -1;
+	for (int i = 0; i < EquipmentSlots.Num(); ++i)
+	{
+		if (Type == EquipmentSlots[i].Type)
+		{
+			EqSlotsIndex = i;
+			break;
+		}
+	}
+	return EqSlotsIndex;
 }
 
 void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex)
 {
+	if (Type == SelectMainHandType)
+	{
+		UpdateCombatType();
+		if (IsItemTwoHanded(NewItem))
+		{
+			SetSlotHidden(EItemType::EShield, 0, true);
+		}
+		else
+		{
+			SetSlotHidden(EItemType::EShield, 0, false);
+		}
+		bool bShowArrows = SelectMainHandType == EItemType::ERangeWeapon && GetCombatType() == ECombatType::ERanged;
+		SetSlotHidden(EItemType::EArrows, 0, !bShowArrows);
+	}
 
+	if (OldItem.Id != NewItem.Id)
+	{
+		ActiveItems.Remove(OldItem.Id);
+		ActiveItems.Add(NewItem.Id);
+		UpdateDisplayedItem(Type, SlotIndex);
+		AttachDisplayedItem(Type, SlotIndex);
+	}
+		
+	OnActiveItemChanged.Broadcast(OldItem, NewItem, Type, SlotIndex, ActiveIndex);
+
+}
+
+int32 UXYXEquipmentManagerComponent::GetNextArrayIndex(TArray <FStoredItem> &Wildcard, int32 Index, bool bForward)
+{
+	int32 NewIndex = 0;
+	if (bForward)
+	{
+		if (Wildcard.IsValidIndex(Index + 1))
+		{
+			NewIndex = Index + 1;
+		}
+		else
+		{
+			NewIndex = 0;
+		}
+	}
+	else
+	{
+		if (Wildcard.IsValidIndex(Index - 1))
+		{
+			NewIndex = Index - 1;
+		}
+		else
+		{
+			NewIndex = Wildcard.Num() - 1;
+		}
+	}
+	return NewIndex;
 }
 
 void UXYXEquipmentManagerComponent::SwitchSlotActiveIndex(EItemType Type, int32 SlotIndex, bool bForward, bool bIgnoreEmptyItems)
 {
+	if (!IsSlotIndexValid(Type,SlotIndex))
+	{
+		return;
+	}
 
+	int32 ActiveIndex = GetActiveItemIndex(Type, SlotIndex);
+	int32 EqSlotsIndex = GetEquipmentSlotsIndex(Type);
+	if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
+	{
+		if (EquipmentSlots[EqSlotsIndex].Slots.IsValidIndex(SlotIndex))
+		{
+			bool ChangeActiveItem = false;
+			auto& Slots = EquipmentSlots[EqSlotsIndex].Slots[SlotIndex];
+			int32 NewIndex = GetNextArrayIndex(Slots.Items, ActiveIndex, bForward);
+			if (bIgnoreEmptyItems)
+			{
+				for (int i = 1; i < Slots.Items.Num(); ++i)
+				{
+					FStoredItem Item = Slots.Items[NewIndex];
+					if (IsItemValid(Item))
+					{
+						ChangeActiveItem = true;
+					}
+					else
+					{
+						NewIndex = GetNextArrayIndex(Slots.Items, NewIndex, bForward);
+					}
+				}
+			}
+			else
+			{
+				ChangeActiveItem = true;
+			}
+
+			if (ChangeActiveItem)
+			{
+				Slots.ActiveItemIndex = NewIndex;
+				if (Slots.Items.IsValidIndex(ActiveIndex) && Slots.Items.IsValidIndex(NewIndex))
+				{
+					FStoredItem OldItem = Slots.Items[ActiveIndex];
+					FStoredItem NewItem = Slots.Items[NewIndex];
+					ActiveItemChanged(OldItem, NewItem, Type, SlotIndex, NewIndex);
+				}
+			}
+		}
+	}
 }
 
 void UXYXEquipmentManagerComponent::SwitchMainHandType(bool bForward)
 {
+	int32 SelectedIndex;
+	if (MainHandTypes.Find(SelectMainHandType, SelectedIndex))
+	{
+		if (SelectedIndex < 0)
+		{
+			return;
+		}
+	}
 
+	int32 NextIndex = 0;
+	if (bForward)
+	{
+		if (MainHandTypes.IsValidIndex(SelectedIndex + 1))
+		{
+			NextIndex = SelectedIndex + 1;
+		}
+		else
+		{
+			NextIndex = 0;
+		}
+	}
+	else
+	{
+		if (MainHandTypes.IsValidIndex(SelectedIndex - 1))
+		{
+			NextIndex = SelectedIndex - 1;
+		}
+		else
+		{
+			NextIndex = MainHandTypes.Num() - 1;
+		}
+	}
+
+	if (MainHandTypes.IsValidIndex(NextIndex))
+	{
+		SetMainHandType(MainHandTypes[NextIndex]);
+	}
 }
 
 FStoredItem UXYXEquipmentManagerComponent::GetWeapon()
 {
-	FStoredItem Item;
-	return Item;
+	int32 ItemIndex = GetActiveItemIndex(SelectMainHandType, 0);
+	return GetItemInSlot(SelectMainHandType, 0, ItemIndex);
 }
 
 EItemType UXYXEquipmentManagerComponent::GetSelectedMainHandType()
 {
-	return EItemType::ENone;
+	return SelectMainHandType;
 }
 
 bool UXYXEquipmentManagerComponent::IsItemActive(FGuid ItemId)
 {
+	int32 Index;
+	if (ActiveItems.Find(ItemId, Index))
+	{
+		return Index >= 0;
+	}
+
 	return false;
 }
 
 bool UXYXEquipmentManagerComponent::IsActiveItemIndex(EItemType Type, int32 SlotIndex, int32 ItemIndex)
 {
-	return false;
+	int32 ActiveIndex = GetActiveItemIndex(Type, SlotIndex);
+	return ActiveIndex == ItemIndex;
 }
 
 void UXYXEquipmentManagerComponent::UseActiveItemAtSlot(EItemType Type, int32 SlotIndex)
 {
-
+	int32 ItemIndex = GetActiveItemIndex(Type, SlotIndex);
+	if (IsItemIndexValid(Type, SlotIndex, ItemIndex))
+	{
+		int32 EqSlotsIndex = GetEquipmentSlotsIndex(Type);
+		if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
+		{
+			if (EquipmentSlots[EqSlotsIndex].Slots.IsValidIndex(SlotIndex))
+			{
+				auto& Slots = EquipmentSlots[EqSlotsIndex].Slots[SlotIndex];
+				if (Slots.Items.IsValidIndex(ItemIndex) && !Slots.bIsHidden)
+				{
+					FStoredItem Item = Slots.Items[ItemIndex];
+					if (IsItemValid(Item))
+					{
+						if (IsValid(InventoryComp))
+						{
+							InventoryComp->UseItem(Item.Id);
+						}
+						else
+						{
+							UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(GetOwner());
+							if (ItemBase)
+							{
+								ItemBase->UseItem(GetOwner());
+							}
+							Item.Amount -= 1;
+							UpdateItemInSlot(Type, SlotIndex, ItemIndex, Item, EHandleSameItemMethod::EUpdate);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
-void UXYXEquipmentManagerComponent::FindItem(FStoredItem Item, EItemType& Type, int32& SlotIndex, int32& ItemIndex)
+void UXYXEquipmentManagerComponent::FindItem(FStoredItem Item, EItemType& Type, int32& SlotIndex, int32& ItemIndex) 
 {
+	Type = EItemType::ENone;
+	SlotIndex = -1;
+	ItemIndex = -1;
 
+	EItemType ItemType = GetItemType(Item);
+	int32 EqSlotsIndex = GetEquipmentSlotsIndex(ItemType);
+	if (EqSlotsIndex >= 0)
+	{
+		if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
+		{
+			for (int i = 0; i < EquipmentSlots[EqSlotsIndex].Slots.Num(); ++i)
+			{
+				for (int j = 0; j < EquipmentSlots[EqSlotsIndex].Slots[i].Items.Num(); ++j)
+				{
+					if (EquipmentSlots[EqSlotsIndex].Slots[i].Items[j].Id == Item.Id)
+					{
+						Type = EquipmentSlots[EqSlotsIndex].Type;
+						SlotIndex = i;
+						ItemIndex = j;
+						break;
+					}
+				}
+			}
+		}
+	}
 }
 
 void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equipment)
@@ -434,14 +832,7 @@ void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)
 	}
 	else
 	{
-		if (IsItemNoShield(Item))
-		{
-			SetSlotHidden(EItemType::EShield, 0, true);
-		}
-		else
-		{
-			SetSlotHidden(EItemType::EShield, 0, false);
-		}
+		SetSlotHidden(EItemType::EShield, 0, false);
 	}
 
 	bool ArrowShow = SelectMainHandType == EItemType::ERangeWeapon && GetCombatType() == ECombatType::ERanged;
@@ -461,12 +852,14 @@ bool UXYXEquipmentManagerComponent::IsShieldEquipped()
 	FStoredItem Item = GetItemInSlot(EItemType::EShield, 0, Index);
 	if (IsItemValid(Item))
 	{
-		UWorld* World = GetWorld();
-		check(World);
-		UXYXItemBase* ConstructedItem = Cast<UXYXItemBase>(World->SpawnActor(Item.ItemClass));
+		UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
 		if (ConstructedItem)
 		{
-			return ConstructedItem->BlockValue > 0;
+			IXYXInterfaceItemCanBlock* myInterface = Cast<IXYXInterfaceItemCanBlock>(ConstructedItem);
+			if (myInterface)
+			{
+				return myInterface->GetBlockValue() > 0.f;
+			}
 		}
 	}
 
@@ -564,13 +957,15 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 	{
 		if (!IsSlotHidden(EItemType::EShield, 0))
 		{
-			UWorld* World = GetWorld();
-			check(World);
-			UXYXItemBase* ConstructedItem = Cast<UXYXItemBase>(World->SpawnActor(Item.ItemClass));
-			if (ConstructedItem && ConstructedItem->BlockValue > 0)
+			UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
+			if (ConstructedItem)
 			{
-				Value = ConstructedItem->BlockValue;
-				bSuccess = true;
+				IXYXInterfaceItemCanBlock* myInterface = Cast<IXYXInterfaceItemCanBlock>(ConstructedItem);
+				if (myInterface)
+				{
+					Value = myInterface->GetBlockValue();
+					bSuccess = true;
+				}
 			}
 		}
 	}
@@ -581,13 +976,15 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 	{
 		if (!IsSlotHidden(SelectMainHandType, 0))
 		{
-			UWorld* World = GetWorld();
-			check(World);
-			UXYXItemBase* ConstructedItem = Cast<UXYXItemBase>(World->SpawnActor(Item.ItemClass));
-			if (ConstructedItem && ConstructedItem->BlockValue > 0)
+			UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
+			if (ConstructedItem)
 			{
-				Value = ConstructedItem->BlockValue;
-				bSuccess = true;
+				IXYXInterfaceItemCanBlock* myInterface = Cast<IXYXInterfaceItemCanBlock>(ConstructedItem);
+				if (myInterface)
+				{
+					Value = myInterface->GetBlockValue();
+					bSuccess = true;
+				}
 			}
 		}
 	}

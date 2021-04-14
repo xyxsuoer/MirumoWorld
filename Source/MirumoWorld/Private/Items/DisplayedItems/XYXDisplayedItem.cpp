@@ -3,6 +3,7 @@
 
 #include "Items/DisplayedItems/XYXDisplayedItem.h"
 
+
 // Sets default values
 AXYXDisplayedItem::AXYXDisplayedItem()
 {
@@ -16,13 +17,6 @@ void AXYXDisplayedItem::BeginPlay()
 {
 	Super::BeginPlay();
 	
-}
-
-// Called every frame
-void AXYXDisplayedItem::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 
 bool AXYXDisplayedItem::Attach()

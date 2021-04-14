@@ -9,12 +9,12 @@
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInCombatChanged, bool, bIsInCombat);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnItemInSlotChanged, FStoredItem, OldItem, FStoredItem, NewItem, EItemType, Type, int32, SlotIndex, int32, ItemIndex);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnActiveItemChanged, FStoredItem, OldItem, FStoredItem, NewItem, EItemType, Type, int32, SlotIndex, int32, ActiveIndex);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnSlotHiddenChanged, EItemType, SlotType, int32, SlotIndex, FStoredItem, ActiveItem, bool, bIsHidden);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMainHandTypeChanged, EItemType, Type);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCombatTypeChanged, ECombatType, CombatType);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponTypeChanged, EWeaponType, WeaponType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnItemInSlotChanged, FStoredItem, OldItem, FStoredItem, NewItem, EItemType, Type, int32, SlotIndex, int32, ItemIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnActiveItemChanged, FStoredItem, OldItem, FStoredItem, NewItem, EItemType, Type, int32, SlotIndex, int32, ActiveIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnSlotHiddenChanged, EItemType, SlotType, int32, SlotIndex, FStoredItem, ActiveItem, bool, bIsHidden);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MIRUMOWORLD_API UXYXEquipmentManagerComponent : public UActorComponent
@@ -71,9 +71,6 @@ public:
 		bool IsItemTwoHanded(FStoredItem Item);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		bool IsItemNoShield(FStoredItem Item);
-
-	UFUNCTION(BlueprintCallable, Category = XYX)
 		void UpdateDisplayedItem(EItemType Type, int32 SlotIndex);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
@@ -99,6 +96,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void ActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex);
+
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		int32 GetNextArrayIndex(TArray<FStoredItem>& Wildcard, int32 Index, bool bForward);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void SwitchSlotActiveIndex(EItemType Type, int32 SlotIndex, bool bForward, bool bIgnoreEmptyItems);
