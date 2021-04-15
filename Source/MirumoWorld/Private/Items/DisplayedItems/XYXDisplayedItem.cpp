@@ -2,6 +2,8 @@
 
 
 #include "Items/DisplayedItems/XYXDisplayedItem.h"
+#include "Components/XYXEquipmentManagerComponent.h"
+
 
 
 // Sets default values
@@ -22,5 +24,20 @@ void AXYXDisplayedItem::BeginPlay()
 bool AXYXDisplayedItem::Attach()
 {
 	return true;
+}
+
+void AXYXDisplayedItem::SetEquipmemtComp(UXYXEquipmentManagerComponent* Comp)
+{
+	EquipmentComp = Comp;
+}
+
+void AXYXDisplayedItem::SetSlotIndex(int32 Index)
+{
+	SlotIndex = Index;
+}
+
+void AXYXDisplayedItem::SetItemType(EItemType Ty)
+{
+	ItemType = Ty;
 }
 

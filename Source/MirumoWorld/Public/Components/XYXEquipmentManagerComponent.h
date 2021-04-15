@@ -178,14 +178,11 @@ protected:
 
 public:	
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		class AXYXCharacter* CharacterOwner;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXInventoryManagerComponent* InventoryComp;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		TMap<EItemType, FDisplayedItems> DisplayedItems = {};
+		TMap<EItemType, FDisplayedItems> MapDisplayedItems = {};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		TArray<FEquipmentSlots> EquipmentSlots = {};

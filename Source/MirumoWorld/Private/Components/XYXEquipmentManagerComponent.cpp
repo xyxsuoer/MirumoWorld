@@ -5,7 +5,6 @@
 #include "Items/DisplayedItems/XYXDisplayedItem.h"
 #include "Components/XYXInventoryManagerComponent.h"
 #include "Items/ObjectItems/XYXItemBase.h"
-#include "Actors/XYXCharacter.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Items/ObjectItems/XYXItemWeapon.h"
 #include "Interfaces/XYXInterfaceItemDisplayed.h"
@@ -21,7 +20,6 @@ UXYXEquipmentManagerComponent::UXYXEquipmentManagerComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	// ...
 }
 
 // Called when the game starts
@@ -29,9 +27,21 @@ void UXYXEquipmentManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CharacterOwner = Cast<AXYXCharacter>(GetOwner());
+	TArray<FDisplayedItems> DIValues;
+	MapDisplayedItems.GenerateValueArray(DIValues);
+	for (int32 i = 0; i < DIValues.Num(); ++i)
+	{
+		for (int32 j = 0; j < DIValues[i].DisplayedItems.Num(); ++j)
+		{
+			auto& o = DIValues[i].DisplayedItems[j];
+			if (IsValid(o))
+			{
+				GetWorld()->DestroyActor(o);
+			}
+		}
+	}
 
-
+	MapDisplayedItems.Empty();
 }
 
 EItemType UXYXEquipmentManagerComponent::GetItemType(FStoredItem Item)
@@ -137,8 +147,8 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 {
 	TArray<EItemType>   DIKeys;
 	TArray<FDisplayedItems> DIValues;
-	DisplayedItems.GenerateKeyArray(DIKeys); //生成key、value数组
-	DisplayedItems.GenerateValueArray(DIValues);
+	MapDisplayedItems.GenerateKeyArray(DIKeys); //生成key、value数组
+	MapDisplayedItems.GenerateValueArray(DIValues);
 
 	int32 FoundIndex;
 	if (DIKeys.Find(Type, FoundIndex))
@@ -180,11 +190,19 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 					FActorSpawnParameters ActorSpawnParams;
 					ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 					ActorSpawnParams.Owner = GetOwner();
-					
-					AXYXDisplayedItem* DisplayedItem = Cast<AXYXDisplayedItem>(World->SpawnActor(DIClass));
-					if (DisplayedItem)
+					ActorSpawnParams.Instigator = GetOwner()->GetInstigator();
+					AXYXDisplayedItem* XYXActor = World->SpawnActor<AXYXDisplayedItem>(DIClass, FTransform(), ActorSpawnParams);
+					if (XYXActor)
 					{
+						XYXActor->SetEquipmemtComp(this);
+						XYXActor->SetItemType(Type);
+						XYXActor->SetSlotIndex(SlotIndex);
 
+						TempArray[SlotIndex] = XYXActor;
+						FDisplayedItems NewDisplayedItems;
+						NewDisplayedItems.DisplayedItems = TempArray;
+
+						MapDisplayedItems.Add(Type, NewDisplayedItems);
 					}
 				}
 			}
@@ -195,9 +213,9 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 AXYXDisplayedItem* UXYXEquipmentManagerComponent::GetDisplayedItem(EItemType Type, int32 SlotIndex)
 {
 	AXYXDisplayedItem* DisplayItem = nullptr;
-	if (DisplayedItems.Contains(Type))
+	if (MapDisplayedItems.Contains(Type))
 	{
-		auto& FItems = DisplayedItems[Type];
+		auto& FItems = MapDisplayedItems[Type];
 		if (FItems.DisplayedItems.IsValidIndex(SlotIndex))
 		{
 			DisplayItem = FItems.DisplayedItems[SlotIndex];
@@ -241,7 +259,7 @@ FStoredItem UXYXEquipmentManagerComponent::GetActiveItem(EItemType Type, int32 S
 		}
 	}
 
-	 return Item;
+	return Item;
 }
 
 bool UXYXEquipmentManagerComponent::IsSlotHidden(EItemType Type, int32 SlotIndex)
@@ -319,9 +337,9 @@ void UXYXEquipmentManagerComponent::UpdateItemInSlot(EItemType Type, int32 SlotI
 				if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
 				{
 					auto& Slots = EquipmentSlots[EqSlotsIndex].Slots;
-					for (int i = 0; i < Slots.Num(); ++i)
+					for (int32 i = 0; i < Slots.Num(); ++i)
 					{
-						for (int j = 0; j < Slots[i].Items.Num(); ++j)
+						for (int32 j = 0; j < Slots[i].Items.Num(); ++j)
 						{
 							if (Slots[i].Items[j].Id == Item.Id)
 							{
@@ -370,13 +388,12 @@ void UXYXEquipmentManagerComponent::UpdateItemInSlot(EItemType Type, int32 SlotI
 			}
 		}
 	}
-
 }
 
 int32 UXYXEquipmentManagerComponent::GetEquipmentSlotsIndex(EItemType Type)
 {
 	int32 EqSlotsIndex = -1;
-	for (int i = 0; i < EquipmentSlots.Num(); ++i)
+	for (int32 i = 0; i < EquipmentSlots.Num(); ++i)
 	{
 		if (Type == EquipmentSlots[i].Type)
 		{
@@ -384,6 +401,7 @@ int32 UXYXEquipmentManagerComponent::GetEquipmentSlotsIndex(EItemType Type)
 			break;
 		}
 	}
+
 	return EqSlotsIndex;
 }
 
@@ -413,7 +431,6 @@ void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStor
 	}
 		
 	OnActiveItemChanged.Broadcast(OldItem, NewItem, Type, SlotIndex, ActiveIndex);
-
 }
 
 int32 UXYXEquipmentManagerComponent::GetNextArrayIndex(TArray <FStoredItem> &Wildcard, int32 Index, bool bForward)
@@ -441,6 +458,7 @@ int32 UXYXEquipmentManagerComponent::GetNextArrayIndex(TArray <FStoredItem> &Wil
 			NewIndex = Wildcard.Num() - 1;
 		}
 	}
+
 	return NewIndex;
 }
 
@@ -462,7 +480,7 @@ void UXYXEquipmentManagerComponent::SwitchSlotActiveIndex(EItemType Type, int32 
 			int32 NewIndex = GetNextArrayIndex(Slots.Items, ActiveIndex, bForward);
 			if (bIgnoreEmptyItems)
 			{
-				for (int i = 1; i < Slots.Items.Num(); ++i)
+				for (int32 i = 1; i < Slots.Items.Num(); ++i)
 				{
 					FStoredItem Item = Slots.Items[NewIndex];
 					if (IsItemValid(Item))
@@ -612,9 +630,9 @@ void UXYXEquipmentManagerComponent::FindItem(FStoredItem Item, EItemType& Type, 
 	{
 		if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
 		{
-			for (int i = 0; i < EquipmentSlots[EqSlotsIndex].Slots.Num(); ++i)
+			for (int32 i = 0; i < EquipmentSlots[EqSlotsIndex].Slots.Num(); ++i)
 			{
-				for (int j = 0; j < EquipmentSlots[EqSlotsIndex].Slots[i].Items.Num(); ++j)
+				for (int32 j = 0; j < EquipmentSlots[EqSlotsIndex].Slots[i].Items.Num(); ++j)
 				{
 					if (EquipmentSlots[EqSlotsIndex].Slots[i].Items[j].Id == Item.Id)
 					{
@@ -638,7 +656,7 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 	}
 
 	// Clear and rebuild displayed items array
-	for (auto& e : DisplayedItems)
+	for (auto& e : MapDisplayedItems)
 	{
 		for (auto& o : e.Value.DisplayedItems)
 		{
@@ -648,7 +666,8 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 			}
 		}
 	}
-	DisplayedItems.Empty();
+
+	MapDisplayedItems.Empty();
 
 	for (auto& e : EquipmentCopy)
 	{
@@ -657,17 +676,17 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 		TempItems.SetNum(Num);
 		FDisplayedItems TempDisplayedItems;
 		TempDisplayedItems.DisplayedItems = TempItems;
-		DisplayedItems.Add(e.Type, TempDisplayedItems);
+		MapDisplayedItems.Add(e.Type, TempDisplayedItems);
 	}
 
 	// Unequip all items
-	for (int i = 0; i<EquipmentSlots.Num(); ++i)
+	for (int32 i = 0; i<EquipmentSlots.Num(); ++i)
 	{
 		EItemType Type = EquipmentSlots[i].Type;
-		for (int j = 0; j<EquipmentSlots[i].Slots.Num(); ++j)
+		for (int32 j = 0; j<EquipmentSlots[i].Slots.Num(); ++j)
 		{
 			int32 SlotIndex = j;
-			for (int k = 0; k < EquipmentSlots[i].Slots[j].Items.Num(); ++k)
+			for (int32 k = 0; k < EquipmentSlots[i].Slots[j].Items.Num(); ++k)
 			{
 				int32 ItemIndex = k;
 				FStoredItem Item = EquipmentSlots[i].Slots[j].Items[k];
@@ -687,12 +706,12 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 
 	// Hide not selected main hand slot types 
 	// (hide all and show only active to make sure OnSlotHiddenChanged event dispatcher will be triggered)
-	for (int i = 0; i<MainHandTypes.Num(); ++i)
+	for (int32 i = 0; i<MainHandTypes.Num(); ++i)
 	{
 		int32 EqSlotsIndex = GetEquipmentSlotsIndex(MainHandTypes[i]);
 		if (EquipmentSlots.IsValidIndex(EqSlotsIndex))
 		{
-			for (int j = 0; j < EquipmentSlots[EqSlotsIndex].Slots.Num(); ++j)
+			for (int32 j = 0; j < EquipmentSlots[EqSlotsIndex].Slots.Num(); ++j)
 			{
 				EItemType Type = EquipmentSlots[EqSlotsIndex].Type;
 				if (Type == SelectMainHandType)
@@ -708,14 +727,14 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 	}
 
 	// Equip new items
-	for (int i = 0; i < EquipmentCopy.Num(); ++i)
+	for (int32 i = 0; i < EquipmentCopy.Num(); ++i)
 	{
 		EItemType Type = EquipmentCopy[i].Type;
-		for (int j = 0; j < EquipmentCopy[i].Slots.Num(); ++j)
+		for (int32 j = 0; j < EquipmentCopy[i].Slots.Num(); ++j)
 		{
 			int32 SlotIndex = j;
 			SetSlotActiveIndex(Type, SlotIndex, EquipmentCopy[i].Slots[j].ActiveItemIndex);
-			for (int k = 0; k < EquipmentCopy[i].Slots[j].Items.Num(); ++k)
+			for (int32 k = 0; k < EquipmentCopy[i].Slots[j].Items.Num(); ++k)
 			{
 				int32 ItemIndex = k;
 				FStoredItem Item = EquipmentCopy[i].Slots[j].Items[k];
@@ -798,7 +817,6 @@ void UXYXEquipmentManagerComponent::SetSlotActiveIndex(EItemType Type, int32 Slo
 			}
 		}
 	}
-
 }
 
 void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)

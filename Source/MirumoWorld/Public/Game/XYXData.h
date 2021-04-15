@@ -6,7 +6,6 @@
 #include "UObject/NoExportTypes.h"
 #include "Animation/AnimMontage.h"
 #include "Engine/DataTable.h"
-#include <Items/DisplayedItems/XYXDisplayedItem.h>
 #include "Components/PrimitiveComponent.h"
 #include "Materials/MaterialInterface.h"
 #include "GameFramework/Actor.h"
@@ -436,7 +435,7 @@ struct FDisplayedItems
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
-		TArray<AXYXDisplayedItem*>  DisplayedItems;
+		TArray<class AXYXDisplayedItem*>  DisplayedItems;
 
 };
 
