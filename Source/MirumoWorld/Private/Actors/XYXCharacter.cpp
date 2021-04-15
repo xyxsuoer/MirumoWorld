@@ -432,6 +432,9 @@ void AXYXCharacter::ParryAction()
 
 void AXYXCharacter::SprintAction()
 {
+	if (!WeaponCanSprint())
+		return;
+
 	SetSprintOrCrouch(true, EMovementState::ESprint);
 }
 
@@ -440,8 +443,28 @@ void AXYXCharacter::StopSprintAction()
 	SetSprintOrCrouch(false, EMovementState::ESprint);
 }
 
+bool AXYXCharacter::WeaponCanSprint()
+{
+	return HasMovementInput() &&
+		(CurrentWeaponType == EWeaponType::ENone ||
+			CurrentWeaponType == EWeaponType::EDualSword ||
+			CurrentWeaponType == EWeaponType::EOneHandSword ||
+			CurrentWeaponType == EWeaponType::EOneHandAndShield ||
+			CurrentWeaponType == EWeaponType::EOneHandSwordShield ||
+			CurrentWeaponType == EWeaponType::ESpear ||
+			CurrentWeaponType == EWeaponType::EBow ||
+			CurrentWeaponType == EWeaponType::ETwinBlade ||
+			CurrentWeaponType == EWeaponType::ETwinDagger ||
+			CurrentWeaponType == EWeaponType::EKatana ||
+			CurrentWeaponType == EWeaponType::ESpell
+			);
+}
+
 void AXYXCharacter::CrouchAction()
 {
+	if (!WeaponCanCrouch())
+		return;
+
 	SetSprintOrCrouch(true, EMovementState::ECrouch);
 }
 
@@ -456,6 +479,20 @@ void AXYXCharacter::ToggleMovementAction()
 	{
 		MovementSpeedComp->ToggleState();
 	}
+}
+
+bool AXYXCharacter::WeaponCanCrouch()
+{
+	return HasMovementInput() &&
+		(CurrentWeaponType == EWeaponType::ENone ||
+			CurrentWeaponType == EWeaponType::EDualSword ||
+			CurrentWeaponType == EWeaponType::EOneHandSword ||
+			CurrentWeaponType == EWeaponType::EOneHandAndShield ||
+			CurrentWeaponType == EWeaponType::EOneHandSwordShield ||
+			CurrentWeaponType == EWeaponType::EBow ||
+			CurrentWeaponType == EWeaponType::ETwinDagger ||
+			CurrentWeaponType == EWeaponType::ESpell
+		);
 }
 
 void AXYXCharacter::Roll()

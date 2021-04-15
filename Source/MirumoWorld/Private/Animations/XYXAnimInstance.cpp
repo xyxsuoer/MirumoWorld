@@ -58,8 +58,8 @@ void UXYXAnimInstance::StoreCharacterInfo()
 		if (XYXCharacter->GetMovementSpeedComponent()) 
 		{
 			MovementState = XYXCharacter->GetMovementSpeedComponent()->GetMovementState();
-			bIsSprinting = (MovementState == EMovementState::ESprint && XYXCharacter->HasMovementInput())? true : false;
-			bIsCrouching = (MovementState == EMovementState::ECrouch && XYXCharacter->HasMovementInput())? true : false;
+			bIsSprinting =	MovementState == EMovementState::ESprint;
+			bIsCrouching = MovementState == EMovementState::ECrouch;
 		}
 
 		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);

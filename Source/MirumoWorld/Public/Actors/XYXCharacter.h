@@ -303,6 +303,9 @@ public:
 		void StopSprintAction();
 
 	UFUNCTION()
+		bool WeaponCanSprint();
+
+	UFUNCTION()
 		void CrouchAction();
 
 	UFUNCTION()
@@ -310,6 +313,9 @@ public:
 
 	UFUNCTION()
 		void ToggleMovementAction();
+
+	UFUNCTION()
+		bool WeaponCanCrouch();
 
 	UFUNCTION()
 		void CustomJump();
