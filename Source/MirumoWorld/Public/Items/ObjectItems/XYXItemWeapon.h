@@ -10,14 +10,16 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class MIRUMOWORLD_API UXYXItemWeapon : public UXYXItemBase
 {
 	GENERATED_BODY()
 
 public:
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		EWeaponType WeaponType;
+	UXYXItemWeapon();
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		EWeaponType WeaponType = EWeaponType::ENone;
 	
 };

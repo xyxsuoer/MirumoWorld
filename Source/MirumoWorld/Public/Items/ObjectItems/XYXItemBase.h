@@ -10,16 +10,19 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class MIRUMOWORLD_API UXYXItemBase : public UObject
 {
 	GENERATED_BODY()
 
 public:
+
+	UXYXItemBase();
+
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		virtual void UseItem(AActor* Caller);
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		FItem Item;
 
 };

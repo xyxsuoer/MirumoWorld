@@ -4,12 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "Items/DisplayedItems/XYXDisplayedItem.h"
-#include "XYXInterfaceItemDisplayed.generated.h"
+#include "XYXInterfaceItem.generated.h"
 
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UXYXInterfaceItemDisplayed : public UInterface
+class UXYXInterfaceItem : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -17,7 +16,7 @@ class UXYXInterfaceItemDisplayed : public UInterface
 /**
  * 
  */
-class MIRUMOWORLD_API IXYXInterfaceItemDisplayed
+class MIRUMOWORLD_API IXYXInterfaceItem
 {
 	GENERATED_BODY()
 
@@ -25,5 +24,13 @@ class MIRUMOWORLD_API IXYXInterfaceItemDisplayed
 public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		bool IsTwoHanded();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		float GetBlockValue();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 		TSubclassOf<class AXYXDisplayedItem>  GetDisplayedItem();
+
+
 };

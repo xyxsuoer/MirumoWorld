@@ -7,10 +7,8 @@
 #include "Items/ObjectItems/XYXItemBase.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Items/ObjectItems/XYXItemWeapon.h"
-#include "Interfaces/XYXInterfaceItemDisplayed.h"
-#include "Interfaces/XYXInterfaceItemCanBeTwoHanded.h"
-#include "Interfaces/XYXInterfaceItemCanBlock.h"
 #include "Game/XYXData.h"
+#include "Interfaces/XYXInterfaceItem.h"
 
 
 // Sets default values for this component's properties
@@ -134,7 +132,7 @@ bool UXYXEquipmentManagerComponent::IsItemTwoHanded(FStoredItem Item)
 		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(GetOwner());
 		if (ItemBase)
 		{
-			IXYXInterfaceItemCanBeTwoHanded* myInterface = Cast<IXYXInterfaceItemCanBeTwoHanded>(ItemBase);
+			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
 			if (myInterface)
 				return myInterface->IsTwoHanded();
 		}
@@ -176,7 +174,7 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(GetOwner());
 		if (ItemBase)
 		{
-			IXYXInterfaceItemDisplayed* myInterface = Cast<IXYXInterfaceItemDisplayed>(ItemBase);
+			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
 			if (myInterface)
 			{
 				TArray<AXYXDisplayedItem*>  TempArray;
@@ -873,7 +871,7 @@ bool UXYXEquipmentManagerComponent::IsShieldEquipped()
 		UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
 		if (ConstructedItem)
 		{
-			IXYXInterfaceItemCanBlock* myInterface = Cast<IXYXInterfaceItemCanBlock>(ConstructedItem);
+			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ConstructedItem);
 			if (myInterface)
 			{
 				return myInterface->GetBlockValue() > 0.f;
@@ -978,7 +976,7 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 			UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
 			if (ConstructedItem)
 			{
-				IXYXInterfaceItemCanBlock* myInterface = Cast<IXYXInterfaceItemCanBlock>(ConstructedItem);
+				IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ConstructedItem);
 				if (myInterface)
 				{
 					Value = myInterface->GetBlockValue();
@@ -997,7 +995,7 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 			UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
 			if (ConstructedItem)
 			{
-				IXYXInterfaceItemCanBlock* myInterface = Cast<IXYXInterfaceItemCanBlock>(ConstructedItem);
+				IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ConstructedItem);
 				if (myInterface)
 				{
 					Value = myInterface->GetBlockValue();

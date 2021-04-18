@@ -3,3 +3,7 @@
 
 #include "Items/ObjectItems/XYXItemMeleeWeapon.h"
 
+UXYXItemMeleeWeapon::UXYXItemMeleeWeapon()
+{
+
+}

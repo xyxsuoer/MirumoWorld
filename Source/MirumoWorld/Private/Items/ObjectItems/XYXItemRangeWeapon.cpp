@@ -3,3 +3,7 @@
 
 #include "Items/ObjectItems/XYXItemRangeWeapon.h"
 
+UXYXItemRangeWeapon::UXYXItemRangeWeapon()
+{
+
+}
