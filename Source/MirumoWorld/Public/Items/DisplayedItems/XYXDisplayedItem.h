@@ -44,7 +44,7 @@ public:
 		bool Attach();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		FName GetAttachmentSocket();
+	virtual	FName GetAttachmentSocket();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void SimulatePhysics();

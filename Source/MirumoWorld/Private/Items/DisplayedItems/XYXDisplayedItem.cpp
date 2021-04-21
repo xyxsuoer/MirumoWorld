@@ -4,6 +4,7 @@
 #include "Items/DisplayedItems/XYXDisplayedItem.h"
 #include "Components/XYXEquipmentManagerComponent.h"
 #include <Particles/ParticleSystemComponent.h>
+#include "Actors/XYXCharacter.h"
 
 
 
@@ -21,6 +22,12 @@ AXYXDisplayedItem::AXYXDisplayedItem()
 void AXYXDisplayedItem::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UPrimitiveComponent* MeshComp = GetPrimaryComponent();
+	if (IsValid(MeshComp))
+	{
+		MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 	
 }
 
@@ -58,7 +65,18 @@ UPrimitiveComponent* AXYXDisplayedItem::GetPrimaryComponent()
 
 bool AXYXDisplayedItem::Attach()
 {
-	return true;
+	UPrimitiveComponent* MeshComp = GetPrimaryComponent();
+	if (IsValid(MeshComp))
+	{
+		AXYXCharacter* Character = Cast<AXYXCharacter>(GetOwner());
+		if (Character)
+		{
+			MeshComp->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, GetAttachmentSocket());
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 FName AXYXDisplayedItem::GetAttachmentSocket()

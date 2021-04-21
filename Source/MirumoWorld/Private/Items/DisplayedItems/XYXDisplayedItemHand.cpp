@@ -3,3 +3,18 @@
 
 #include "Items/DisplayedItems/XYXDisplayedItemHand.h"
 
+AXYXDisplayedItemHand::AXYXDisplayedItemHand()
+{
+
+}
+
+void AXYXDisplayedItemHand::BeginPlay()
+{
+
+}
+
+FName AXYXDisplayedItemHand::GetAttachmentSocket()
+{
+	Super::GetAttachmentSocket();
+	return HandAttachmentSocket;
+}
