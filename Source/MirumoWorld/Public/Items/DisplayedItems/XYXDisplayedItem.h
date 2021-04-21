@@ -22,9 +22,6 @@ protected:
 
 public:	
 
-	UFUNCTION(BlueprintCallable, Category = XYX)
-		bool Attach();
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXEquipmentManagerComponent* EquipmentComp;
 
@@ -33,6 +30,24 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		EItemType ItemType =  EItemType::ENone;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		FName AttachmentSocket = TEXT("None");
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		USceneComponent* SceneComponent;
+
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		UPrimitiveComponent* GetPrimaryComponent();
+
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		bool Attach();
+
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		FName GetAttachmentSocket();
+
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		void SimulatePhysics();
 
 public:
 

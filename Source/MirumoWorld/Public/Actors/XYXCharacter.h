@@ -76,7 +76,7 @@ public:
 	// =================================================
 
 	UPROPERTY(EditDefaultsOnly, Category = XYX)
-		FName CharacterName = "SaulXu";
+		FName CharacterName = TEXT("SaulXu");
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		bool bIsDead = false;
@@ -106,16 +106,16 @@ public:
 		EDirection ReceivedHitDirection = EDirection::EFront;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		TArray<FName> LeftHandCollisionSockets = { "left_hand_1", "left_hand_2" };
+		TArray<FName> LeftHandCollisionSockets = { TEXT("left_hand_1"), TEXT("left_hand_2") };
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		TArray<FName> RightHandCollisionSockets = { "right_hand_1", "right_hand_2" };
+		TArray<FName> RightHandCollisionSockets = { TEXT("right_hand_1"), TEXT("right_hand_2") };
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		TArray<FName> RightFootCollisionSockets = { "right_foot_1", "right_foot_2" };
+		TArray<FName> RightFootCollisionSockets = { TEXT("right_foot_1"), TEXT("right_foot_2") };
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		TArray<FName> LeftFootCollisionSockets = { "left_foot_1", "left_foot_2" };
+		TArray<FName> LeftFootCollisionSockets = { TEXT("left_foot_1"), TEXT("left_foot_2") };
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		float HorizontalLookRate = 45.f;

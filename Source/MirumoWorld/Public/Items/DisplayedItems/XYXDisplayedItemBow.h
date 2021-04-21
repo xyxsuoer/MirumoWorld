@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Items/DisplayedItems/XYXDisplayedItemHand.h"
-#include "MyXYXDisplayedItemBow.generated.h"
+#include "XYXDisplayedItemBow.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MIRUMOWORLD_API AMyXYXDisplayedItemBow : public AXYXDisplayedItemHand
+class MIRUMOWORLD_API AXYXDisplayedItemBow : public AXYXDisplayedItemHand
 {
 	GENERATED_BODY()
 	
