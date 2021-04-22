@@ -32,5 +32,6 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 		TSubclassOf<class AXYXDisplayedItem>  GetDisplayedItem();
 
-
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		TArray<struct FModifier> GetModifiers();
 };

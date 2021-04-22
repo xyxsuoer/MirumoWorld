@@ -50,4 +50,10 @@ public:
 		return DisplayedItem;
 	}
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		TArray<struct FModifier> GetModifiers();
+	virtual TArray<struct FModifier> GetModifiers_Implementation() override {
+			return Modifiers;
+	}
+
 };

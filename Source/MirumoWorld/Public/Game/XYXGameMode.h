@@ -29,7 +29,7 @@ public:
 	FOnGameLoaded OnGameLoaded;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		UXYXSaveGame* XYXSaveGame;
+		class UXYXSaveGame* XYXSaveGame;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		FString SaveGameName = "Save_XYX";
