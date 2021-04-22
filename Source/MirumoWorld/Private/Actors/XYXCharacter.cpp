@@ -15,6 +15,9 @@
 #include "Components/XYXMontageManagerComponent.h"
 #include "Components/XYXInputBufferComponent.h"
 #include "Components/XYXStateManagerComponent.h"
+#include "Components/XYXMovementSpeedComponent.h"
+#include "Components/XYXEquipmentManagerComponent.h"
+#include "Components/XYXInventoryManagerComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 

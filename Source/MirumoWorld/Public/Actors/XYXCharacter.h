@@ -8,7 +8,6 @@
 #include "GenericTeamAgentInterface.h"
 #include "Interfaces/XYXInterfaceMontageManagerComp.h"
 #include "Interfaces/XYXInterfaceEntity.h"
-#include "Components/XYXMovementSpeedComponent.h"
 #include "XYXCharacter.generated.h"
 
 #define ECC_ACFHeroesChannel  ECollisionChannel::ECC_GameTraceChannel1
@@ -61,6 +60,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXMovementSpeedComponent* MovementSpeedComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXEquipmentManagerComponent* EquipmentComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXInventoryManagerComponent* InventoryComp;
+
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXInputBufferComponent* GetInputBufferComponent() const { return InputBufferComp; }
 
@@ -72,6 +77,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXMovementSpeedComponent* GetMovementSpeedComponent() const { return MovementSpeedComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXEquipmentManagerComponent* GetEquipmentManagerComponent() const { return EquipmentComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXInventoryManagerComponent* GetInventoryManagerComponent() const { return InventoryComp; }
 
 	// =================================================
 

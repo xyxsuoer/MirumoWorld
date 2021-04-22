@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameMode.h"
+#include "XYXData.h"
 #include "XYXGameMode.generated.h"
 
 
@@ -18,6 +19,10 @@ class MIRUMOWORLD_API AXYXGameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 	
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
 public:
 
 	AXYXGameMode();
@@ -27,6 +32,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnGameLoaded OnGameLoaded;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		class AXYXCharacter* Character;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		class UXYXSaveGame* XYXSaveGame;
@@ -48,5 +56,17 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TMap<EAttributesType, float> StatValues = {};
+
+	UFUNCTION()
+		void UpdateEquipmentValue();
+
+	UFUNCTION()
+		void UpdateInventoryValue();
+
+	UFUNCTION()
+		void LoadGame();
+
+	UFUNCTION()
+		void SaveGame();
 
 };
