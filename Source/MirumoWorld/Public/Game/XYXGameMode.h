@@ -6,6 +6,10 @@
 #include "GameFramework/GameMode.h"
 #include "XYXGameMode.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameSaved);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameLoaded);
+
 /**
  * 
  */
@@ -17,4 +21,32 @@ class MIRUMOWORLD_API AXYXGameMode : public AGameModeBase
 public:
 
 	AXYXGameMode();
+
+	UPROPERTY(BlueprintAssignable)
+	FOnGameSaved OnGameSaved;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnGameLoaded OnGameLoaded;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		UXYXSaveGame* XYXSaveGame;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		FString SaveGameName = "Save_XYX";
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TArray<FStoredItem> Inventory = {};
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TArray<FEquipmentSlots> EquipmentSlots = {};
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bIsInCombat = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		EItemType SelectMainHandSlotType = EItemType::ENone;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TMap<EAttributesType, float> StatValues = {};
+
 };

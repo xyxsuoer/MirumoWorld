@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "XYXData.h"
 #include "XYXSaveGame.generated.h"
 
 /**
@@ -14,8 +15,23 @@ class MIRUMOWORLD_API UXYXSaveGame : public USaveGame
 {
 	GENERATED_BODY()
 
-protected:
+public:
 
+	UXYXSaveGame();
 
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TArray<FStoredItem> Inventory = {};
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TArray<FEquipmentSlots> EquipmentSlots = {};
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bIsInCombat = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		EItemType SelectMainHandSlotType = EItemType::ENone;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TMap<EAttributesType, float> StatValues = {};
 	
 };

@@ -81,7 +81,7 @@ bool AXYXDisplayedItem::Attach()
 
 FName AXYXDisplayedItem::GetAttachmentSocket()
 {
-	return AttachmentSocket;
+	return DIAttachmentSocket;
 }
 
 void AXYXDisplayedItem::SimulatePhysics()
@@ -101,11 +101,11 @@ void AXYXDisplayedItem::SetEquipmemtComp(UXYXEquipmentManagerComponent* Comp)
 
 void AXYXDisplayedItem::SetSlotIndex(int32 Index)
 {
-	SlotIndex = Index;
+	DISlotIndex = Index;
 }
 
 void AXYXDisplayedItem::SetItemType(EItemType Ty)
 {
-	ItemType = Ty;
+	DIItemType = Ty;
 }
 

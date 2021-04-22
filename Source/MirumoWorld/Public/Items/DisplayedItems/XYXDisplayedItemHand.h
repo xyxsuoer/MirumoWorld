@@ -24,9 +24,12 @@ protected:
 
 public:
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		FName HandAttachmentSocket = TEXT("None");
 
 	virtual	FName GetAttachmentSocket() override;
+
+	UFUNCTION()
+		void OnSlotHiddenChanged(EItemType SlotType, int32 SlotIndex, FStoredItem ActiveItem, bool bIsHidden);
 	
 };

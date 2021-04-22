@@ -3,3 +3,7 @@
 
 #include "Game/XYXSaveGame.h"
 
+UXYXSaveGame::UXYXSaveGame()
+{
+
+}

@@ -2,6 +2,7 @@
 
 
 #include "Items/DisplayedItems/XYXDisplayedItemHand.h"
+#include "Components/XYXEquipmentManagerComponent.h"
 
 AXYXDisplayedItemHand::AXYXDisplayedItemHand()
 {
@@ -10,11 +11,45 @@ AXYXDisplayedItemHand::AXYXDisplayedItemHand()
 
 void AXYXDisplayedItemHand::BeginPlay()
 {
-
+	Super::BeginPlay();
+	if (EquipmentComp)
+	{
+		EquipmentComp->OnSlotHiddenChanged.AddDynamic(this, &AXYXDisplayedItemHand::OnSlotHiddenChanged);
+	}
 }
 
 FName AXYXDisplayedItemHand::GetAttachmentSocket()
 {
-	Super::GetAttachmentSocket();
-	return HandAttachmentSocket;
+	//Super::GetAttachmentSocket();
+	if (EquipmentComp)
+	{
+		if (EquipmentComp->IsSlotHidden(DIItemType, DISlotIndex))
+		{
+			return DIAttachmentSocket;
+		}
+		else
+		{
+			if (EquipmentComp->GetIsInCombat())
+			{
+				return HandAttachmentSocket;
+			}
+			else
+			{
+				return DIAttachmentSocket;
+			}
+		}
+	}
+
+	return DIAttachmentSocket;
+}
+
+void AXYXDisplayedItemHand::OnSlotHiddenChanged(EItemType SlotType, int32 SlotIndex, FStoredItem ActiveItem, bool bIsHidden)
+{
+	if (EquipmentComp && EquipmentComp->GetIsInCombat())
+	{
+		if (SlotType == DIItemType && SlotIndex == DISlotIndex)
+		{
+			Attach();
+		}
+	}
 }

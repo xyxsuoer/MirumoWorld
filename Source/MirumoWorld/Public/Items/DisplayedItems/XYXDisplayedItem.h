@@ -25,14 +25,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXEquipmentManagerComponent* EquipmentComp;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		int32 SlotIndex = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
+		int32 DISlotIndex = 0;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		EItemType ItemType =  EItemType::ENone;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
+		EItemType DIItemType =  EItemType::ENone;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		FName AttachmentSocket = TEXT("None");
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
+		FName DIAttachmentSocket = TEXT("None");
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		USceneComponent* SceneComponent;
@@ -41,10 +41,10 @@ public:
 		UPrimitiveComponent* GetPrimaryComponent();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		bool Attach();
+		virtual bool Attach();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-	virtual	FName GetAttachmentSocket();
+		virtual	FName GetAttachmentSocket();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void SimulatePhysics();
