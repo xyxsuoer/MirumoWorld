@@ -172,6 +172,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		bool IsWeaponEquipped();
 
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		void Initialize();
+
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		void HandleOnItemModified(FStoredItem Item);
+
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		void HandleOnGameLoaded();
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -184,7 +193,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TMap<EItemType, FDisplayedItems> MapDisplayedItems = {};
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		TArray<FEquipmentSlots> EquipmentSlots = {};
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Game/XYXData.h"
 #include "XYXItemBase.generated.h"
 
 /**
@@ -23,6 +22,6 @@ public:
 		virtual void UseItem(AActor* Caller);
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
-		FItem Item;
+		struct FItem Item;
 
 };

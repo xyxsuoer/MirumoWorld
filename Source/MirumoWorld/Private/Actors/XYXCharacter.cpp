@@ -63,7 +63,8 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	MontageManagerComp = CreateDefaultSubobject<UXYXMontageManagerComponent>(TEXT("Montage Manager Component"));
 	StateManagerComp = CreateDefaultSubobject<UXYXStateManagerComponent>(TEXT("State Manager Component"));
 	MovementSpeedComp = CreateDefaultSubobject<UXYXMovementSpeedComponent>(TEXT("Movement Speed Component"));
-
+	EquipmentComp = CreateDefaultSubobject<UXYXEquipmentManagerComponent>(TEXT("Equipment Manager Component"));
+	InventoryComp = CreateDefaultSubobject<UXYXInventoryManagerComponent>(TEXT("Inventory Manager Component"));
 }
 
 // Called to bind functionality to input
@@ -123,6 +124,16 @@ void AXYXCharacter::InitialzeCharacter()
 		MovementSpeedComp->OnMovementStateStart.AddDynamic(this, &AXYXCharacter::HandleMovementStateStart);
 		MovementSpeedComp->OnMovementStateEnd.AddDynamic(this, &AXYXCharacter::HandleMovementStateEnd);
 	}
+
+	if (EquipmentComp)
+	{
+		EquipmentComp->Initialize();
+	}
+
+	StartCameraSettings.Rotation = FollowCamera->GetRelativeRotation();
+	StartCameraSettings.ArmLength = CameraBoom->TargetArmLength;
+	StartCameraSettings.SocketOffset = CameraBoom->SocketOffset;
+	StartCameraSettings.CameraLagSpeed = CameraBoom->CameraLagSpeed;
 
 	bInitialized = true;
 }
@@ -448,6 +459,12 @@ void AXYXCharacter::StopSprintAction()
 
 bool AXYXCharacter::WeaponCanSprint()
 {
+	if (!EquipmentComp)
+	{
+		return false;
+	}
+
+	EWeaponType CurrentWeaponType = EquipmentComp->GetWeaponType();
 	return HasMovementInput() &&
 		(CurrentWeaponType == EWeaponType::ENone ||
 			CurrentWeaponType == EWeaponType::EDualSword ||
@@ -460,7 +477,7 @@ bool AXYXCharacter::WeaponCanSprint()
 			CurrentWeaponType == EWeaponType::ETwinDagger ||
 			CurrentWeaponType == EWeaponType::EKatana ||
 			CurrentWeaponType == EWeaponType::ESpell
-			);
+		);
 }
 
 void AXYXCharacter::CrouchAction()
@@ -486,6 +503,12 @@ void AXYXCharacter::ToggleMovementAction()
 
 bool AXYXCharacter::WeaponCanCrouch()
 {
+	if (!EquipmentComp)
+	{
+		return false;
+	}
+
+	EWeaponType CurrentWeaponType = EquipmentComp->GetWeaponType();
 	return HasMovementInput() &&
 		(CurrentWeaponType == EWeaponType::ENone ||
 			CurrentWeaponType == EWeaponType::EDualSword ||
@@ -725,7 +748,12 @@ UDataTable* AXYXCharacter::GetMontages_Implementation(EMontageAction Action)
 		}
 		else
 		{
-			switch (CurrentWeaponType)
+			if (!EquipmentComp)
+			{
+				return nullptr;
+			}
+
+			switch (EquipmentComp->GetWeaponType())
 			{
 			case EWeaponType::ENone:
 				if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_Unarmed")))

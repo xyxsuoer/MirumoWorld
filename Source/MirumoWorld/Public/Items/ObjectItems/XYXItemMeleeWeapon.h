@@ -7,9 +7,10 @@
 #include "Interfaces/XYXInterfaceItem.h"
 #include "XYXItemMeleeWeapon.generated.h"
 
-/**
- * 
- */
+
+struct FModifier;
+class AXYXDisplayedItem;
+
 UCLASS(Blueprintable, BlueprintType)
 class MIRUMOWORLD_API UXYXItemMeleeWeapon : public UXYXItemWeapon,
 	public IXYXInterfaceItem
@@ -27,7 +28,7 @@ public:
 		bool bTwoHanded = false;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
-		TSubclassOf<class AXYXDisplayedItem> DisplayedItem;
+		TSubclassOf<AXYXDisplayedItem> DisplayedItem;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<FModifier> Modifiers;
@@ -45,14 +46,14 @@ public:
 	}
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
-		TSubclassOf<class AXYXDisplayedItem>  GetDisplayedItem();
-	virtual TSubclassOf<class AXYXDisplayedItem> GetDisplayedItem_Implementation() override {
+		TSubclassOf<AXYXDisplayedItem>  GetDisplayedItem();
+	virtual TSubclassOf<AXYXDisplayedItem> GetDisplayedItem_Implementation() override {
 		return DisplayedItem;
 	}
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
-		TArray<struct FModifier> GetModifiers();
-	virtual TArray<struct FModifier> GetModifiers_Implementation() override {
+		TArray<FModifier> GetModifiers();
+	virtual TArray<FModifier> GetModifiers_Implementation() override {
 			return Modifiers;
 	}
 

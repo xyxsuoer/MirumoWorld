@@ -17,8 +17,6 @@ AXYXGameMode::AXYXGameMode()
 	{
 		DefaultPawnClass = BP_Heroe.Class;
 	}
-
-	Character = Cast<AXYXCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 }
 
 void AXYXGameMode::BeginPlay()
@@ -27,18 +25,16 @@ void AXYXGameMode::BeginPlay()
 
 	UpdateInventoryValue();
 	UpdateEquipmentValue();
-	if (UGameplayStatics::DoesSaveGameExist(SaveGameName, 0))
-	{
-		LoadGame();
-	}
-	else
-	{
-		SaveGame();
-	}
+
+	UWorld* World = GetWorld();
+	check(World);
+	World->GetTimerManager().SetTimer(LoadSaveTimer, this, &AXYXGameMode::LoadOrSave, 0.001f, false);
+
 }
 
 void AXYXGameMode::UpdateEquipmentValue()
 {
+	AXYXCharacter* Character = Cast<AXYXCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (IsValid(Character))
 	{
 		UXYXEquipmentManagerComponent* EquipmentComp = Character->GetEquipmentManagerComponent();
@@ -53,6 +49,7 @@ void AXYXGameMode::UpdateEquipmentValue()
 
 void AXYXGameMode::UpdateInventoryValue()
 {
+	AXYXCharacter* Character = Cast<AXYXCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (IsValid(Character))
 	{
 		UXYXInventoryManagerComponent* InventoryComp = Character->GetInventoryManagerComponent();
@@ -60,6 +57,18 @@ void AXYXGameMode::UpdateInventoryValue()
 		{
 			Inventory = InventoryComp->Inventory;
 		}
+	}
+}
+
+void AXYXGameMode::LoadOrSave()
+{
+	if (UGameplayStatics::DoesSaveGameExist(SaveGameName, 0))
+	{
+		LoadGame();
+	}
+	else
+	{
+		SaveGame();
 	}
 }
 

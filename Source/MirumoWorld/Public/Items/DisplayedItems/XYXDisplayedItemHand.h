@@ -30,6 +30,6 @@ public:
 	virtual	FName GetAttachmentSocket() override;
 
 	UFUNCTION()
-		void OnSlotHiddenChanged(EItemType SlotType, int32 SlotIndex, FStoredItem ActiveItem, bool bIsHidden);
+		void HandleOnSlotHiddenChanged(EItemType SlotType, int32 SlotIndex, FStoredItem ActiveItem, bool bIsHidden);
 	
 };

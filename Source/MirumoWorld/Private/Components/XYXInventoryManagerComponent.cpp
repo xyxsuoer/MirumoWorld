@@ -5,6 +5,8 @@
 #include <Items/ObjectItems/XYXItemBase.h>
 #include "Kismet/KismetSystemLibrary.h"
 #include "Actors/XYXCharacter.h"
+#include "Game/XYXGameMode.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
 UXYXInventoryManagerComponent::UXYXInventoryManagerComponent()
@@ -22,7 +24,17 @@ void UXYXInventoryManagerComponent::BeginPlay()
 
 	ClearInventory();
 
-	CharacterOwner = Cast<AXYXCharacter>(GetOwner());
+	auto&& Character = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	auto&& Owner = Cast<ACharacter>(GetOwner());
+	if (Character == Owner)
+	{
+		auto&& XYXGameMode = Cast<AXYXGameMode>(UGameplayStatics::GetGameMode(this));
+		if (IsValid(XYXGameMode))
+		{
+			XYXGameMode->OnGameLoaded.AddDynamic(this, &UXYXInventoryManagerComponent::HandleOnGameLoaded);
+		}
+	}
+
 }
 
 void UXYXInventoryManagerComponent::AddItem(TSubclassOf<UXYXItemBase> ItemClass, int32 Amount)
@@ -146,7 +158,7 @@ void UXYXInventoryManagerComponent::UseItem(FGuid ItemId)
 		return;
 	}
 
-	UXYXItemBase* Item = NewObject<UXYXItemBase>(GetOwner());
+	UXYXItemBase* Item = NewObject<UXYXItemBase>();
 	if (Item)
 	{
 		Item->UseItem(GetOwner());
@@ -171,7 +183,7 @@ bool UXYXInventoryManagerComponent::IsSlotEmpty(int32 Index)
 FStoredItem UXYXInventoryManagerComponent::GetItemAtIndex(int32 Index)
 {
 	FStoredItem Item;
-	if (IsSlotEmpty(Index))
+	if (!IsSlotEmpty(Index))
 	{
 		Item = Inventory[Index];
 	}
@@ -215,5 +227,14 @@ bool UXYXInventoryManagerComponent::IsItemValid(FStoredItem Item)
 	return Item.Id.IsValid() && UKismetSystemLibrary::IsValidClass(Item.ItemClass) && Item.Amount > 0;
 }
 
+void UXYXInventoryManagerComponent::HandleOnGameLoaded()
+{
+	auto&& XYXGameMode = Cast<AXYXGameMode>(UGameplayStatics::GetGameMode(this));
+	if (IsValid(XYXGameMode))
+	{
+		Inventory = XYXGameMode->Inventory;
+		ClearInventory();
+	}
+}
 
 

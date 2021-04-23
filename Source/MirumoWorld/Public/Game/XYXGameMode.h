@@ -34,9 +34,6 @@ public:
 	FOnGameLoaded OnGameLoaded;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		class AXYXCharacter* Character;
-
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		class UXYXSaveGame* XYXSaveGame;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
@@ -57,11 +54,17 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TMap<EAttributesType, float> StatValues = {};
 
+	UPROPERTY()
+		FTimerHandle LoadSaveTimer;
+
 	UFUNCTION()
 		void UpdateEquipmentValue();
 
 	UFUNCTION()
 		void UpdateInventoryValue();
+
+	UFUNCTION()
+		void LoadOrSave();
 
 	UFUNCTION()
 		void LoadGame();

@@ -362,8 +362,6 @@ public:
 private:
 	bool bInitialized = false;
 
-	EWeaponType CurrentWeaponType = EWeaponType::ENone;
-
 	UPROPERTY()
 		FTimerHandle ResetMeleeAttackCounterTimer;
 

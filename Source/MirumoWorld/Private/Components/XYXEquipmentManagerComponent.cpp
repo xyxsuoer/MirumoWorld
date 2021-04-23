@@ -9,6 +9,10 @@
 #include "Items/ObjectItems/XYXItemWeapon.h"
 #include "Game/XYXData.h"
 #include "Interfaces/XYXInterfaceItem.h"
+#include <Game/XYXGameMode.h>
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Character.h"
+#include "UObject/ConstructorHelpers.h"
 
 
 // Sets default values for this component's properties
@@ -129,7 +133,7 @@ bool UXYXEquipmentManagerComponent::IsItemTwoHanded(FStoredItem Item)
 {
 	if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
 	{
-		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(GetOwner());
+		auto&& ItemBase = NewObject<UXYXItemBase>();
 		if (ItemBase)
 		{
 			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
@@ -171,7 +175,9 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 	FStoredItem Item = GetActiveItem(Type, SlotIndex);
 	if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
 	{
-		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(GetOwner());
+		UWorld* const World = GetWorld(); 
+		check(World);
+		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
 		if (ItemBase)
 		{
 			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
@@ -183,8 +189,6 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 				auto DIClass = myInterface->GetDisplayedItem();
 				if (UKismetSystemLibrary::IsValidClass(DIClass))
 				{
-					UWorld* const World = GetWorld(); // get a reference to the world
-					check(World);
 					FActorSpawnParameters ActorSpawnParams;
 					ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 					ActorSpawnParams.Owner = GetOwner();
@@ -601,7 +605,7 @@ void UXYXEquipmentManagerComponent::UseActiveItemAtSlot(EItemType Type, int32 Sl
 						}
 						else
 						{
-							UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(GetOwner());
+							UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
 							if (ItemBase)
 							{
 								ItemBase->UseItem(GetOwner());
@@ -868,10 +872,10 @@ bool UXYXEquipmentManagerComponent::IsShieldEquipped()
 	FStoredItem Item = GetItemInSlot(EItemType::EShield, 0, Index);
 	if (IsItemValid(Item))
 	{
-		UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
-		if (ConstructedItem)
+		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
+		if (ItemBase)
 		{
-			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ConstructedItem);
+			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
 			if (myInterface)
 			{
 				return myInterface->GetBlockValue() > 0.f;
@@ -973,10 +977,10 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 	{
 		if (!IsSlotHidden(EItemType::EShield, 0))
 		{
-			UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
-			if (ConstructedItem)
+			UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
+			if (ItemBase)
 			{
-				IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ConstructedItem);
+				IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
 				if (myInterface)
 				{
 					Value = myInterface->GetBlockValue();
@@ -992,10 +996,10 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 	{
 		if (!IsSlotHidden(SelectMainHandType, 0))
 		{
-			UXYXItemBase* ConstructedItem = NewObject<UXYXItemBase>(GetOwner());
-			if (ConstructedItem)
+			UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
+			if (ItemBase)
 			{
-				IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ConstructedItem);
+				IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
 				if (myInterface)
 				{
 					Value = myInterface->GetBlockValue();
@@ -1037,4 +1041,50 @@ bool UXYXEquipmentManagerComponent::IsWeaponEquipped()
 	return GetWeaponType() != EWeaponType::ENone;
 }
 
+void UXYXEquipmentManagerComponent::Initialize()
+{
+	InventoryComp = Cast<UXYXInventoryManagerComponent>(GetOwner()->GetComponentByClass(UXYXInventoryManagerComponent::StaticClass()));
+	if (IsValid(InventoryComp))
+	{
+		InventoryComp->OnItemRemoved.AddDynamic(this, &UXYXEquipmentManagerComponent::HandleOnItemModified);
+		InventoryComp->OnItemAdded.AddDynamic(this, &UXYXEquipmentManagerComponent::HandleOnItemModified);
+	}
+
+	BuildEquipment(EquipmentSlots);
+
+	auto&& Character = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	auto&& Owner = Cast<ACharacter>(GetOwner());
+	if (Owner == Character)
+	{
+		auto&& 	XYXGameMode = Cast<AXYXGameMode>(UGameplayStatics::GetGameMode(this));
+		if (IsValid(XYXGameMode))
+		{
+			XYXGameMode->OnGameLoaded.AddDynamic(this, &UXYXEquipmentManagerComponent::HandleOnGameLoaded);
+		}
+	}
+
+}
+
+void UXYXEquipmentManagerComponent::HandleOnItemModified(FStoredItem Item)
+{
+	EItemType Type;
+	int32 SlotIndex;
+	int32 ItemIndex;
+	FindItem(Item, Type, SlotIndex, ItemIndex);
+	if (SlotIndex >= 0)
+	{
+		UpdateItemInSlot(Type, SlotIndex, ItemIndex, Item, EHandleSameItemMethod::EUpdate);
+	}
+}
+
+void UXYXEquipmentManagerComponent::HandleOnGameLoaded()
+{
+	auto&& XYXGameMode = Cast<AXYXGameMode>(UGameplayStatics::GetGameMode(this));
+	if (IsValid(XYXGameMode))
+	{
+		SelectMainHandType = XYXGameMode->SelectMainHandSlotType;
+		BuildEquipment(XYXGameMode->EquipmentSlots);
+		SetCombat(XYXGameMode->bIsInCombat);
+	}
+}
 

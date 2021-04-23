@@ -59,15 +59,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		bool IsItemValid(FStoredItem Item);
 
+	UFUNCTION(BlueprintCallable, Category = XYX)
+		void HandleOnGameLoaded();
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
 public:	
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		TArray<FStoredItem> Inventory;
-
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		class AXYXCharacter* CharacterOwner;
 };
