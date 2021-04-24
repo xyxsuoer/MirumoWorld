@@ -158,10 +158,10 @@ void UXYXInventoryManagerComponent::UseItem(FGuid ItemId)
 		return;
 	}
 
-	UXYXItemBase* Item = NewObject<UXYXItemBase>();
-	if (Item)
+	UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Inventory[Index].ItemClass);
+	if (ItemBase)
 	{
-		Item->UseItem(GetOwner());
+		ItemBase->UseItem(GetOwner());
 	}
 
 	if (Inventory[Index].ItemClass.GetDefaultObject()->Item.bIsConsumable)

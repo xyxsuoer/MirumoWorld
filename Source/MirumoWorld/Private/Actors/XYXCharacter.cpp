@@ -466,15 +466,15 @@ bool AXYXCharacter::WeaponCanSprint()
 
 	EWeaponType CurrentWeaponType = EquipmentComp->GetWeaponType();
 	return HasMovementInput() &&
-		(CurrentWeaponType == EWeaponType::ENone ||
-			CurrentWeaponType == EWeaponType::EDualSword ||
+		(	CurrentWeaponType == EWeaponType::ENone ||
+			CurrentWeaponType == EWeaponType::EDualSwordRight ||
 			CurrentWeaponType == EWeaponType::EOneHandSword ||
 			CurrentWeaponType == EWeaponType::EOneHandAndShield ||
 			CurrentWeaponType == EWeaponType::EOneHandSwordShield ||
 			CurrentWeaponType == EWeaponType::ESpear ||
 			CurrentWeaponType == EWeaponType::EBow ||
 			CurrentWeaponType == EWeaponType::ETwinBlade ||
-			CurrentWeaponType == EWeaponType::ETwinDagger ||
+			CurrentWeaponType == EWeaponType::ETwinDaggerRight ||
 			CurrentWeaponType == EWeaponType::EKatana ||
 			CurrentWeaponType == EWeaponType::ESpell
 		);
@@ -511,12 +511,12 @@ bool AXYXCharacter::WeaponCanCrouch()
 	EWeaponType CurrentWeaponType = EquipmentComp->GetWeaponType();
 	return HasMovementInput() &&
 		(CurrentWeaponType == EWeaponType::ENone ||
-			CurrentWeaponType == EWeaponType::EDualSword ||
+			CurrentWeaponType == EWeaponType::EDualSwordRight ||
 			CurrentWeaponType == EWeaponType::EOneHandSword ||
 			CurrentWeaponType == EWeaponType::EOneHandAndShield ||
 			CurrentWeaponType == EWeaponType::EOneHandSwordShield ||
 			CurrentWeaponType == EWeaponType::EBow ||
-			CurrentWeaponType == EWeaponType::ETwinDagger ||
+			CurrentWeaponType == EWeaponType::ETwinDaggerRight ||
 			CurrentWeaponType == EWeaponType::ESpell
 		);
 }
@@ -763,7 +763,7 @@ UDataTable* AXYXCharacter::GetMontages_Implementation(EMontageAction Action)
 				if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_Bow")))
 					DataTable = GameInstance->MontageDataTables[TEXT("Heroe_Bow")];
 				break;
-			case EWeaponType::EDualSword:
+			case EWeaponType::EDualSwordRight:
 				if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_DualSword")))
 					DataTable = GameInstance->MontageDataTables[TEXT("Heroe_DualSword")];
 				break;
@@ -799,7 +799,7 @@ UDataTable* AXYXCharacter::GetMontages_Implementation(EMontageAction Action)
 				if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_TwinBlade")))
 					DataTable = GameInstance->MontageDataTables[TEXT("Heroe_TwinBlade")];
 				break;
-			case EWeaponType::ETwinDagger:
+			case EWeaponType::ETwinDaggerRight:
 				if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_TwinDagger")))
 					DataTable = GameInstance->MontageDataTables[TEXT("Heroe_TwinDagger")];
 				break;

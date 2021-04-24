@@ -198,13 +198,13 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TArray<EItemType> MainHandTypes = {
-			EItemType::EMeleeWeapon,
+			EItemType::EMeleeWeaponRight,
 			EItemType::ERangeWeapon,
 			EItemType::ESpell
 		};
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		EItemType SelectMainHandType = EItemType::EMeleeWeapon;
+		EItemType SelectMainHandType = EItemType::EMeleeWeaponRight;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsInCombat = false;

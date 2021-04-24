@@ -69,5 +69,5 @@ protected:
 public:	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
-		TArray<FStoredItem> Inventory;
+		TArray<FStoredItem> Inventory;	
 };

@@ -125,19 +125,20 @@ UENUM(BlueprintType)
 enum class EItemType : uint8
 {
 	ENone													UMETA(DisplayName = "ENone"),									// 无
-	ESpell												UMETA(DisplayName = "ESpell"),									// 法术
+	ESpell												UMETA(DisplayName = "ESpell"),								// 法术
 	EShield												UMETA(DisplayName = "EShield"),								// 盾牌 
 	EHead													UMETA(DisplayName = "EHead"),									// 头部 
 	EBody													UMETA(DisplayName = "EBody"),									// 身体
 	ELegs													UMETA(DisplayName = "ELegs"),									// 腿部
-	EHands												UMETA(DisplayName = "EHands"),									// 手部
+	EHands												UMETA(DisplayName = "EHands"),								// 手部
 	EFeet													UMETA(DisplayName = "EFeet"),									// 足部
 	ERing													UMETA(DisplayName = "ERing"),									// 戒指
 	ENecklace											UMETA(DisplayName = "ENecklace"),							// 项链
 	EArrows												UMETA(DisplayName = "EArrows"),								// 箭矢
 	ETool													UMETA(DisplayName = "ETool"),									// 工具 
 	EMaterial											UMETA(DisplayName = "EMaterial"),							// 材料 
-	EMeleeWeapon									UMETA(DisplayName = "EMeleeWeapon"),						// 近战物品(物理)
+	EMeleeWeaponRight							UMETA(DisplayName = "EMeleeWeaponRight"),			// 近战物品(物理)
+	EMeleeWeaponLeft							UMETA(DisplayName = "EMeleeWeaponLeft"),			// 近战物品(物理)
 	ERangeWeapon									UMETA(DisplayName = "ERangeWeapon")						// 远程武器(物理)
 };
 
@@ -277,20 +278,22 @@ UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
 	ENone													UMETA(DisplayName = "ENone"),								// 徒手/盾
-	EBow													UMETA(DisplayName = "EBow"),									// 弓
-	ESpell												UMETA(DisplayName = "ESpell"),								// 法术
-	EDualSword										UMETA(DisplayName = "EDualSword"),						// 双剑
+	EBow													UMETA(DisplayName = "EBow"),								// 弓
+	ESpell												UMETA(DisplayName = "ESpell"),							// 法术
+	EDualSwordLeft								UMETA(DisplayName = "EDualSwordLeft"),			// 双剑左手剑
+	EDualSwordRight								UMETA(DisplayName = "EDualSwordRight"),			// 双剑右手剑
 	EGreatSword										UMETA(DisplayName = "EGreatSword"),					// 巨剑
 	EKatana												UMETA(DisplayName = "EKatana"),							// 太刀
 	EOneHandAndShield							UMETA(DisplayName = "EOneHandAndShield"),		// 单手武器(钝器) + 盾
 	EOneHandSwordShield						UMETA(DisplayName = "EOneHandSwordShield"),	// 单手剑 + 盾
 	EOneHandSword									UMETA(DisplayName = "EOneHandSword"),				// 单手长剑/刀
-	ESpear												UMETA(DisplayName = "ESpear"),								// 长矛
-	ETwinBlade										UMETA(DisplayName = "ETwinBlade"),						// 长柄双刃(双剑/双刀合成)
-	ETwinDagger										UMETA(DisplayName = "ETwinDagger"),					// 双匕首
+	ESpear												UMETA(DisplayName = "ESpear"),							// 长矛
+	ETwinBlade										UMETA(DisplayName = "ETwinBlade"),					// 长柄双刃(双剑/双刀合成)
+	ETwinDaggerLeft								UMETA(DisplayName = "ETwinDaggerLeft"),					// 双匕首
+	ETwinDaggerRight							UMETA(DisplayName = "ETwinDaggerRight"),					// 双匕首
 	ETwoHandAxe										UMETA(DisplayName = "ETwoHandAxe"),					// 双手斧
-	ETwoHandHammer								UMETA(DisplayName = "ETwoHandHammer"),				// 双手锤
-	ETwoHandSword									UMETA(DisplayName = "ETwoHandSword")					// 双手剑
+	ETwoHandHammer								UMETA(DisplayName = "ETwoHandHammer"),			// 双手锤
+	ETwoHandSword									UMETA(DisplayName = "ETwoHandSword")				// 双手剑
 };
 
 

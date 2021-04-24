@@ -133,12 +133,14 @@ bool UXYXEquipmentManagerComponent::IsItemTwoHanded(FStoredItem Item)
 {
 	if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
 	{
-		auto&& ItemBase = NewObject<UXYXItemBase>();
+		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
 		if (ItemBase)
 		{
-			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
-			if (myInterface)
-				return myInterface->IsTwoHanded();
+			IXYXInterfaceItem* MyInterface = Cast<IXYXInterfaceItem>(ItemBase);
+			if (MyInterface)
+			{
+				return MyInterface->Execute_IsTwoHanded(ItemBase);
+			}
 		}
 	}
 
@@ -175,20 +177,21 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 	FStoredItem Item = GetActiveItem(Type, SlotIndex);
 	if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
 	{
-		UWorld* const World = GetWorld(); 
-		check(World);
-		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
+		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
 		if (ItemBase)
 		{
-			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
-			if (myInterface)
+			IXYXInterfaceItem* MyInterface = Cast<IXYXInterfaceItem>(ItemBase);
+			if (MyInterface)
 			{
 				TArray<AXYXDisplayedItem*>  TempArray;
 				TempArray = DIValues[FoundIndex].DisplayedItems;
 
-				auto DIClass = myInterface->GetDisplayedItem();
+				auto DIClass = MyInterface->Execute_GetDisplayedItem(ItemBase);
 				if (UKismetSystemLibrary::IsValidClass(DIClass))
 				{
+					UWorld* const World = GetWorld();
+					check(World);
+
 					FActorSpawnParameters ActorSpawnParams;
 					ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 					ActorSpawnParams.Owner = GetOwner();
@@ -605,7 +608,7 @@ void UXYXEquipmentManagerComponent::UseActiveItemAtSlot(EItemType Type, int32 Sl
 						}
 						else
 						{
-							UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
+							UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
 							if (ItemBase)
 							{
 								ItemBase->UseItem(GetOwner());
@@ -872,13 +875,13 @@ bool UXYXEquipmentManagerComponent::IsShieldEquipped()
 	FStoredItem Item = GetItemInSlot(EItemType::EShield, 0, Index);
 	if (IsItemValid(Item))
 	{
-		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
+		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
 		if (ItemBase)
 		{
-			IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
-			if (myInterface)
+			IXYXInterfaceItem* MyInterface = Cast<IXYXInterfaceItem>(ItemBase);
+			if (MyInterface)
 			{
-				return myInterface->GetBlockValue() > 0.f;
+				return MyInterface->Execute_GetBlockValue(ItemBase) > 0.f;
 			}
 		}
 	}
@@ -936,7 +939,8 @@ void UXYXEquipmentManagerComponent::UpdateCombatType()
 		case EItemType::ESpell:
 			CombatType = ECombatType::EMagic;
 			break;
-		case EItemType::EMeleeWeapon:
+		case EItemType::EMeleeWeaponRight:
+		case EItemType::EMeleeWeaponLeft:
 			CombatType = ECombatType::EMelee;
 			break;
 		case EItemType::ERangeWeapon:
@@ -977,13 +981,13 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 	{
 		if (!IsSlotHidden(EItemType::EShield, 0))
 		{
-			UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
+			UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
 			if (ItemBase)
 			{
-				IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
-				if (myInterface)
+				IXYXInterfaceItem* MyInterface = Cast<IXYXInterfaceItem>(ItemBase);
+				if (MyInterface)
 				{
-					Value = myInterface->GetBlockValue();
+					Value = MyInterface->Execute_GetBlockValue(ItemBase);
 					bSuccess = true;
 				}
 			}
@@ -996,13 +1000,13 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 	{
 		if (!IsSlotHidden(SelectMainHandType, 0))
 		{
-			UXYXItemBase* ItemBase = NewObject<UXYXItemBase>();
+			UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
 			if (ItemBase)
 			{
-				IXYXInterfaceItem* myInterface = Cast<IXYXInterfaceItem>(ItemBase);
-				if (myInterface)
+				IXYXInterfaceItem* MyInterface = Cast<IXYXInterfaceItem>(ItemBase);
+				if (MyInterface)
 				{
-					Value = myInterface->GetBlockValue();
+					Value = MyInterface->Execute_GetBlockValue(ItemBase);
 					bSuccess = true;
 				}
 			}

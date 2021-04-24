@@ -252,7 +252,6 @@ public:
 	UFUNCTION()
 		void HandleMovementStateEnd(EMovementState State);
 
-
 	UFUNCTION()
 		void MeleeAttack(EMeleeAttackType AttackType);
 
