@@ -52,7 +52,7 @@ public:
 public:
 
 	UFUNCTION()
-		void SetEquipmemtComp(UXYXEquipmentManagerComponent* Comp);
+		virtual void SetEquipmemtComp(UXYXEquipmentManagerComponent* Comp);
 
 	UFUNCTION()
 		void SetSlotIndex(int32 Index);

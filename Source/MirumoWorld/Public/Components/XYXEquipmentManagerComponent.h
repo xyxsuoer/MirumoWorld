@@ -199,8 +199,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TArray<EItemType> MainHandTypes = {
 			EItemType::EMeleeWeaponRight,
-			EItemType::ERangeWeapon,
-			EItemType::ESpell
+			//EItemType::ERangeWeapon,
+			//EItemType::ESpell,
+			EItemType::ENone
 		};
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)

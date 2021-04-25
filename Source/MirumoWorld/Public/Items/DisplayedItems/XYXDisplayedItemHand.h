@@ -29,6 +29,9 @@ public:
 
 	virtual	FName GetAttachmentSocket() override;
 
+	virtual void SetEquipmemtComp(class UXYXEquipmentManagerComponent* Comp) override;
+
+
 	UFUNCTION()
 		void HandleOnSlotHiddenChanged(EItemType SlotType, int32 SlotIndex, FStoredItem ActiveItem, bool bIsHidden);
 	

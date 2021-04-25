@@ -91,6 +91,11 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AXYXCharacter::CrouchAction);
 		PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AXYXCharacter::StopCrouchAction);
 		PlayerInputComponent->BindAction("ToggleMovement", IE_Pressed, this, &AXYXCharacter::ToggleMovementAction);
+		PlayerInputComponent->BindAction("SwitchMainHandTypeUp", IE_Pressed, this, &AXYXCharacter::SwitchMainHandTypeUpAction);
+		PlayerInputComponent->BindAction("SwitchMainHandTypeDown", IE_Pressed, this, &AXYXCharacter::SwitchMainHandTypeDownAction);
+		PlayerInputComponent->BindAction("SwitchMainHandItemUp", IE_Pressed, this, &AXYXCharacter::SwitchMainHandItemUpAction);
+		PlayerInputComponent->BindAction("SwitchMainHandItemDown", IE_Pressed, this, &AXYXCharacter::SwitchMainHandItemDownAction);
+		PlayerInputComponent->BindAction("ToggleCombat", IE_Pressed, this, &AXYXCharacter::ToggleCombatAction);
 	}
 }
 
@@ -128,6 +133,10 @@ void AXYXCharacter::InitialzeCharacter()
 	if (EquipmentComp)
 	{
 		EquipmentComp->Initialize();
+		EquipmentComp->OnInCombatChanged.AddDynamic(this, &AXYXCharacter::HandleOnInCombatChanged);
+		EquipmentComp->OnActiveItemChanged.AddDynamic(this, &AXYXCharacter::HandleOnActiveItemChanged);
+		EquipmentComp->OnMainHandTypeChanged.AddDynamic(this, &AXYXCharacter::HandleOnMainHandTypeChanged);
+		EquipmentComp->OnCombatTypeChanged.AddDynamic(this, &AXYXCharacter::HandleOnCombatTypeChanged);
 	}
 
 	StartCameraSettings.Rotation = FollowCamera->GetRelativeRotation();
@@ -169,6 +178,21 @@ void AXYXCharacter::HandleInputBufferConsumed(const EInputBufferKey key)
 	case EInputBufferKey::EParry:
 		Parry();
 		break;
+	case EInputBufferKey::ESwitchMainHandTypeUp:
+		SwitchMainHandType(true);
+		break;
+	case EInputBufferKey::ESwitchMainHandTypeDown:
+		SwitchMainHandType(false);
+		break;
+	case EInputBufferKey::ESwitchMainHandItemUp:
+		SwitchMainHandItem(true);
+		break;
+	case EInputBufferKey::ESwitchMainHandItemDown:
+		SwitchMainHandItem(false);
+		break;
+	case EInputBufferKey::EToggleCombat:
+		ToggleCombat();
+		break;
 	}
 }
 
@@ -208,6 +232,26 @@ void AXYXCharacter::HandleMovementStateEnd(EMovementState State)
 	{
 		World->GetTimerManager().ClearTimer(CrouchLoopTimer);
 	}
+}
+
+void AXYXCharacter::HandleOnInCombatChanged(bool bIsInCombat)
+{
+
+}
+
+void AXYXCharacter::HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex)
+{
+	PlayMainHandTypeChangedMontage(Type);
+}
+
+void AXYXCharacter::HandleOnMainHandTypeChanged(EItemType Type)
+{
+	PlayMainHandTypeChangedMontage(Type);
+}
+
+void AXYXCharacter::HandleOnCombatTypeChanged(ECombatType CombatType)
+{
+
 }
 
 void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
@@ -385,9 +429,18 @@ UAnimMontage* AXYXCharacter::GetParryMontage()
 
 void AXYXCharacter::LightAttack()
 {
-	if (InputBufferComp)
+	if (!EquipmentComp && !InputBufferComp)
+	{
+		return;
+	}
+
+	if (EquipmentComp->GetIsInCombat())
 	{
 		InputBufferComp->UpdateKey(EInputBufferKey::ELightAttack);
+	}
+	else
+	{
+		InputBufferComp->UpdateKey(EInputBufferKey::EToggleCombat);
 	}
 }
 
@@ -631,6 +684,125 @@ void AXYXCharacter::CrouchLoop()
 	else
 	{
 		SetSprintOrCrouch(false, EMovementState::ECrouch);
+	}
+}
+
+bool AXYXCharacter::CanUseOrSwitchItem()
+{
+	if (IsEntityAlive() && IsStateEqual(EState::EIdle))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+void AXYXCharacter::SwitchMainHandTypeUpAction()
+{
+	if (InputBufferComp)
+	{
+		InputBufferComp->UpdateKey(EInputBufferKey::ESwitchMainHandTypeUp);
+	}
+}
+
+void AXYXCharacter::SwitchMainHandTypeDownAction()
+{
+	if (InputBufferComp)
+	{
+		InputBufferComp->UpdateKey(EInputBufferKey::ESwitchMainHandTypeDown);
+	}
+}
+
+void AXYXCharacter::SwitchMainHandType(bool bForward)
+{
+	if (CanUseOrSwitchItem() && EquipmentComp)
+	{
+		EquipmentComp->SwitchMainHandType(bForward);
+	}
+}
+
+void AXYXCharacter::SwitchMainHandItemUpAction()
+{
+	if (InputBufferComp)
+	{
+		InputBufferComp->UpdateKey(EInputBufferKey::ESwitchMainHandItemUp);
+	}
+}
+
+void AXYXCharacter::SwitchMainHandItemDownAction()
+{
+	if (InputBufferComp)
+	{
+		InputBufferComp->UpdateKey(EInputBufferKey::ESwitchMainHandItemDown);
+	}
+}
+
+void AXYXCharacter::SwitchMainHandItem(bool bForward)
+{
+	if (CanUseOrSwitchItem() && EquipmentComp)
+	{
+		EItemType Type = EquipmentComp->GetSelectedMainHandType();
+		EquipmentComp->SwitchSlotActiveIndex(Type, 0, bForward, true);
+	}
+}
+
+void AXYXCharacter::ToggleCombatAction()
+{
+	if (InputBufferComp)
+	{
+		InputBufferComp->UpdateKey(EInputBufferKey::EToggleCombat);
+	}
+}
+
+void AXYXCharacter::ToggleCombat()
+{
+	if (!IsStateEqual(EState::EIdle))
+	{
+		return;
+	}
+
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetState(EState::EInteracting);
+	}
+
+	if (EquipmentComp && MontageManagerComp)
+	{
+		UAnimMontage* Montage = nullptr;
+		if (EquipmentComp->GetIsInCombat())
+		{
+			Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDrawWeaopon, 0);
+		}
+		else
+		{
+			Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDisarmWeapon, 0);
+		}
+		if (IsValid(Montage))
+		{
+			PlayAnimMontage(Montage);
+		}
+		else
+		{
+			EquipmentComp->ToggleCombat();
+			StateManagerComp->ResetState(0.f);
+		}
+	}
+}
+
+void AXYXCharacter::PlayMainHandTypeChangedMontage(EItemType Type)
+{
+	if (EquipmentComp && StateManagerComp && MontageManagerComp)
+	{
+		if (EquipmentComp->GetSelectedMainHandType() == Type && EquipmentComp->GetIsInCombat())
+		{
+			StateManagerComp->SetState(EState::EInteracting);
+			UAnimMontage* Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDrawWeaopon, 1);
+			if (IsValid(Montage))
+			{
+				PlayAnimMontage(Montage);
+				StateManagerComp->ResetState(0.1f);
+			}
+		}
 	}
 }
 

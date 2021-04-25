@@ -12,10 +12,6 @@ AXYXDisplayedItemHand::AXYXDisplayedItemHand()
 void AXYXDisplayedItemHand::BeginPlay()
 {
 	Super::BeginPlay();
-	if (EquipmentComp)
-	{
-		EquipmentComp->OnSlotHiddenChanged.AddDynamic(this, &AXYXDisplayedItemHand::HandleOnSlotHiddenChanged);
-	}
 }
 
 FName AXYXDisplayedItemHand::GetAttachmentSocket()
@@ -41,6 +37,16 @@ FName AXYXDisplayedItemHand::GetAttachmentSocket()
 	}
 
 	return DIAttachmentSocket;
+}
+
+void AXYXDisplayedItemHand::SetEquipmemtComp( UXYXEquipmentManagerComponent* Comp)
+{
+	EquipmentComp = Comp;
+
+	if (EquipmentComp)
+	{
+		EquipmentComp->OnSlotHiddenChanged.AddDynamic(this, &AXYXDisplayedItemHand::HandleOnSlotHiddenChanged);
+	}
 }
 
 void AXYXDisplayedItemHand::HandleOnSlotHiddenChanged(EItemType SlotType, int32 SlotIndex, FStoredItem ActiveItem, bool bIsHidden)

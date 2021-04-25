@@ -85,16 +85,16 @@ protected:
 		bool bIsLookingForward = false;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
-		bool bIsInCombat = true;
+		bool bIsInCombat = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsTwoHandedWeaponEquipped = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		ECombatType CombatType = ECombatType::EUnarmed;
+		ECombatType CurCombatType = ECombatType::EUnarmed;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		EWeaponType WeaponType = EWeaponType::ENone;
+		EWeaponType CurWeaponType = EWeaponType::ENone;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		EKatanaStance KatanaStance = EKatanaStance::EKatanaS1;
@@ -108,6 +108,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = ACF)
 		class UCharacterMovementComponent* MovementComp;
+
+	UPROPERTY(BlueprintReadOnly, Category = ACF)
+		class UXYXEquipmentManagerComponent* EquipmentComp;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		FVector Velocity;
@@ -123,6 +126,24 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsCrouching = false;
+
+	UFUNCTION()
+		void HandleOnInCombatChanged(bool bInCombat);
+
+	UFUNCTION()
+		void HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex);
+
+	UFUNCTION()
+		void HandleOnMainHandTypeChanged(EItemType Type);
+
+	UFUNCTION()
+		void HandleOnCombatTypeChanged(ECombatType CombatType);
+
+	UFUNCTION()
+		void HandleOnWeaponTypeChanged(EWeaponType WeaponType);
+
+	UFUNCTION()
+		void UpdateHandItemsInfo();
 
 private:
 

@@ -92,9 +92,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		bool bIsDead = false;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
-		ECombatType CombatType = ECombatType::EUnarmed;
-
 	UPROPERTY(Replicated)
 		ETeam CombatTeam = ETeam::EHeroesTeam;
 
@@ -253,6 +250,18 @@ public:
 		void HandleMovementStateEnd(EMovementState State);
 
 	UFUNCTION()
+		void HandleOnInCombatChanged(bool bIsInCombat);
+
+	UFUNCTION()
+		void HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex);
+
+	UFUNCTION()
+		void HandleOnMainHandTypeChanged(EItemType Type);
+
+	UFUNCTION()
+		void HandleOnCombatTypeChanged(ECombatType CombatType);
+
+	UFUNCTION()
 		void MeleeAttack(EMeleeAttackType AttackType);
 
 	UFUNCTION()
@@ -357,6 +366,35 @@ public:
 	UFUNCTION()
 		void CrouchLoop();
 
+	UFUNCTION()
+		bool CanUseOrSwitchItem();
+		
+	UFUNCTION()
+		void SwitchMainHandTypeUpAction();
+
+	UFUNCTION()
+		void SwitchMainHandTypeDownAction();
+
+	UFUNCTION()
+		void SwitchMainHandType(bool bForward);
+
+	UFUNCTION()
+		void SwitchMainHandItemUpAction();
+
+	UFUNCTION()
+		void SwitchMainHandItemDownAction();
+
+	UFUNCTION()
+		void SwitchMainHandItem(bool bForward);
+
+	UFUNCTION()
+		void ToggleCombatAction();
+
+	UFUNCTION()
+		void ToggleCombat();
+
+	UFUNCTION()
+		void PlayMainHandTypeChangedMontage(EItemType Type);
 
 private:
 	bool bInitialized = false;

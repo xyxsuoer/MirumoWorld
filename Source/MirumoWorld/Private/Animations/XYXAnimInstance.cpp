@@ -7,6 +7,7 @@
 #include "GameFramework/NavMovementComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/XYXMovementSpeedComponent.h"
+#include "Components/XYXEquipmentManagerComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "Kismet/GameplayStatics.h"
 
@@ -16,7 +17,15 @@ void UXYXAnimInstance::NativeInitializeAnimation()
 
 	SetReferences();
 	
-
+	if (IsValid(EquipmentComp))
+	{
+		EquipmentComp->OnInCombatChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnInCombatChanged);
+		EquipmentComp->OnActiveItemChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnActiveItemChanged);
+		EquipmentComp->OnMainHandTypeChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnMainHandTypeChanged);
+		EquipmentComp->OnCombatTypeChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnCombatTypeChanged);
+		EquipmentComp->OnWeaponTypeChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnWeaponTypeChanged);
+		
+	}
 }
 
 void UXYXAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -36,9 +45,44 @@ void UXYXAnimInstance::SetReferences()
 	if (XYXCharacter)
 	{
 		MovementComp = XYXCharacter->GetCharacterMovement();
+		EquipmentComp = XYXCharacter->GetEquipmentManagerComponent();
 	}
 }
 
+
+void UXYXAnimInstance::HandleOnInCombatChanged(bool bInCombat)
+{
+	bIsInCombat = bInCombat;
+}
+
+void UXYXAnimInstance::HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex)
+{
+	UpdateHandItemsInfo();
+}
+
+void UXYXAnimInstance::HandleOnMainHandTypeChanged(EItemType Type)
+{
+	UpdateHandItemsInfo();
+}
+
+void UXYXAnimInstance::HandleOnCombatTypeChanged(ECombatType CombatType)
+{
+	CurCombatType = CombatType;
+}
+
+void UXYXAnimInstance::HandleOnWeaponTypeChanged(EWeaponType WeaponType)
+{
+	CurWeaponType = WeaponType;
+}
+
+void UXYXAnimInstance::UpdateHandItemsInfo()
+{
+	if (EquipmentComp )
+	{
+		bIsShieldEquipped = EquipmentComp->IsShieldEquipped();
+		bIsTwoHandedWeaponEquipped = EquipmentComp->IsTwoHandedWeaponEquipped();
+	}
+}
 
 void UXYXAnimInstance::StoreCharacterInfo()
 {

@@ -896,8 +896,7 @@ bool UXYXEquipmentManagerComponent::GetIsInCombat()
 
 void UXYXEquipmentManagerComponent::ToggleCombat()
 {
-	bIsInCombat = !bIsInCombat;
-	SetCombat(bIsInCombat);
+	SetCombat(!bIsInCombat);
 }
 
 void UXYXEquipmentManagerComponent::SetCombat(bool bValue)
@@ -906,7 +905,16 @@ void UXYXEquipmentManagerComponent::SetCombat(bool bValue)
 	{
 		bIsInCombat = bValue;
 		AttachDisplayedItem(SelectMainHandType, 0);
-		AttachDisplayedItem(EItemType::EShield, 0);
+		if (SelectMainHandType == EItemType::EMeleeWeaponRight &&
+			(WeaponType == EWeaponType::EDualSwordRight || WeaponType == EWeaponType::ETwinDaggerRight))
+		{
+			AttachDisplayedItem(EItemType::EMeleeWeaponLeft, 0);
+		}
+		else
+		{
+			AttachDisplayedItem(EItemType::EShield, 0);
+		}
+
 		OnInCombatChanged.Broadcast(bIsInCombat);
 	}
 }
@@ -948,7 +956,7 @@ void UXYXEquipmentManagerComponent::UpdateCombatType()
 			break;
 		}
 
-		UXYXItemWeapon* Item = Cast<UXYXItemWeapon>(Weapon.ItemClass);
+		auto&& Item = NewObject<UXYXItemWeapon>(this, Weapon.ItemClass);
 		if (Item)
 		{
 			WeaponType = Item->WeaponType;
