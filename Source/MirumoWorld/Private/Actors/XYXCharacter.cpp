@@ -800,8 +800,8 @@ void AXYXCharacter::PlayMainHandTypeChangedMontage(EItemType Type)
 			if (IsValid(Montage))
 			{
 				PlayAnimMontage(Montage);
-				StateManagerComp->ResetState(0.1f);
 			}
+			StateManagerComp->ResetState(0.1f);
 		}
 	}
 }

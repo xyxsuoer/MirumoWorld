@@ -458,6 +458,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		int32 Amount = 0;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
+		EWeaponType ItemWeaponType = EWeaponType::ENone;
+
 };
 
 USTRUCT(BlueprintType)

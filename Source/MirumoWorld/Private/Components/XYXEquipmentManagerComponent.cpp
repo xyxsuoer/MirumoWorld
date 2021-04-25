@@ -844,11 +844,25 @@ void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)
 	SelectMainHandType = Type;
 
 	UpdateCombatType();
-	SetSlotHidden(PreviousType, 0, true);
 	SetSlotHidden(SelectMainHandType, 0, false);
+	SetSlotHidden(PreviousType, 0, true);
+
+	int32 PreviousItemIndex = GetActiveItemIndex(PreviousType, 0);
+	FStoredItem  PreviousItem = GetItemInSlot(PreviousType, 0, PreviousItemIndex);
+	if (PreviousItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
+		PreviousItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
+	{
+		SetSlotHidden(EItemType::EMeleeWeaponLeft, 0, true);
+	}
 
 	int32 ItemIndex = GetActiveItemIndex(SelectMainHandType, 0);
 	FStoredItem Item = GetItemInSlot(SelectMainHandType, 0, ItemIndex);
+	if (Item.ItemWeaponType == EWeaponType::EDualSwordRight ||
+		Item.ItemWeaponType == EWeaponType::ETwinDaggerRight)
+	{
+		SetSlotHidden(EItemType::EMeleeWeaponLeft, 0, false);
+	}
+
 	if (IsItemTwoHanded(Item))
 	{
 		SetSlotHidden(EItemType::EShield, 0, true);
@@ -905,9 +919,11 @@ void UXYXEquipmentManagerComponent::SetCombat(bool bValue)
 	{
 		bIsInCombat = bValue;
 		AttachDisplayedItem(SelectMainHandType, 0);
-		if (SelectMainHandType == EItemType::EMeleeWeaponRight &&
-			(WeaponType == EWeaponType::EDualSwordRight || WeaponType == EWeaponType::ETwinDaggerRight))
+		FStoredItem Weapon = GetWeapon();
+		if (Weapon.ItemWeaponType == EWeaponType::EDualSwordRight || 
+			Weapon.ItemWeaponType == EWeaponType::ETwinDaggerRight)
 		{
+			// 如果有副手
 			AttachDisplayedItem(EItemType::EMeleeWeaponLeft, 0);
 		}
 		else
@@ -956,11 +972,7 @@ void UXYXEquipmentManagerComponent::UpdateCombatType()
 			break;
 		}
 
-		auto&& Item = NewObject<UXYXItemWeapon>(this, Weapon.ItemClass);
-		if (Item)
-		{
-			WeaponType = Item->WeaponType;
-		}
+		WeaponType = Weapon.ItemWeaponType;
 	}
 	else
 	{
