@@ -742,7 +742,14 @@ void AXYXCharacter::SwitchMainHandItem(bool bForward)
 	if (CanUseOrSwitchItem() && EquipmentComp)
 	{
 		EItemType Type = EquipmentComp->GetSelectedMainHandType();
-		EquipmentComp->SwitchSlotActiveIndex(Type, 0, bForward, true);
+		int32 SlotIndex = EquipmentComp->GetSelectedMainHandSlotIndex();
+		EquipmentComp->SwitchSlotActiveIndex(Type, SlotIndex, bForward, true);
+		auto&& Weapon = EquipmentComp->GetWeapon();
+		if (Weapon.ItemWeaponType == EWeaponType::EDualSwordRight ||
+				Weapon.ItemWeaponType == EWeaponType::ETwinDaggerRight)
+		{
+			EquipmentComp->SwitchSlotActiveIndex(EItemType::EMeleeWeaponLeft, SlotIndex, bForward, true);
+		}
 	}
 }
 
@@ -771,11 +778,11 @@ void AXYXCharacter::ToggleCombat()
 		UAnimMontage* Montage = nullptr;
 		if (EquipmentComp->GetIsInCombat())
 		{
-			Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDrawWeaopon, 0);
+			Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDisarmWeapon, 0);
 		}
 		else
 		{
-			Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDisarmWeapon, 0);
+			Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDrawWeapon, 0);
 		}
 		if (IsValid(Montage))
 		{
@@ -796,13 +803,13 @@ void AXYXCharacter::PlayMainHandTypeChangedMontage(EItemType Type)
 		if (EquipmentComp->GetSelectedMainHandType() == Type && EquipmentComp->GetIsInCombat())
 		{
 			StateManagerComp->SetState(EState::EInteracting);
-			UAnimMontage* Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDrawWeaopon, 1);
+			UAnimMontage* Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EDrawWeapon, 1);
 			if (IsValid(Montage))
 			{
 				PlayAnimMontage(Montage);
 			}
-			StateManagerComp->ResetState(0.1f);
 		}
+		StateManagerComp->ResetState(0.1f);
 	}
 }
 

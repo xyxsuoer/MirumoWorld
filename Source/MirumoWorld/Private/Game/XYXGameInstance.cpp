@@ -12,5 +12,7 @@ UXYXGameInstance::UXYXGameInstance()
 	MontageDataTables.Emplace(TEXT("Heroe_Unarmed") ,pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_DualSword.Heroe_DualSword'"));
 	MontageDataTables.Emplace(TEXT("Heroe_DualSword"), pDataTable);
+	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_TwinDagger.Heroe_TwinDagger'"));
+	MontageDataTables.Emplace(TEXT("Heroe_TwinDagger"), pDataTable);
 }
 

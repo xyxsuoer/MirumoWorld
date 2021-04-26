@@ -113,6 +113,9 @@ public:
 		EItemType GetSelectedMainHandType();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
+		int32 GetSelectedMainHandSlotIndex() { return SelectMainHandSlotIndex; }
+
+	UFUNCTION(BlueprintCallable, Category = XYX)
 		bool IsItemActive(FGuid ItemId);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
@@ -206,6 +209,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		EItemType SelectMainHandType = EItemType::EMeleeWeaponRight;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		int32 SelectMainHandSlotIndex = 0;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsInCombat = false;

@@ -433,6 +433,13 @@ void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStor
 		ActiveItems.Add(NewItem.Id);
 		UpdateDisplayedItem(Type, SlotIndex);
 		AttachDisplayedItem(Type, SlotIndex);
+		if (NewItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
+			NewItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
+		{
+			// 如果有副手
+			UpdateDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
+			AttachDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
+		}
 	}
 		
 	OnActiveItemChanged.Broadcast(OldItem, NewItem, Type, SlotIndex, ActiveIndex);
@@ -485,12 +492,13 @@ void UXYXEquipmentManagerComponent::SwitchSlotActiveIndex(EItemType Type, int32 
 			int32 NewIndex = GetNextArrayIndex(Slots.Items, ActiveIndex, bForward);
 			if (bIgnoreEmptyItems)
 			{
-				for (int32 i = 1; i < Slots.Items.Num(); ++i)
+				for (int32 i = 0; i < Slots.Items.Num(); ++i)
 				{
 					FStoredItem Item = Slots.Items[NewIndex];
 					if (IsItemValid(Item))
 					{
 						ChangeActiveItem = true;
+						break;
 					}
 					else
 					{
@@ -560,8 +568,8 @@ void UXYXEquipmentManagerComponent::SwitchMainHandType(bool bForward)
 
 FStoredItem UXYXEquipmentManagerComponent::GetWeapon()
 {
-	int32 ItemIndex = GetActiveItemIndex(SelectMainHandType, 0);
-	return GetItemInSlot(SelectMainHandType, 0, ItemIndex);
+	int32 ItemIndex = GetActiveItemIndex(SelectMainHandType, SelectMainHandSlotIndex);
+	return GetItemInSlot(SelectMainHandType, SelectMainHandSlotIndex, ItemIndex);
 }
 
 EItemType UXYXEquipmentManagerComponent::GetSelectedMainHandType()
@@ -841,26 +849,28 @@ void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)
 	}
 
 	EItemType PreviousType = SelectMainHandType;
+	int32 PreviousSlotIndex = SelectMainHandSlotIndex;
 	SelectMainHandType = Type;
+	SelectMainHandSlotIndex = 0;
 
 	UpdateCombatType();
-	SetSlotHidden(SelectMainHandType, 0, false);
-	SetSlotHidden(PreviousType, 0, true);
+	SetSlotHidden(SelectMainHandType, SelectMainHandSlotIndex, false);
+	SetSlotHidden(PreviousType, PreviousSlotIndex, true);
 
-	int32 PreviousItemIndex = GetActiveItemIndex(PreviousType, 0);
-	FStoredItem  PreviousItem = GetItemInSlot(PreviousType, 0, PreviousItemIndex);
+	int32 PreviousItemIndex = GetActiveItemIndex(PreviousType, PreviousSlotIndex);
+	FStoredItem  PreviousItem = GetItemInSlot(PreviousType, PreviousSlotIndex, PreviousItemIndex);
 	if (PreviousItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
 		PreviousItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
 	{
-		SetSlotHidden(EItemType::EMeleeWeaponLeft, 0, true);
+		SetSlotHidden(EItemType::EMeleeWeaponLeft, PreviousSlotIndex, true);
 	}
 
-	int32 ItemIndex = GetActiveItemIndex(SelectMainHandType, 0);
-	FStoredItem Item = GetItemInSlot(SelectMainHandType, 0, ItemIndex);
+	int32 ItemIndex = GetActiveItemIndex(SelectMainHandType, SelectMainHandSlotIndex);
+	FStoredItem Item = GetItemInSlot(SelectMainHandType, SelectMainHandSlotIndex, ItemIndex);
 	if (Item.ItemWeaponType == EWeaponType::EDualSwordRight ||
 		Item.ItemWeaponType == EWeaponType::ETwinDaggerRight)
 	{
-		SetSlotHidden(EItemType::EMeleeWeaponLeft, 0, false);
+		SetSlotHidden(EItemType::EMeleeWeaponLeft, SelectMainHandSlotIndex, false);
 	}
 
 	if (IsItemTwoHanded(Item))
@@ -918,13 +928,13 @@ void UXYXEquipmentManagerComponent::SetCombat(bool bValue)
 	if (bIsInCombat != bValue)
 	{
 		bIsInCombat = bValue;
-		AttachDisplayedItem(SelectMainHandType, 0);
+		AttachDisplayedItem(SelectMainHandType, SelectMainHandSlotIndex);
 		FStoredItem Weapon = GetWeapon();
 		if (Weapon.ItemWeaponType == EWeaponType::EDualSwordRight || 
 			Weapon.ItemWeaponType == EWeaponType::ETwinDaggerRight)
 		{
 			// 如果有副手
-			AttachDisplayedItem(EItemType::EMeleeWeaponLeft, 0);
+			AttachDisplayedItem(EItemType::EMeleeWeaponLeft, SelectMainHandSlotIndex);
 		}
 		else
 		{
@@ -964,7 +974,6 @@ void UXYXEquipmentManagerComponent::UpdateCombatType()
 			CombatType = ECombatType::EMagic;
 			break;
 		case EItemType::EMeleeWeaponRight:
-		case EItemType::EMeleeWeaponLeft:
 			CombatType = ECombatType::EMelee;
 			break;
 		case EItemType::ERangeWeapon:
@@ -1014,11 +1023,11 @@ void UXYXEquipmentManagerComponent::GetBlockValue(float& Value, bool& bSuccess)
 		}
 	}
 
-	ItemIndex = GetActiveItemIndex(SelectMainHandType, 0);
-	Item = GetItemInSlot(SelectMainHandType, 0, ItemIndex);
+	ItemIndex = GetActiveItemIndex(SelectMainHandType, SelectMainHandSlotIndex);
+	Item = GetItemInSlot(SelectMainHandType, SelectMainHandSlotIndex, ItemIndex);
 	if (IsItemValid(Item))
 	{
-		if (!IsSlotHidden(SelectMainHandType, 0))
+		if (!IsSlotHidden(SelectMainHandType, SelectMainHandSlotIndex))
 		{
 			UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
 			if (ItemBase)
@@ -1107,6 +1116,7 @@ void UXYXEquipmentManagerComponent::HandleOnGameLoaded()
 	if (IsValid(XYXGameMode))
 	{
 		SelectMainHandType = XYXGameMode->SelectMainHandSlotType;
+		SelectMainHandSlotIndex = XYXGameMode->SelectMainHandSlotIndex;
 		BuildEquipment(XYXGameMode->EquipmentSlots);
 		SetCombat(XYXGameMode->bIsInCombat);
 	}

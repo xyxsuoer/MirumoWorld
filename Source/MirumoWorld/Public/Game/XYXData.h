@@ -92,7 +92,7 @@ enum class EMontageAction : uint8
 	ERollBackward									UMETA(DisplayName = "ERollBackward"),					// 往后翻滚
 	ERollLeft											UMETA(DisplayName = "ERollLeft"),							// 向左翻滚
 	ERollRight										UMETA(DisplayName = "ERollRight"),							// 向右翻滚
-	EDrawWeaopon									UMETA(DisplayName = "EDrawWeaopon"),						// 抽出武器
+	EDrawWeapon										UMETA(DisplayName = "EDrawWeapon"),						// 抽出武器
 	EDisarmWeapon									UMETA(DisplayName = "EDisarmWeapon"),					// 收起武器
 	EStunFront										UMETA(DisplayName = "EStunFront"),							// 击中前面 
 	EStunBack											UMETA(DisplayName = "EStunBack"),							// 击中后面 

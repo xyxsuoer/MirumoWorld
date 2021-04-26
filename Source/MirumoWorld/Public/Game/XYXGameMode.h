@@ -52,6 +52,9 @@ public:
 		EItemType SelectMainHandSlotType = EItemType::ENone;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		int32 SelectMainHandSlotIndex = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TMap<EAttributesType, float> StatValues = {};
 
 	UPROPERTY()

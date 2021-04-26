@@ -43,6 +43,7 @@ void AXYXGameMode::UpdateEquipmentValue()
 			EquipmentSlots = EquipmentComp->EquipmentSlots;
 			bIsInCombat = EquipmentComp->bIsInCombat;
 			SelectMainHandSlotType = EquipmentComp->GetSelectedMainHandType();
+			SelectMainHandSlotIndex = EquipmentComp->GetSelectedMainHandSlotIndex();
 		}
 	}
 }
@@ -81,6 +82,7 @@ void AXYXGameMode::LoadGame()
 	Inventory = XYXSaveGame->Inventory;
 	bIsInCombat = XYXSaveGame->bIsInCombat;
 	SelectMainHandSlotType = XYXSaveGame->SelectMainHandSlotType;
+	SelectMainHandSlotIndex = XYXSaveGame->SelectMainHandSlotIndex;
 	StatValues = XYXSaveGame->StatValues;
 	OnGameLoaded.Broadcast();
 }
@@ -98,6 +100,7 @@ void AXYXGameMode::SaveGame()
 	XYXSaveGame->EquipmentSlots = EquipmentSlots;
 	XYXSaveGame->bIsInCombat = bIsInCombat;
 	XYXSaveGame->SelectMainHandSlotType = SelectMainHandSlotType;
+	XYXSaveGame->SelectMainHandSlotIndex = SelectMainHandSlotIndex;
 	XYXSaveGame->StatValues = StatValues;
 	//	±£´æÊý¾Ý
 	UGameplayStatics::SaveGameToSlot(XYXSaveGame, SaveGameName, 0);
