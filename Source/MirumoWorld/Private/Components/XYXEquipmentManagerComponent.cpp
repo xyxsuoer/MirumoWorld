@@ -284,7 +284,7 @@ bool UXYXEquipmentManagerComponent::IsSlotHidden(EItemType Type, int32 SlotIndex
 	return false;
 }
 
-void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden)
+void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden, float BeginTime)
 {
 	if (IsSlotHidden(Type, SlotIndex) != bIsHidden)
 	{
@@ -294,13 +294,39 @@ void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotInde
 			if (EquipmentSlots[EqSlotsIndex].Slots.IsValidIndex(SlotIndex))
 			{
 				EquipmentSlots[EqSlotsIndex].Slots[SlotIndex].bIsHidden = bIsHidden;
-				int32 ActiveIndex = GetActiveItemIndex(Type, SlotIndex);
-				FStoredItem ActiveItem = GetItemInSlot(Type, SlotIndex, ActiveIndex);
-				OnSlotHiddenChanged.Broadcast(Type, SlotIndex, ActiveItem, bIsHidden);
+				if (BeginTime == 0.f)
+				{
+					int32 ActiveIndex = GetActiveItemIndex(Type, SlotIndex);
+					FStoredItem ActiveItem = GetItemInSlot(Type, SlotIndex, ActiveIndex);
+					OnSlotHiddenChanged.Broadcast(Type, SlotIndex, ActiveItem, bIsHidden);
+				}
+				else
+				{
+					UWorld* World = GetWorld();
+					check(World);
+					TempDataInfo info;
+					info.bTempIsHidden = bIsHidden;
+					info.TempSlotIndex = SlotIndex;
+					info.TempType = Type;
+					TmpDataInfoVec.Emplace(info);
+					World->GetTimerManager().ClearTimer(HiddenTimer);
+					World->GetTimerManager().SetTimer(HiddenTimer, this, &UXYXEquipmentManagerComponent::SlotHiddenChangedBroadcast, 0.5f, false);
+				}
 			}
 		}
 	}
 }
+
+void UXYXEquipmentManagerComponent::SlotHiddenChangedBroadcast()
+{
+	for (auto& e : TmpDataInfoVec)
+	{
+		int32 ActiveIndex = GetActiveItemIndex(e.TempType, e.TempSlotIndex);
+		FStoredItem ActiveItem = GetItemInSlot(e.TempType, e.TempSlotIndex, ActiveIndex);
+		OnSlotHiddenChanged.Broadcast(e.TempType, e.TempSlotIndex, ActiveItem, e.bTempIsHidden);
+	}
+}
+
 
 void UXYXEquipmentManagerComponent::UpdateItemInSlot(EItemType Type, int32 SlotIndex, int32 ItemIndex, FStoredItem Item, EHandleSameItemMethod HandleSameItemMethod)
 {
@@ -854,7 +880,7 @@ void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)
 	SelectMainHandSlotIndex = 0;
 
 	UpdateCombatType();
-	SetSlotHidden(SelectMainHandType, SelectMainHandSlotIndex, false);
+	SetSlotHidden(SelectMainHandType, SelectMainHandSlotIndex, false, 0.5f);
 	SetSlotHidden(PreviousType, PreviousSlotIndex, true);
 
 	int32 PreviousItemIndex = GetActiveItemIndex(PreviousType, PreviousSlotIndex);
@@ -870,7 +896,7 @@ void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)
 	if (Item.ItemWeaponType == EWeaponType::EDualSwordRight ||
 		Item.ItemWeaponType == EWeaponType::ETwinDaggerRight)
 	{
-		SetSlotHidden(EItemType::EMeleeWeaponLeft, SelectMainHandSlotIndex, false);
+		SetSlotHidden(EItemType::EMeleeWeaponLeft, SelectMainHandSlotIndex, false, 0.3f);
 	}
 
 	if (IsItemTwoHanded(Item))

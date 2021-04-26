@@ -86,7 +86,7 @@ public:
 		bool IsSlotHidden(EItemType Type, int32 SlotIndex);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		void SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden);
+		void SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden, float BeginTime = 0.f);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void UpdateItemInSlot(EItemType Type, int32 SlotIndex, int32 ItemIndex, FStoredItem Item, EHandleSameItemMethod HandleSameItemMethod);
@@ -184,6 +184,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void HandleOnGameLoaded();
 
+	UFUNCTION()
+		void SlotHiddenChangedBroadcast();
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -227,6 +230,20 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TArray<FGuid> ActiveItems = {};
+
+	struct TempDataInfo
+	{
+		EItemType TempType = EItemType::ENone;
+		int32 TempSlotIndex = 0;
+		bool bTempIsHidden = false;
+	};
+
+private:
+
+		UPROPERTY()
+			FTimerHandle HiddenTimer;
+
+		TArray<TempDataInfo> TmpDataInfoVec = {};
 
 
 };
