@@ -809,6 +809,13 @@ void AXYXCharacter::PlayMainHandTypeChangedMontage(EItemType Type)
 				PlayAnimMontage(Montage);
 			}
 		}
+		else
+		{
+			if (!EquipmentComp->GetIsInCombat())
+			{
+				EquipmentComp->DelayUpdateDisplayedItem();
+			}
+		}
 		StateManagerComp->ResetState(0.1f);
 	}
 }

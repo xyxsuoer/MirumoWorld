@@ -86,7 +86,7 @@ public:
 		bool IsSlotHidden(EItemType Type, int32 SlotIndex);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		void SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden, float BeginTime = 0.f);
+		void SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden, bool bNeedAN = false);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void UpdateItemInSlot(EItemType Type, int32 SlotIndex, int32 ItemIndex, FStoredItem Item, EHandleSameItemMethod HandleSameItemMethod);
@@ -95,13 +95,16 @@ public:
 		int32 GetEquipmentSlotsIndex(EItemType Type);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		void ActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex);
+		void ActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex, bool bNeedAN = false);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		int32 GetNextArrayIndex(TArray<FStoredItem>& Wildcard, int32 Index, bool bForward);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void SwitchSlotActiveIndex(EItemType Type, int32 SlotIndex, bool bForward, bool bIgnoreEmptyItems);
+
+	UFUNCTION()
+		void DelayUpdateDisplayedItem();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void SwitchMainHandType(bool bForward);
@@ -243,7 +246,8 @@ private:
 		UPROPERTY()
 			FTimerHandle HiddenTimer;
 
-		TArray<TempDataInfo> TmpDataInfoVec = {};
+		TArray<TempDataInfo> SlotHiddenChangedVec = {};
 
+		TArray<TempDataInfo> UpdateDisplayedItemVec = {};
 
 };

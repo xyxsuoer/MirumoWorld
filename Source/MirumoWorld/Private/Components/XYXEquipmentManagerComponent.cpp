@@ -284,7 +284,7 @@ bool UXYXEquipmentManagerComponent::IsSlotHidden(EItemType Type, int32 SlotIndex
 	return false;
 }
 
-void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden, float BeginTime)
+void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotIndex, bool bIsHidden, bool bNeedAN)
 {
 	if (IsSlotHidden(Type, SlotIndex) != bIsHidden)
 	{
@@ -294,7 +294,7 @@ void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotInde
 			if (EquipmentSlots[EqSlotsIndex].Slots.IsValidIndex(SlotIndex))
 			{
 				EquipmentSlots[EqSlotsIndex].Slots[SlotIndex].bIsHidden = bIsHidden;
-				if (BeginTime == 0.f)
+				if (!bNeedAN)
 				{
 					int32 ActiveIndex = GetActiveItemIndex(Type, SlotIndex);
 					FStoredItem ActiveItem = GetItemInSlot(Type, SlotIndex, ActiveIndex);
@@ -302,15 +302,11 @@ void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotInde
 				}
 				else
 				{
-					UWorld* World = GetWorld();
-					check(World);
 					TempDataInfo info;
 					info.bTempIsHidden = bIsHidden;
 					info.TempSlotIndex = SlotIndex;
 					info.TempType = Type;
-					TmpDataInfoVec.Emplace(info);
-					World->GetTimerManager().ClearTimer(HiddenTimer);
-					World->GetTimerManager().SetTimer(HiddenTimer, this, &UXYXEquipmentManagerComponent::SlotHiddenChangedBroadcast, 0.5f, false);
+					SlotHiddenChangedVec.Emplace(info);
 				}
 			}
 		}
@@ -319,11 +315,13 @@ void UXYXEquipmentManagerComponent::SetSlotHidden(EItemType Type, int32 SlotInde
 
 void UXYXEquipmentManagerComponent::SlotHiddenChangedBroadcast()
 {
-	for (auto& e : TmpDataInfoVec)
+	for (auto& e : SlotHiddenChangedVec)
 	{
 		int32 ActiveIndex = GetActiveItemIndex(e.TempType, e.TempSlotIndex);
 		FStoredItem ActiveItem = GetItemInSlot(e.TempType, e.TempSlotIndex, ActiveIndex);
 		OnSlotHiddenChanged.Broadcast(e.TempType, e.TempSlotIndex, ActiveItem, e.bTempIsHidden);
+		SlotHiddenChangedVec.RemoveAt(0);
+		break;
 	}
 }
 
@@ -436,7 +434,7 @@ int32 UXYXEquipmentManagerComponent::GetEquipmentSlotsIndex(EItemType Type)
 	return EqSlotsIndex;
 }
 
-void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex)
+void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex, bool bNeedAN)
 {
 	if (Type == SelectMainHandType)
 	{
@@ -457,18 +455,49 @@ void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStor
 	{
 		ActiveItems.Remove(OldItem.Id);
 		ActiveItems.Add(NewItem.Id);
-		UpdateDisplayedItem(Type, SlotIndex);
-		AttachDisplayedItem(Type, SlotIndex);
-		if (NewItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
-			NewItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
-		{
-			// 如果有副手
-			UpdateDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
-			AttachDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
-		}
-	}
+
 		
-	OnActiveItemChanged.Broadcast(OldItem, NewItem, Type, SlotIndex, ActiveIndex);
+		if (!bNeedAN)
+		{
+			UpdateDisplayedItem(Type, SlotIndex);
+			AttachDisplayedItem(Type, SlotIndex);
+			if (NewItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
+				NewItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
+			{
+				UpdateDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
+				AttachDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
+			}
+		}
+		else
+		{
+			UpdateDisplayedItem(Type, SlotIndex);
+			TempDataInfo info;
+			info.TempSlotIndex = SlotIndex;
+			info.TempType = Type;
+			UpdateDisplayedItemVec.Emplace(info);
+
+			if (NewItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
+				NewItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
+			{
+				UpdateDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
+				TempDataInfo info2;
+				info2.TempSlotIndex = SlotIndex;
+				info2.TempType = EItemType::EMeleeWeaponLeft;
+				UpdateDisplayedItemVec.Emplace(info2);
+			}
+		}
+		
+		OnActiveItemChanged.Broadcast(OldItem, NewItem, Type, SlotIndex, ActiveIndex);
+	}
+}
+
+void UXYXEquipmentManagerComponent::DelayUpdateDisplayedItem()
+{
+	for (auto& e : UpdateDisplayedItemVec)
+	{
+		AttachDisplayedItem(e.TempType, e.TempSlotIndex);
+	}
+	UpdateDisplayedItemVec.Empty();
 }
 
 int32 UXYXEquipmentManagerComponent::GetNextArrayIndex(TArray <FStoredItem> &Wildcard, int32 Index, bool bForward)
@@ -544,7 +573,7 @@ void UXYXEquipmentManagerComponent::SwitchSlotActiveIndex(EItemType Type, int32 
 				{
 					FStoredItem OldItem = Slots.Items[ActiveIndex];
 					FStoredItem NewItem = Slots.Items[NewIndex];
-					ActiveItemChanged(OldItem, NewItem, Type, SlotIndex, NewIndex);
+					ActiveItemChanged(OldItem, NewItem, Type, SlotIndex, NewIndex, true);
 				}
 			}
 		}
@@ -880,7 +909,7 @@ void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)
 	SelectMainHandSlotIndex = 0;
 
 	UpdateCombatType();
-	SetSlotHidden(SelectMainHandType, SelectMainHandSlotIndex, false, 0.5f);
+	SetSlotHidden(SelectMainHandType, SelectMainHandSlotIndex, false, true);
 	SetSlotHidden(PreviousType, PreviousSlotIndex, true);
 
 	int32 PreviousItemIndex = GetActiveItemIndex(PreviousType, PreviousSlotIndex);
@@ -896,7 +925,7 @@ void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)
 	if (Item.ItemWeaponType == EWeaponType::EDualSwordRight ||
 		Item.ItemWeaponType == EWeaponType::ETwinDaggerRight)
 	{
-		SetSlotHidden(EItemType::EMeleeWeaponLeft, SelectMainHandSlotIndex, false, 0.3f);
+		SetSlotHidden(EItemType::EMeleeWeaponLeft, SelectMainHandSlotIndex, false, true);
 	}
 
 	if (IsItemTwoHanded(Item))
