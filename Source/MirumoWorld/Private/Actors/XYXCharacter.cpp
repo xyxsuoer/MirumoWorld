@@ -131,6 +131,7 @@ void AXYXCharacter::RegisterBlockingTimeline()
 
 		BlockingTimeline->SetLooping(false);
 		BlockingTimeline->SetTimelineLength(5.0f);
+		BlockingTimeline->SetPlayRate(2.0f);
 		BlockingTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
 
 		BlockingTimeline->SetPlaybackPosition(0.0f, false);
