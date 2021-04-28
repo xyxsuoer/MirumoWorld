@@ -65,6 +65,11 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	MovementSpeedComp = CreateDefaultSubobject<UXYXMovementSpeedComponent>(TEXT("Movement Speed Component"));
 	EquipmentComp = CreateDefaultSubobject<UXYXEquipmentManagerComponent>(TEXT("Equipment Manager Component"));
 	InventoryComp = CreateDefaultSubobject<UXYXInventoryManagerComponent>(TEXT("Inventory Manager Component"));
+
+	static const ConstructorHelpers::FObjectFinder<UCurveFloat> Curve(TEXT("CurveFloat'/Game/Mirumo/CurveFloats/Blocking_Timeline.Blocking_Timeline'"));
+	check(Curve.Succeeded());
+	BlockingFloatCurve = Curve.Object;
+
 }
 
 // Called to bind functionality to input
@@ -96,6 +101,8 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("SwitchMainHandItemUp", IE_Pressed, this, &AXYXCharacter::SwitchMainHandItemUpAction);
 		PlayerInputComponent->BindAction("SwitchMainHandItemDown", IE_Pressed, this, &AXYXCharacter::SwitchMainHandItemDownAction);
 		PlayerInputComponent->BindAction("ToggleCombat", IE_Pressed, this, &AXYXCharacter::ToggleCombatAction);
+		PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AXYXCharacter::BlockAction);
+		PlayerInputComponent->BindAction("Block", IE_Released, this, &AXYXCharacter::StopBlockAction);
 	}
 }
 
@@ -104,7 +111,40 @@ void AXYXCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	InitialzeCharacter();
+	RegisterBlockingTimeline();
 }
+
+void AXYXCharacter::RegisterBlockingTimeline()
+{
+	FOnTimelineFloat onTimelineCallback;
+	FOnTimelineEventStatic onTimelineFinishedCallback;
+
+	if (BlockingFloatCurve)
+	{
+		BlockingTimeline = NewObject<UTimelineComponent>(this, FName("BlockingTimelineAnimation"));
+		BlockingTimeline->CreationMethod = EComponentCreationMethod::UserConstructionScript; // Indicate it comes from a blueprint so it gets cleared when we rerun construction scripts
+		this->BlueprintCreatedComponents.Add(BlockingTimeline); // Add to array so it gets saved
+		BlockingTimeline->SetNetAddressable();	// This component has a stable name that can be referenced for replication
+
+		BlockingTimeline->SetPropertySetObject(this); // Set which object the timeline should drive properties on
+		BlockingTimeline->SetDirectionPropertyName(FName("BlockingTimelineDirection"));
+
+		BlockingTimeline->SetLooping(false);
+		BlockingTimeline->SetTimelineLength(5.0f);
+		BlockingTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
+
+		BlockingTimeline->SetPlaybackPosition(0.0f, false);
+
+		//Add the float curve to the timeline and connect it to your timelines's interpolation function
+		onTimelineCallback.BindUFunction(this, FName{ TEXT("BlockingTimelineCallback") });
+		onTimelineFinishedCallback.BindUFunction(this, FName{ TEXT("BlockingTimelineFinishedCallback") });
+		BlockingTimeline->AddInterpFloat(BlockingFloatCurve, onTimelineCallback);
+		BlockingTimeline->SetTimelineFinishedFunc(onTimelineFinishedCallback);
+
+		BlockingTimeline->RegisterComponent();
+	}
+}
+
 
 bool AXYXCharacter::IsEntityAlive_Implementation()
 {
@@ -137,6 +177,12 @@ void AXYXCharacter::InitialzeCharacter()
 		EquipmentComp->OnActiveItemChanged.AddDynamic(this, &AXYXCharacter::HandleOnActiveItemChanged);
 		EquipmentComp->OnMainHandTypeChanged.AddDynamic(this, &AXYXCharacter::HandleOnMainHandTypeChanged);
 		EquipmentComp->OnCombatTypeChanged.AddDynamic(this, &AXYXCharacter::HandleOnCombatTypeChanged);
+	}
+
+	if (StateManagerComp)
+	{
+		StateManagerComp->OnActivityChanged.AddDynamic(this, &AXYXCharacter::HandleOnActivityChanged);
+		StateManagerComp->OnStateChanged.AddDynamic(this, &AXYXCharacter::HandleOnStateChanged);
 	}
 
 	StartCameraSettings.Rotation = FollowCamera->GetRelativeRotation();
@@ -236,7 +282,10 @@ void AXYXCharacter::HandleMovementStateEnd(EMovementState State)
 
 void AXYXCharacter::HandleOnInCombatChanged(bool bIsInCombat)
 {
-
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsBlockingPressed, false);
+	}
 }
 
 void AXYXCharacter::HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex)
@@ -252,6 +301,30 @@ void AXYXCharacter::HandleOnMainHandTypeChanged(EItemType Type)
 void AXYXCharacter::HandleOnCombatTypeChanged(ECombatType CombatType)
 {
 
+}
+
+void AXYXCharacter::HandleOnActivityChanged(EActivity Activity, bool Value)
+{
+	switch(Activity)
+	{
+	case EActivity::EIsBlockingPressed:
+		UpdateBlocking();
+		break;
+	case EActivity::EIsLookingForward:
+		break;
+	case EActivity::EIsZooming:
+		break;
+	}
+}
+
+void AXYXCharacter::HandleOnStateChanged(EState PrevState, EState NewState)
+{
+	UpdateBlocking();
+	if(PrevState == EState::EAttacking)
+	{
+		MeleeAttackType = EMeleeAttackType::ENone;
+		BackstabbedActor = nullptr;
+	}
 }
 
 void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
@@ -303,7 +376,9 @@ void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 
 bool AXYXCharacter::CanMeleeAttack()
 {
-	if (StateManagerComp && StateManagerComp->GetState() == EState::EIdle)
+	if (StateManagerComp && StateManagerComp->GetState() == EState::EIdle &&
+		EquipmentComp && EquipmentComp->GetIsInCombat() &&
+		(EquipmentComp->GetCombatType() == ECombatType::EUnarmed || EquipmentComp->GetCombatType()== ECombatType::EMelee))
 	{
 		return true;
 	}
@@ -389,9 +464,11 @@ UAnimMontage* AXYXCharacter::GetBlockMontage()
 {
 	UAnimMontage* Montage = nullptr;
 
-	bool IsShieldEquipped = false;
-	if (MontageManagerComp)
-		Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EBlock, IsShieldEquipped ? 1 : 0);
+	if (EquipmentComp && MontageManagerComp)
+	{
+		int32 Index = EquipmentComp->IsShieldEquipped() ? 1 : 0;
+		Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EBlock, Index);
+	}
 
 	return Montage;
 }
@@ -420,9 +497,11 @@ UAnimMontage* AXYXCharacter::GetParryMontage()
 {
 	UAnimMontage* Montage = nullptr;
 
-	bool IsShieldEquipped = false;
-	if (MontageManagerComp)
-		Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EParry, IsShieldEquipped ? 1 : 0);
+	if (MontageManagerComp && EquipmentComp) 
+	{
+		int32 Index = EquipmentComp->IsShieldEquipped() ? 1 : 0;
+		Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EParry, Index);
+	}
 
 	return Montage;
 }
@@ -820,6 +899,61 @@ void AXYXCharacter::PlayMainHandTypeChangedMontage(EItemType Type)
 	}
 }
 
+void AXYXCharacter::BlockAction()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsBlockingPressed, true);
+	}
+}
+
+void AXYXCharacter::StopBlockAction()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsBlockingPressed, false);
+	}
+}
+
+void AXYXCharacter::UpdateBlocking()
+{
+	bool bPlay = false;
+	if (StateManagerComp && EquipmentComp && 
+		StateManagerComp->GetActivityValue(EActivity::EIsBlockingPressed) &&
+		IsIdleAndNotFalling() && 
+		EquipmentComp->CanBlock())
+	{
+		bPlay = true;
+	}
+
+	PlayBlockingTimeline(bPlay);
+}
+
+void AXYXCharacter::BlockingTimelineCallback(float Val)
+{
+	BlockAlpha = BlockingTimeline->GetPlaybackPosition();
+}
+
+void AXYXCharacter::BlockingTimelineFinishedCallback()
+{
+	
+}
+
+void AXYXCharacter::PlayBlockingTimeline(bool bInPlay)
+{
+	if (BlockingTimeline != NULL)
+	{
+		if (bInPlay)
+		{
+			BlockingTimeline->PlayFromStart();
+		}
+		else
+		{
+			BlockingTimeline->ReverseFromEnd();
+		}
+	}
+}
+
 void AXYXCharacter::CustomJump()
 {
 	if (!CanJump() || !IsStateEqual(EState::EIdle))
@@ -866,6 +1000,10 @@ void AXYXCharacter::Parry()
 void AXYXCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (BlockingTimeline != NULL)
+	{
+		BlockingTimeline->TickComponent(DeltaTime, ELevelTick::LEVELTICK_TimeOnly, NULL);
+	}
 }
 
 void AXYXCharacter::PostInitProperties() {
@@ -937,6 +1075,29 @@ UDataTable* AXYXCharacter::GetMontages_Implementation(EMontageAction Action)
 			if (!EquipmentComp)
 			{
 				return nullptr;
+			}
+
+			bool SwitchType = false;
+			if (EquipmentComp->GetIsInCombat())
+			{
+				SwitchType = true;
+			}
+			else
+			{
+				if (Action == EMontageAction::EDisarmWeapon || Action == EMontageAction::EDrawWeapon)
+				{
+					SwitchType = true;
+				}
+				else
+				{
+					if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_Unarmed")))
+						DataTable = GameInstance->MontageDataTables[TEXT("Heroe_Unarmed")];
+				}
+			}
+
+			if (!SwitchType)
+			{
+				return DataTable;
 			}
 
 			switch (EquipmentComp->GetWeaponType())

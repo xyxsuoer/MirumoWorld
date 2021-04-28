@@ -73,9 +73,6 @@ bool AXYXDisplayedItem::Attach()
 		if (Character)
 		{
 			MeshComp->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, GetAttachmentSocket());
-			FLatentActionInfo ActionInfo;
-			ActionInfo.CallbackTarget = this;
-			UKismetSystemLibrary::MoveComponentTo(MeshComp, FVector(0.f, 0.f, 0.f), FRotator(0.f, 0.f, 0.f), false, false, 1.f, true, EMoveComponentAction::Move, ActionInfo);
 			return true;
 		}
 	}

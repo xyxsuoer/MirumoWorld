@@ -8,6 +8,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "Interfaces/XYXInterfaceMontageManagerComp.h"
 #include "Interfaces/XYXInterfaceEntity.h"
+#include "Components/TimelineComponent.h"
 #include "XYXCharacter.generated.h"
 
 #define ECC_ACFHeroesChannel  ECollisionChannel::ECC_GameTraceChannel1
@@ -182,6 +183,15 @@ public:
 	UPROPERTY(Replicated)
 		EKatanaStance KatanaStance = EKatanaStance::EKatanaS1;
 
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		UTimelineComponent* BlockingTimeline;
+
+	UPROPERTY()
+		UCurveFloat* BlockingFloatCurve;
+
+	UPROPERTY()
+		TEnumAsByte<ETimelineDirection::Type> BlockingTimelineDirection;
+
 	// Movement Input
 	virtual void MoveRight(float Val);
 
@@ -260,6 +270,12 @@ public:
 
 	UFUNCTION()
 		void HandleOnCombatTypeChanged(ECombatType CombatType);
+
+	UFUNCTION()
+		void HandleOnActivityChanged(EActivity Activity, bool Value);
+
+	UFUNCTION()
+		void HandleOnStateChanged(EState PrevState, EState NewState);
 
 	UFUNCTION()
 		void MeleeAttack(EMeleeAttackType AttackType);
@@ -396,6 +412,27 @@ public:
 	UFUNCTION()
 		void PlayMainHandTypeChangedMontage(EItemType Type);
 
+	UFUNCTION()
+		void BlockAction();
+
+	UFUNCTION()
+		void StopBlockAction();
+
+	UFUNCTION()
+		void UpdateBlocking();
+
+	UFUNCTION()
+		void RegisterBlockingTimeline();
+
+	UFUNCTION()
+		void BlockingTimelineCallback(float Val);
+
+	UFUNCTION()
+		void BlockingTimelineFinishedCallback();
+
+	UFUNCTION()
+		void PlayBlockingTimeline(bool bInPlay);
+
 private:
 	bool bInitialized = false;
 
@@ -407,5 +444,7 @@ private:
 
 	UPROPERTY()
 		FTimerHandle CrouchLoopTimer;
+
+
 
 };

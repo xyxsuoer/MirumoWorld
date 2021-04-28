@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/XYXMovementSpeedComponent.h"
 #include "Components/XYXEquipmentManagerComponent.h"
+#include "Components/XYXStateManagerComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "Kismet/GameplayStatics.h"
 
@@ -24,7 +25,10 @@ void UXYXAnimInstance::NativeInitializeAnimation()
 		EquipmentComp->OnMainHandTypeChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnMainHandTypeChanged);
 		EquipmentComp->OnCombatTypeChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnCombatTypeChanged);
 		EquipmentComp->OnWeaponTypeChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnWeaponTypeChanged);
-		
+	}
+	if (IsValid(StateManagerComp))
+	{
+		StateManagerComp->OnActivityChanged.AddDynamic(this, &UXYXAnimInstance::HandleOnActivityChanged);
 	}
 }
 
@@ -46,6 +50,7 @@ void UXYXAnimInstance::SetReferences()
 	{
 		MovementComp = XYXCharacter->GetCharacterMovement();
 		EquipmentComp = XYXCharacter->GetEquipmentManagerComponent();
+		StateManagerComp = XYXCharacter->GetStateManagerComponent();
 	}
 }
 
@@ -84,6 +89,14 @@ void UXYXAnimInstance::UpdateHandItemsInfo()
 	}
 }
 
+void UXYXAnimInstance::HandleOnActivityChanged(EActivity Activity, bool Value)
+{
+	if (Activity == EActivity::EIsLookingForward)
+	{
+		bIsLookingForward = Value;
+	}
+}
+
 void UXYXAnimInstance::StoreCharacterInfo()
 {
 	if (XYXCharacter && MovementComp)
@@ -104,6 +117,11 @@ void UXYXAnimInstance::StoreCharacterInfo()
 			MovementState = XYXCharacter->GetMovementSpeedComponent()->GetMovementState();
 			bIsSprinting =	MovementState == EMovementState::ESprint;
 			bIsCrouching = MovementState == EMovementState::ECrouch;
+		}
+
+		if (IsValid(StateManagerComp))
+		{
+			bIsBlocking = StateManagerComp->GetActivityValue(EActivity::EIsBlockingPressed);
 		}
 
 		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);

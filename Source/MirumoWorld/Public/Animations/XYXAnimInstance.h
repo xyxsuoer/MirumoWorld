@@ -112,6 +112,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = ACF)
 		class UXYXEquipmentManagerComponent* EquipmentComp;
 
+	UPROPERTY(BlueprintReadOnly, Category = ACF)
+		class UXYXStateManagerComponent* StateManagerComp;
+
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		FVector Velocity;
 
@@ -126,6 +129,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsCrouching = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bIsBlocking = false;
 
 	UFUNCTION()
 		void HandleOnInCombatChanged(bool bInCombat);
@@ -144,6 +150,9 @@ protected:
 
 	UFUNCTION()
 		void UpdateHandItemsInfo();
+
+	UFUNCTION()
+		void HandleOnActivityChanged(EActivity Activity, bool Value);
 
 private:
 
