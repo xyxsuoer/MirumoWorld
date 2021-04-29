@@ -824,12 +824,6 @@ void AXYXCharacter::SwitchMainHandItem(bool bForward)
 		EItemType Type = EquipmentComp->GetSelectedMainHandType();
 		int32 SlotIndex = EquipmentComp->GetSelectedMainHandSlotIndex();
 		EquipmentComp->SwitchSlotActiveIndex(Type, SlotIndex, bForward, true);
-	/*	auto&& Weapon = EquipmentComp->GetWeapon();
-		if (Weapon.ItemWeaponType == EWeaponType::EDualSwordRight ||
-				Weapon.ItemWeaponType == EWeaponType::ETwinDaggerRight)
-		{
-			EquipmentComp->SwitchSlotActiveIndex(EItemType::EMeleeWeaponLeft, SlotIndex, bForward, true);
-		}*/
 	}
 }
 
