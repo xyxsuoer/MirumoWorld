@@ -3,3 +3,7 @@
 
 #include "Items/ObjectItems/XYXItemShield.h"
 
+UXYXItemShield::UXYXItemShield()
+{
+
+}

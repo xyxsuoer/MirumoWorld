@@ -36,9 +36,13 @@ void UXYXEquipmentManagerComponent::BeginPlay()
 		for (int32 j = 0; j < DIValues[i].DisplayedItems.Num(); ++j)
 		{
 			auto& o = DIValues[i].DisplayedItems[j];
-			if (IsValid(o))
+			if (IsValid(o.MainDI))
 			{
-				GetWorld()->DestroyActor(o);
+				GetWorld()->DestroyActor(o.MainDI);
+			}
+			if (IsValid(o.SecondDI))
+			{
+				GetWorld()->DestroyActor(o.SecondDI);
 			}
 		}
 	}
@@ -122,10 +126,16 @@ bool UXYXEquipmentManagerComponent::IsSlotIndexValid(EItemType Type, int32 SlotI
 
 void UXYXEquipmentManagerComponent::AttachDisplayedItem(EItemType Type, int32 SlotIndex)
 {
-	AXYXDisplayedItem* DisplayedItem = GetDisplayedItem(Type, SlotIndex);
-	if (IsValid(DisplayedItem))
+	AXYXDisplayedItem* DIOne = nullptr;
+	AXYXDisplayedItem* DISecond = nullptr;
+	GetDisplayedItem(Type, SlotIndex, DIOne, DISecond);
+	if (IsValid(DIOne))
 	{
-		DisplayedItem->Attach();
+		DIOne->Attach();
+	}
+	if (IsValid(DISecond))
+	{
+		DISecond->Attach();
 	}
 }
 
@@ -163,35 +173,55 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 		}
 	}
 
+	UWorld* const World = GetWorld();
+	check(World);
+
 	// Destroy displayed item in slot index
 	if (DIValues[FoundIndex].DisplayedItems.IsValidIndex(SlotIndex))
 	{
 		auto& o = DIValues[FoundIndex].DisplayedItems[SlotIndex];
-		if (IsValid(o))
+		if (IsValid(o.MainDI))
 		{
-			GetWorld()->DestroyActor(o);
+			World->DestroyActor(o.MainDI);
+		}
+		if (IsValid(o.SecondDI))
+		{
+			World->DestroyActor(o.SecondDI);
 		}
 	}
 
 	// Spawn displayed item if possible
+	FDItem DI;
 	FStoredItem Item = GetActiveItem(Type, SlotIndex);
-	if (UKismetSystemLibrary::IsValidClass(Item.ItemClass))
+	for (int i = 0; i< 2; ++ i)
 	{
-		UXYXItemBase* ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
-		if (ItemBase)
+		UXYXItemBase* ItemBase = nullptr;
+		bool bSpawDI = false;
+		if (i == 0  && UKismetSystemLibrary::IsValidClass(Item.ItemClass))
+		{
+			ItemBase = NewObject<UXYXItemBase>(this, Item.ItemClass);
+			if (ItemBase)
+			{
+				bSpawDI = true;
+			}
+		}
+		else if(i == 1 && UKismetSystemLibrary::IsValidClass(Item.ItemSecondClass))
+		{
+			ItemBase = NewObject<UXYXItemBase>(this, Item.ItemSecondClass);
+			if (ItemBase)
+			{
+				bSpawDI = true;
+			}
+		}
+
+		if (bSpawDI)
 		{
 			IXYXInterfaceItem* MyInterface = Cast<IXYXInterfaceItem>(ItemBase);
 			if (MyInterface)
 			{
-				TArray<AXYXDisplayedItem*>  TempArray;
-				TempArray = DIValues[FoundIndex].DisplayedItems;
-
 				auto DIClass = MyInterface->Execute_GetDisplayedItem(ItemBase);
 				if (UKismetSystemLibrary::IsValidClass(DIClass))
 				{
-					UWorld* const World = GetWorld();
-					check(World);
-
 					FActorSpawnParameters ActorSpawnParams;
 					ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 					ActorSpawnParams.Owner = GetOwner();
@@ -203,31 +233,37 @@ void UXYXEquipmentManagerComponent::UpdateDisplayedItem(EItemType Type, int32 Sl
 						XYXActor->SetItemType(Type);
 						XYXActor->SetSlotIndex(SlotIndex);
 
-						TempArray[SlotIndex] = XYXActor;
-						FDisplayedItems NewDisplayedItems;
-						NewDisplayedItems.DisplayedItems = TempArray;
-
-						MapDisplayedItems.Add(Type, NewDisplayedItems);
+						if (i == 0)
+						{
+							DI.MainDI = XYXActor;
+						}
+						else if(i == 1)
+						{
+							DI.SecondDI = XYXActor;
+						}
 					}
 				}
 			}
 		}
 	}
+
+	if (DI.MainDI)
+	{
+		MapDisplayedItems[Type].DisplayedItems[SlotIndex] = DI;
+	}
 }
 
-AXYXDisplayedItem* UXYXEquipmentManagerComponent::GetDisplayedItem(EItemType Type, int32 SlotIndex)
+void UXYXEquipmentManagerComponent::GetDisplayedItem(EItemType Type, int32 SlotIndex, AXYXDisplayedItem* &DIOne, AXYXDisplayedItem* &DISecond)
 {
-	AXYXDisplayedItem* DisplayItem = nullptr;
 	if (MapDisplayedItems.Contains(Type))
 	{
 		auto& FItems = MapDisplayedItems[Type];
 		if (FItems.DisplayedItems.IsValidIndex(SlotIndex))
 		{
-			DisplayItem = FItems.DisplayedItems[SlotIndex];
+			DIOne = FItems.DisplayedItems[SlotIndex].MainDI;
+			DISecond = FItems.DisplayedItems[SlotIndex].SecondDI;
 		}
 	}
-
-	return DisplayItem;
 }
 
 bool UXYXEquipmentManagerComponent::IsItemEquipped(FGuid ItemId)
@@ -439,14 +475,6 @@ void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStor
 	if (Type == SelectMainHandType)
 	{
 		UpdateCombatType();
-		if (IsItemTwoHanded(NewItem))
-		{
-			SetSlotHidden(EItemType::EShield, 0, true);
-		}
-		else
-		{
-			SetSlotHidden(EItemType::EShield, 0, false);
-		}
 		bool bShowArrows = SelectMainHandType == EItemType::ERangeWeapon && GetCombatType() == ECombatType::ERanged;
 		SetSlotHidden(EItemType::EArrows, 0, !bShowArrows);
 	}
@@ -455,18 +483,10 @@ void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStor
 	{
 		ActiveItems.Remove(OldItem.Id);
 		ActiveItems.Add(NewItem.Id);
-
-		
 		if (!bNeedAN)
 		{
 			UpdateDisplayedItem(Type, SlotIndex);
 			AttachDisplayedItem(Type, SlotIndex);
-			if (NewItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
-				NewItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
-			{
-				UpdateDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
-				AttachDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
-			}
 		}
 		else
 		{
@@ -475,16 +495,6 @@ void UXYXEquipmentManagerComponent::ActiveItemChanged(FStoredItem OldItem, FStor
 			info.TempSlotIndex = SlotIndex;
 			info.TempType = Type;
 			UpdateDisplayedItemVec.Emplace(info);
-
-			if (NewItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
-				NewItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
-			{
-				UpdateDisplayedItem(EItemType::EMeleeWeaponLeft, SlotIndex);
-				TempDataInfo info2;
-				info2.TempSlotIndex = SlotIndex;
-				info2.TempType = EItemType::EMeleeWeaponLeft;
-				UpdateDisplayedItemVec.Emplace(info2);
-			}
 		}
 		
 		OnActiveItemChanged.Broadcast(OldItem, NewItem, Type, SlotIndex, ActiveIndex);
@@ -728,9 +738,13 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 	{
 		for (auto& o : e.Value.DisplayedItems)
 		{
-			if (IsValid(o))
+			if (IsValid(o.MainDI))
 			{
-				GetWorld()->DestroyActor(o);
+				GetWorld()->DestroyActor(o.MainDI);
+			}
+			if (IsValid(o.SecondDI))
+			{
+				GetWorld()->DestroyActor(o.SecondDI);
 			}
 		}
 	}
@@ -740,7 +754,7 @@ void UXYXEquipmentManagerComponent::BuildEquipment(TArray<FEquipmentSlots>& Equi
 	for (auto& e : EquipmentCopy)
 	{
 		int32 Num = e.Slots.Num();
-		TArray<AXYXDisplayedItem*>  TempItems;
+		TArray<FDItem>  TempItems;
 		TempItems.SetNum(Num);
 		FDisplayedItems TempDisplayedItems;
 		TempDisplayedItems.DisplayedItems = TempItems;
@@ -912,30 +926,8 @@ void UXYXEquipmentManagerComponent::SetMainHandType(EItemType Type)
 	SetSlotHidden(SelectMainHandType, SelectMainHandSlotIndex, false, true);
 	SetSlotHidden(PreviousType, PreviousSlotIndex, true);
 
-	int32 PreviousItemIndex = GetActiveItemIndex(PreviousType, PreviousSlotIndex);
-	FStoredItem  PreviousItem = GetItemInSlot(PreviousType, PreviousSlotIndex, PreviousItemIndex);
-	if (PreviousItem.ItemWeaponType == EWeaponType::EDualSwordRight ||
-		PreviousItem.ItemWeaponType == EWeaponType::ETwinDaggerRight)
-	{
-		SetSlotHidden(EItemType::EMeleeWeaponLeft, PreviousSlotIndex, true);
-	}
-
 	int32 ItemIndex = GetActiveItemIndex(SelectMainHandType, SelectMainHandSlotIndex);
 	FStoredItem Item = GetItemInSlot(SelectMainHandType, SelectMainHandSlotIndex, ItemIndex);
-	if (Item.ItemWeaponType == EWeaponType::EDualSwordRight ||
-		Item.ItemWeaponType == EWeaponType::ETwinDaggerRight)
-	{
-		SetSlotHidden(EItemType::EMeleeWeaponLeft, SelectMainHandSlotIndex, false, true);
-	}
-
-	if (IsItemTwoHanded(Item))
-	{
-		SetSlotHidden(EItemType::EShield, 0, true);
-	}
-	else
-	{
-		SetSlotHidden(EItemType::EShield, 0, false);
-	}
 
 	bool ArrowShow = SelectMainHandType == EItemType::ERangeWeapon && GetCombatType() == ECombatType::ERanged;
 	SetSlotHidden(EItemType::EArrows, 0, !ArrowShow);
@@ -984,18 +976,6 @@ void UXYXEquipmentManagerComponent::SetCombat(bool bValue)
 	{
 		bIsInCombat = bValue;
 		AttachDisplayedItem(SelectMainHandType, SelectMainHandSlotIndex);
-		FStoredItem Weapon = GetWeapon();
-		if (Weapon.ItemWeaponType == EWeaponType::EDualSwordRight || 
-			Weapon.ItemWeaponType == EWeaponType::ETwinDaggerRight)
-		{
-			// 如果有副手
-			AttachDisplayedItem(EItemType::EMeleeWeaponLeft, SelectMainHandSlotIndex);
-		}
-		else
-		{
-			AttachDisplayedItem(EItemType::EShield, 0);
-		}
-
 		OnInCombatChanged.Broadcast(bIsInCombat);
 	}
 }
@@ -1028,15 +1008,18 @@ void UXYXEquipmentManagerComponent::UpdateCombatType()
 		case EItemType::ESpell:
 			CombatType = ECombatType::EMagic;
 			break;
-		case EItemType::EMeleeWeaponRight:
+		case EItemType::EMeleeWeapon:
 			CombatType = ECombatType::EMelee;
 			break;
 		case EItemType::ERangeWeapon:
 			CombatType = ECombatType::ERanged;
 			break;
 		}
-
-		WeaponType = Weapon.ItemWeaponType;
+		UXYXItemWeapon* ItemBase = NewObject<UXYXItemWeapon>(this, Weapon.ItemClass);
+		if (ItemBase)
+		{
+			WeaponType = ItemBase->WeaponType;
+		}
 	}
 	else
 	{

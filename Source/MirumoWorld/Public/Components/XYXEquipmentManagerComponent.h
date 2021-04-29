@@ -74,7 +74,7 @@ public:
 		void UpdateDisplayedItem(EItemType Type, int32 SlotIndex);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		AXYXDisplayedItem* GetDisplayedItem(EItemType Type, int32 SlotIndex);
+		void GetDisplayedItem(EItemType Type, int32 SlotIndex, AXYXDisplayedItem* &DIOne, AXYXDisplayedItem* & DISecond);
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		bool IsItemEquipped(FGuid ItemId);
@@ -207,14 +207,14 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TArray<EItemType> MainHandTypes = {
-			EItemType::EMeleeWeaponRight,
+			EItemType::EMeleeWeapon,
 			//EItemType::ERangeWeapon,
 			//EItemType::ESpell,
 			EItemType::ENone
 		};
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		EItemType SelectMainHandType = EItemType::EMeleeWeaponRight;
+		EItemType SelectMainHandType = EItemType::EMeleeWeapon;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		int32 SelectMainHandSlotIndex = 0;

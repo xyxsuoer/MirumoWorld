@@ -137,8 +137,7 @@ enum class EItemType : uint8
 	EArrows												UMETA(DisplayName = "EArrows"),								// 箭矢
 	ETool													UMETA(DisplayName = "ETool"),									// 工具 
 	EMaterial											UMETA(DisplayName = "EMaterial"),							// 材料 
-	EMeleeWeaponRight							UMETA(DisplayName = "EMeleeWeaponRight"),			// 近战物品(物理)
-	EMeleeWeaponLeft							UMETA(DisplayName = "EMeleeWeaponLeft"),			// 近战物品(物理)
+	EMeleeWeapon									UMETA(DisplayName = "EMeleeWeapon"),					// 近战物品(物理)
 	ERangeWeapon									UMETA(DisplayName = "ERangeWeapon")						// 远程武器(物理)
 };
 
@@ -146,22 +145,22 @@ enum class EItemType : uint8
 UENUM(BlueprintType)
 enum class EInputBufferKey : uint8
 {
-	ENone													UMETA(DisplayName = "ENone"),									// 无
+	ENone													UMETA(DisplayName = "ENone"),										// 无
 	ELightAttack									UMETA(DisplayName = "ELightAttack"),						// 轻击
 	EHeavyAttack									UMETA(DisplayName = "EHeavyAttack"),						// 重击 
-	EThrustAttack									UMETA(DisplayName = "EThrustAttack"),					// 刺出 
+	EThrustAttack									UMETA(DisplayName = "EThrustAttack"),						// 刺出 
 	ESpecialAttack								UMETA(DisplayName = "ESpecialAttack"),					// 特别攻击
 	EFallingAttack								UMETA(DisplayName = "EFallingAttack"),					// 空中攻击
-	ERoll													UMETA(DisplayName = "ERoll"),									// 翻滚
-	EJump													UMETA(DisplayName = "EJump"),									// 跳
+	ERoll													UMETA(DisplayName = "ERoll"),										// 翻滚
+	EJump													UMETA(DisplayName = "EJump"),										// 跳
 	EParry												UMETA(DisplayName = "EParry"),									// 招架
-	EToggleCombat									UMETA(DisplayName = "EToggleCombat"),					// 切换战斗 
-	ESwitchMainHandTypeUp					UMETA(DisplayName = "ESwitchMainHandTypeUp"),	// 切换上一个主手类型 
-	ESwitchMainHandTypeDown				UMETA(DisplayName = "ESwitchMainHandTypeDown"),// 切换下一个主手类型
-	ESwitchMainHandItemUp					UMETA(DisplayName = "ESwitchMainHandItemUp"),	// 切换上一个主手物品
-	ESwitchMainHandItemDown				UMETA(DisplayName = "ESwitchMainHandItemDown"),// 切换下一个主手物品
+	EToggleCombat									UMETA(DisplayName = "EToggleCombat"),						// 切换战斗 
+	ESwitchMainHandTypeUp					UMETA(DisplayName = "ESwitchMainHandTypeUp"),		// 切换上一个主手类型 
+	ESwitchMainHandTypeDown				UMETA(DisplayName = "ESwitchMainHandTypeDown"),	// 切换下一个主手类型
+	ESwitchMainHandItemUp					UMETA(DisplayName = "ESwitchMainHandItemUp"),		// 切换上一个主手物品
+	ESwitchMainHandItemDown				UMETA(DisplayName = "ESwitchMainHandItemDown"),	// 切换下一个主手物品
 	EAbilityAttack								UMETA(DisplayName = "EAbilityAttack"),					// 技能攻击 
-	ESetSpellActiveIndex					UMETA(DisplayName = "ESetSpellActiveIndex")		// 设置激活的法术 
+	ESetSpellActiveIndex					UMETA(DisplayName = "ESetSpellActiveIndex")			// 设置激活的法术 
 };
 
 
@@ -431,6 +430,20 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FDItem {
+
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
+	class AXYXDisplayedItem* MainDI = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
+	class AXYXDisplayedItem* SecondDI = nullptr;
+};
+
+USTRUCT(BlueprintType)
 struct FDisplayedItems 
 {
 	GENERATED_BODY()
@@ -438,7 +451,7 @@ struct FDisplayedItems
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
-		TArray<class AXYXDisplayedItem*>  DisplayedItems;
+		TArray <FDItem>  DisplayedItems;
 
 };
 
@@ -456,10 +469,10 @@ public:
 		TSubclassOf<class UXYXItemBase> ItemClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
-		int32 Amount = 0;
+		TSubclassOf<class UXYXItemBase> ItemSecondClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
-		EWeaponType ItemWeaponType = EWeaponType::ENone;
+		int32 Amount = 0;
 
 };
 
