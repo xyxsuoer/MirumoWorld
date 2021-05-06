@@ -29,8 +29,5 @@ UXYXGameInstance::UXYXGameInstance()
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_TwinBlade.Heroe_TwinBlade'"));
 	MontageDataTables.Emplace(TEXT("Heroe_TwinBlade"), pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_Katana_S1.Heroe_Katana_S1'"));
-	MontageDataTables.Emplace(TEXT("Heroe_Katana_S1"), pDataTable);
-	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_Katana_S2.Heroe_Katana_S2'"));
-	MontageDataTables.Emplace(TEXT("Heroe_Katana_S2"), pDataTable);
 }
 
