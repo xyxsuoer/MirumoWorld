@@ -180,9 +180,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		int32 SelectedSpellIndex = 0;
 
-	UPROPERTY(Replicated)
-		EKatanaStance KatanaStance = EKatanaStance::EKatanaS1;
-
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		UTimelineComponent* BlockingTimeline;
 
@@ -220,10 +217,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		void GetMovementVectors(FVector& ForwardVec, FVector& RightVec);
-
-	UFUNCTION(BlueprintCallable, Category = XYX)
-		EKatanaStance GetKatanaStance() { return KatanaStance; }
-
 
 	// ======================= Interfaces===============================
 

@@ -16,14 +16,6 @@
 
 
  //Enumerations
-UENUM(BlueprintType)
-enum class EKatanaStance : uint8
-{
-	EKatanaS1											UMETA(DisplayName = "EKatanaS1"),
-	EKatanaS2											UMETA(DisplayName = "EKatanaS2"),
-	EKatanaS3											UMETA(DisplayName = "EKatanaS3")
-};
-
 
 UENUM(BlueprintType)
 enum class EAttributesType : uint8
@@ -282,17 +274,14 @@ enum class EWeaponType : uint8
 	EDualSwordLeft								UMETA(DisplayName = "EDualSwordLeft"),			// Ë«½£×óÊÖ½£
 	EDualSwordRight								UMETA(DisplayName = "EDualSwordRight"),			// Ë«½£ÓÒÊÖ½£
 	EGreatSword										UMETA(DisplayName = "EGreatSword"),					// ¾Þ½£
-	EKatana												UMETA(DisplayName = "EKatana"),							// Ì«µ¶
 	EOneHandAndShield							UMETA(DisplayName = "EOneHandAndShield"),		// µ¥ÊÖÎäÆ÷(¶ÛÆ÷) + ¶Ü
 	EOneHandSwordShield						UMETA(DisplayName = "EOneHandSwordShield"),	// µ¥ÊÖ½£ + ¶Ü
 	EOneHandSword									UMETA(DisplayName = "EOneHandSword"),				// µ¥ÊÖ³¤½£/µ¶
-	ESpear												UMETA(DisplayName = "ESpear"),							// ³¤Ã¬
 	ETwinBlade										UMETA(DisplayName = "ETwinBlade"),					// ³¤±úË«ÈÐ(Ë«½£/Ë«µ¶ºÏ³É)
 	ETwinDaggerLeft								UMETA(DisplayName = "ETwinDaggerLeft"),					// Ë«Ø°Ê×
 	ETwinDaggerRight							UMETA(DisplayName = "ETwinDaggerRight"),					// Ë«Ø°Ê×
 	ETwoHandAxe										UMETA(DisplayName = "ETwoHandAxe"),					// Ë«ÊÖ¸«
 	ETwoHandHammer								UMETA(DisplayName = "ETwoHandHammer"),			// Ë«ÊÖ´¸
-	ETwoHandSword									UMETA(DisplayName = "ETwoHandSword")				// Ë«ÊÖ½£
 };
 
 

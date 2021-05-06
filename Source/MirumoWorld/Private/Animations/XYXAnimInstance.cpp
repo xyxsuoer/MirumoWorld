@@ -111,7 +111,6 @@ void UXYXAnimInstance::StoreCharacterInfo()
 		bIsInSlowMotion = XYXCharacter->GetIsInSlowMotion();
 		BlockAlpha = XYXCharacter->GetBlockAlpha();
 		AimAlpha = XYXCharacter->GetAimAlpha();
-		KatanaStance = XYXCharacter->GetKatanaStance();
 		if (XYXCharacter->GetMovementSpeedComponent()) 
 		{
 			MovementState = XYXCharacter->GetMovementSpeedComponent()->GetMovementState();

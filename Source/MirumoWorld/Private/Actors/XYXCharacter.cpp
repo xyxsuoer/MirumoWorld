@@ -605,11 +605,9 @@ bool AXYXCharacter::WeaponCanSprint()
 			CurrentWeaponType == EWeaponType::EOneHandSword ||
 			CurrentWeaponType == EWeaponType::EOneHandAndShield ||
 			CurrentWeaponType == EWeaponType::EOneHandSwordShield ||
-			CurrentWeaponType == EWeaponType::ESpear ||
 			CurrentWeaponType == EWeaponType::EBow ||
 			CurrentWeaponType == EWeaponType::ETwinBlade ||
 			CurrentWeaponType == EWeaponType::ETwinDaggerRight ||
-			CurrentWeaponType == EWeaponType::EKatana ||
 			CurrentWeaponType == EWeaponType::ESpell
 		);
 }
@@ -952,17 +950,7 @@ void AXYXCharacter::PlayBlockingTimeline(bool bInPlay)
 
 void AXYXCharacter::SwitchSomethingAction()
 {
-	if (EquipmentComp && EquipmentComp->GetWeaponType() == EWeaponType::EKatana)
-	{
-		if (KatanaStance == EKatanaStance::EKatanaS1)
-		{
-			KatanaStance = EKatanaStance::EKatanaS2;
-		}
-		else
-		{
-			KatanaStance = EKatanaStance::EKatanaS1;
-		}
-	}
+
 }
 
 void AXYXCharacter::CustomJump()
@@ -1155,12 +1143,6 @@ UDataTable* AXYXCharacter::GetMontages_Implementation(EMontageAction Action)
 						DataTable = GameInstance->MontageDataTables[TEXT("Heroe_OneHandSwordShield")];
 				}
 				break;
-			case EWeaponType::ESpear: 
-				{
-					if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_Spear")))
-						DataTable = GameInstance->MontageDataTables[TEXT("Heroe_Spear")];
-				}
-				break;
 			case EWeaponType::ESpell: 
 				{
 					if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_Spell")))
@@ -1189,26 +1171,6 @@ UDataTable* AXYXCharacter::GetMontages_Implementation(EMontageAction Action)
 				{
 				if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_TwoHandHammer")))
 					DataTable = GameInstance->MontageDataTables[TEXT("Heroe_TwoHandHammer")];
-				}
-				break;
-			case EWeaponType::ETwoHandSword: 
-				{
-					if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_TwoHandSword")))
-						DataTable = GameInstance->MontageDataTables[TEXT("Heroe_TwoHandSword")];
-				}
-				break;
-			case EWeaponType::EKatana:
-				{
-					if (KatanaStance == EKatanaStance::EKatanaS1)
-					{
-						if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_Katana_S1")))
-							DataTable = GameInstance->MontageDataTables[TEXT("Heroe_Katana_S1")];
-					}
-					else if (KatanaStance == EKatanaStance::EKatanaS2)
-					{
-						if (GameInstance->MontageDataTables.Contains(TEXT("Heroe_Katana_S2")))
-							DataTable = GameInstance->MontageDataTables[TEXT("Heroe_Katana_S2")];
-					}
 				}
 				break;
 			}

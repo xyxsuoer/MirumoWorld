@@ -20,8 +20,6 @@ UXYXGameInstance::UXYXGameInstance()
 	MontageDataTables.Emplace(TEXT("Heroe_OneHandAndShield"), pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_OneHandSword.Heroe_OneHandSword'"));
 	MontageDataTables.Emplace(TEXT("Heroe_OneHandSword"), pDataTable);
-	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_TwoHandSword.Heroe_TwoHandSword'"));
-	MontageDataTables.Emplace(TEXT("Heroe_TwoHandSword"), pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_GreatSword.Heroe_GreatSword'"));
 	MontageDataTables.Emplace(TEXT("Heroe_GreatSword"), pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_TwoHandAxe.Heroe_TwoHandAxe'"));
@@ -30,8 +28,6 @@ UXYXGameInstance::UXYXGameInstance()
 	MontageDataTables.Emplace(TEXT("Heroe_TwoHandHammer"), pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_TwinBlade.Heroe_TwinBlade'"));
 	MontageDataTables.Emplace(TEXT("Heroe_TwinBlade"), pDataTable);
-	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_Spear.Heroe_Spear'"));
-	MontageDataTables.Emplace(TEXT("Heroe_Spear"), pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_Katana_S1.Heroe_Katana_S1'"));
 	MontageDataTables.Emplace(TEXT("Heroe_Katana_S1"), pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_Katana_S2.Heroe_Katana_S2'"));

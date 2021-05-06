@@ -96,9 +96,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		EWeaponType CurWeaponType = EWeaponType::ENone;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		EKatanaStance KatanaStance = EKatanaStance::EKatanaS1;
-
 	// Lean
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		float LeanAmount = 0.f;
