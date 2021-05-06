@@ -103,6 +103,7 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("ToggleCombat", IE_Pressed, this, &AXYXCharacter::ToggleCombatAction);
 		PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AXYXCharacter::BlockAction);
 		PlayerInputComponent->BindAction("Block", IE_Released, this, &AXYXCharacter::StopBlockAction);
+		PlayerInputComponent->BindAction("SwitchSomething", IE_Pressed, this, &AXYXCharacter::SwitchSomethingAction);
 	}
 }
 
@@ -945,6 +946,21 @@ void AXYXCharacter::PlayBlockingTimeline(bool bInPlay)
 		else
 		{
 			BlockingTimeline->ReverseFromEnd();
+		}
+	}
+}
+
+void AXYXCharacter::SwitchSomethingAction()
+{
+	if (EquipmentComp && EquipmentComp->GetWeaponType() == EWeaponType::EKatana)
+	{
+		if (KatanaStance == EKatanaStance::EKatanaS1)
+		{
+			KatanaStance = EKatanaStance::EKatanaS2;
+		}
+		else
+		{
+			KatanaStance = EKatanaStance::EKatanaS1;
 		}
 	}
 }

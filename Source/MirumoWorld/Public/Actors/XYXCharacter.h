@@ -433,6 +433,9 @@ public:
 	UFUNCTION()
 		void PlayBlockingTimeline(bool bInPlay);
 
+	UFUNCTION()
+		void SwitchSomethingAction();
+
 private:
 	bool bInitialized = false;
 
