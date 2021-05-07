@@ -158,6 +158,33 @@ bool AXYXCharacter::IsEntityAlive_Implementation()
 	return !bIsDead;
 }
 
+float AXYXCharacter::GetAimAlpha_Implementation()
+{
+	return AimAlpha;
+}
+
+bool AXYXCharacter::DoesHoldBowString_Implementation()
+{
+	if (!EquipmentComp || !GetMesh() || !GetMesh()->GetAnimInstance() ||
+		GetMesh()->GetAnimInstance()->IsAnyMontagePlaying())
+	{
+		return false;
+	}
+
+	if (IsIdleAndNotFalling() && EquipmentComp->GetIsInCombat() &&
+		EquipmentComp->GetCombatType() == ECombatType::ERanged )
+	{
+		return true;
+	}
+
+	return false;
+}
+
+FName AXYXCharacter::GetBowStringSocketName_Implementation()
+{
+	return TEXT("bow_string");
+}
+
 void AXYXCharacter::InitialzeCharacter()
 {
 	if (InputBufferComp) 

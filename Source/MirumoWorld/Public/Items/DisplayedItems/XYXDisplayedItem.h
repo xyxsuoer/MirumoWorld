@@ -38,7 +38,7 @@ public:
 		USceneComponent* SceneComponent;
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		UPrimitiveComponent* GetPrimaryComponent();
+		virtual UPrimitiveComponent* GetPrimaryComponent();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
 		virtual bool Attach();
@@ -47,7 +47,7 @@ public:
 		virtual	FName GetAttachmentSocket();
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		void SimulatePhysics();
+		virtual	void SimulatePhysics();
 
 public:
 

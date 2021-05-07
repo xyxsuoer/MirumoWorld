@@ -8,6 +8,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "Interfaces/XYXInterfaceMontageManagerComp.h"
 #include "Interfaces/XYXInterfaceEntity.h"
+#include "Interfaces/XYXInterfaceArcher.h"
 #include "Components/TimelineComponent.h"
 #include "XYXCharacter.generated.h"
 
@@ -16,7 +17,8 @@
 
 UCLASS()
 class MIRUMOWORLD_API AXYXCharacter : public ACharacter,
-	public IGenericTeamAgentInterface, public IXYXInterfaceMontageManagerComp, public IXYXInterfaceEntity
+	public IGenericTeamAgentInterface, public IXYXInterfaceMontageManagerComp, public IXYXInterfaceEntity,
+	public IXYXInterfaceArcher
 {
 	GENERATED_BODY()
 
@@ -210,9 +212,6 @@ public:
 		bool GetIsInSlowMotion() { return bIsInSlowMotion; }
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
-		float GetAimAlpha() { return AimAlpha; }
-
-	UFUNCTION(BlueprintCallable, Category = XYX)
 		float GetBlockAlpha() { return BlockAlpha; }
 
 	UFUNCTION(BlueprintCallable, Category = XYX)
@@ -234,6 +233,18 @@ public:
 		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 			bool IsEntityAlive();
 		virtual bool IsEntityAlive_Implementation();
+
+		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+			float GetAimAlpha();
+		virtual float GetAimAlpha_Implementation();
+
+		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+			bool DoesHoldBowString();
+		virtual bool DoesHoldBowString_Implementation();
+
+		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+			FName GetBowStringSocketName();
+		virtual FName GetBowStringSocketName_Implementation();
 
 		// =================================================================
 
