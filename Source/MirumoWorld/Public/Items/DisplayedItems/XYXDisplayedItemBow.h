@@ -18,7 +18,7 @@ public:
 	AXYXDisplayedItemBow();
 
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 
 public:
@@ -27,7 +27,7 @@ public:
 		FName ArrowSocketName = TEXT("arrow");
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
-		struct FStoredItem LastUpdateArrow;
+		struct FStoredItem LastUpdatedArrow;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class USkeletalMeshComponent* BowMesh;

@@ -111,8 +111,8 @@ void AXYXDisplayedItemBow::UpdateArrowMesh()
 {
 	if (EquipmentComp)
 	{
-		LastUpdateArrow = EquipmentComp->GetActiveItem(EItemType::EArrows, 0);
-		TSubclassOf<class UXYXItemBase> ItemArrowClass = LastUpdateArrow.ItemClass;
+		LastUpdatedArrow = EquipmentComp->GetActiveItem(EItemType::EArrows, 0);
+		TSubclassOf<class UXYXItemBase> ItemArrowClass = LastUpdatedArrow.ItemClass;
 		if (UKismetSystemLibrary::IsValidClass(ItemArrowClass))
 		{
 			auto ItemArrow = NewObject<UXYXItemArrow>(this, ItemArrowClass);
@@ -129,7 +129,7 @@ void AXYXDisplayedItemBow::UpdateArrowMesh()
 
 void AXYXDisplayedItemBow::HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex)
 {
-	if (Type == EItemType::EArrows && NewItem.Id != LastUpdateArrow.Id )
+	if (Type == EItemType::EArrows && NewItem.Id != LastUpdatedArrow.Id )
 	{
 		UpdateArrowMesh();
 	}
