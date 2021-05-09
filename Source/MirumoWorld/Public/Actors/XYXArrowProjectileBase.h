@@ -34,7 +34,7 @@ public:
 		class UParticleSystemComponent* ParticleSystem;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
-		class UStaticMeshComponent* StaticMesh;
+		class UStaticMeshComponent* StaticMeshComp;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		class UProjectileMovementComponent* ProjectileMovement;
@@ -55,11 +55,14 @@ public:
 		void UpdateArrowMesh();
 
 	UFUNCTION()
-		bool OnArrowHit(FHitResult Hit);
+		void OnArrowHit(FHitResult Hit);
 
 	UFUNCTION()
 		bool IsEnemy(AActor* Target);
 
 	UFUNCTION()
 		void SpawnImpaledArrow(class USceneComponent* Comp, FName SocketName, AActor* InActor, FVector InLocation);
+
+	UFUNCTION()
+		void HandleOnHit(FHitResult HitResult);
 };

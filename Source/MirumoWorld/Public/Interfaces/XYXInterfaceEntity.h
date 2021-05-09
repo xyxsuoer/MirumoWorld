@@ -29,4 +29,11 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 		bool IsEntityAlive();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		FName GetHeadSocket();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		bool TakeDamage(FHitData HitData, EAttackResult& ResultType);
+
 };

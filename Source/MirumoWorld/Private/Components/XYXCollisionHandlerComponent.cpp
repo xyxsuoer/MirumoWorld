@@ -48,7 +48,7 @@ bool UXYXCollisionHandlerComponent::IsCollisionActive()
 	return bCanPerformTrace;
 }
 
-void UXYXCollisionHandlerComponent::SetCollisionMesh(UPrimitiveComponent* WeaponMesh, TArray<FName>& InSockets)
+void UXYXCollisionHandlerComponent::SetCollisionMesh(UPrimitiveComponent* WeaponMesh, TArray<FName> InSockets)
 {
 	Mesh = WeaponMesh;
 	Sockets = InSockets;

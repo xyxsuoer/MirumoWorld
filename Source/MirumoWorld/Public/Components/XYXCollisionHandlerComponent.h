@@ -50,7 +50,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypesToCollideWith = {};
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<FName> IgnoredCollisionProfileNames = {};
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
@@ -75,7 +75,7 @@ public:
 		bool IsCollisionActive();
 
 	UFUNCTION()
-		void SetCollisionMesh(class UPrimitiveComponent* WeaponMesh, TArray<FName>& InSockets);
+		void SetCollisionMesh(class UPrimitiveComponent* WeaponMesh, TArray<FName> InSockets);
 
 	UFUNCTION()
 		void ActiveCollision(ECollisionPart CollisionPart);
