@@ -1189,9 +1189,8 @@ void AXYXCharacter::UpdateAimAlpha()
 
 FTransform AXYXCharacter::GetSpawnedArrowTranform()
 {
-	FTransform Tmp;
 	FVector TmpArrowSpawnLocation = ArrowSpawnLocation->GetComponentLocation();
-	FVector TmpCameraDirection;
+	FVector TmpCameraDirection; 
 	FRotator TmpArrowSpawnDirection;
 	if (GetController())
 	{
@@ -1199,9 +1198,73 @@ FTransform AXYXCharacter::GetSpawnedArrowTranform()
 		FVector TmpFrom = FollowCamera->GetComponentLocation();
 		TmpCameraDirection = UKismetMathLibrary::GetDirectionUnitVector(TmpFrom, TmpTo);
 		TmpArrowSpawnDirection = UKismetMathLibrary::MakeRotFromX(TmpCameraDirection);
+		FVector CameraBoomLocation = CameraBoom->GetComponentLocation();
+		FVector FllowCameraLocation = FollowCamera->GetComponentLocation();
+		float Length = UKismetMathLibrary::VSize(CameraBoomLocation - FllowCameraLocation);
+		FVector TmpLineTraceStart = FllowCameraLocation + TmpCameraDirection * Length;
+		FVector TmpLineTraceEnd = FllowCameraLocation + TmpCameraDirection * 10000.f;
+		FVector TmpCurTraceDirection;
+		for (int32 i = 0; i < 20; ++i) 
+		{
+			FVector TmpFVec = FVector(0.f, 0.f, i * 5.0f);
+			FVector TmpLineTo = TmpLineTraceEnd - TmpFVec;
+			FHitResult HitResult;
+			TArray<AActor*> actorsToIgnore;
+			TmpCurTraceDirection = UKismetMathLibrary::GetDirectionUnitVector(TmpLineTraceStart, TmpLineTo);
+			if (UKismetSystemLibrary::LineTraceSingle(this, TmpLineTraceStart - TmpFVec, TmpLineTraceEnd - TmpFVec,
+				UEngineTypes::ConvertToTraceType(ECC_Camera), false, actorsToIgnore, EDrawDebugTrace::None, HitResult, true, 
+				FLinearColor::Red, FLinearColor::Green, 10.0f))
+			{
+				FVector TmpImpactPoint = HitResult.ImpactPoint;
+				bool CanGoNext = false;
+				if (i == 0)
+				{
+					CanGoNext = true;
+					float LengthHitPointFromCamera = UKismetMathLibrary::VSize(FllowCameraLocation - TmpImpactPoint);
+					float CosOfAngle = UKismetMathLibrary::Cos(
+						UKismetMathLibrary::Acos(
+							UKismetMathLibrary::Dot_VectorVector(UKismetMathLibrary::Normal(TmpCameraDirection, 0.0001f), UKismetMathLibrary::Normal(TmpCurTraceDirection, 0.0001f))
+						)
+					);
+					float LengthToPointOnCameraDirectionLineAboveImpactPoint = LengthHitPointFromCamera / CosOfAngle;
+					TmpArrowSpawnDirection = UKismetMathLibrary::MakeRotFromX(
+						UKismetMathLibrary::GetDirectionUnitVector(TmpArrowSpawnLocation, TmpCameraDirection * LengthToPointOnCameraDirectionLineAboveImpactPoint + FllowCameraLocation));
+				}
+				else
+				{
+					if (UKismetMathLibrary::VSize(TmpArrowSpawnLocation - TmpImpactPoint) > 1000.0f)
+					{
+						CanGoNext = true;
+					}
+				}
+
+				if (CanGoNext)
+				{
+					auto TmpHitActor = HitResult.GetActor();
+					if (TmpHitActor != GetOwner())
+					{
+						IXYXInterfaceEntity* TmpHitObj = Cast<IXYXInterfaceEntity>(TmpHitActor);
+						if (TmpHitObj)
+						{
+							float LengthHitPointFromCamera = UKismetMathLibrary::VSize(FllowCameraLocation - TmpImpactPoint);
+							float CosOfAngle = UKismetMathLibrary::Cos(
+								UKismetMathLibrary::Acos(
+									UKismetMathLibrary::Dot_VectorVector(UKismetMathLibrary::Normal(TmpCameraDirection, 0.0001f), UKismetMathLibrary::Normal(TmpCurTraceDirection, 0.0001f))
+								)
+							);
+							float LengthToPointOnCameraDirectionLineAboveImpactPoint = LengthHitPointFromCamera / CosOfAngle;
+							TmpArrowSpawnDirection = UKismetMathLibrary::MakeRotFromX(
+								UKismetMathLibrary::GetDirectionUnitVector(TmpArrowSpawnLocation, TmpCameraDirection * LengthToPointOnCameraDirectionLineAboveImpactPoint + FllowCameraLocation));
+						
+							return FTransform(TmpArrowSpawnDirection, TmpArrowSpawnLocation, FVector(1.f, 1.f, 1.f));
+						}
+					}
+				}
+			}
+		}
 	}
 
-	return Tmp;
+	return FTransform(TmpArrowSpawnDirection, TmpArrowSpawnLocation, FVector(1.f, 1.f, 1.f));
 }
 
 void AXYXCharacter::CustomJump()
