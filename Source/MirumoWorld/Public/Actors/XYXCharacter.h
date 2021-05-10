@@ -182,6 +182,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		int32 SelectedSpellIndex = 0;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		class USceneComponent* ArrowSpawnLocation;
+
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		UTimelineComponent* BlockingTimeline;
 
@@ -286,6 +289,9 @@ public:
 
 	UFUNCTION()
 		bool CanMeleeAttack();
+
+	UFUNCTION()
+		bool CanBowAttack();
 
 	UFUNCTION()
 		UAnimMontage* GetMeleeAttackMontage(const EMeleeAttackType AttackType);
@@ -440,6 +446,48 @@ public:
 	UFUNCTION()
 		void SwitchSomethingAction();
 
+	UFUNCTION()
+		void StartBowAimModeAttackAction();
+
+	UFUNCTION()
+		void EndBowAimModeAttackAction();
+
+	UFUNCTION()
+		void ShootArrow();
+
+	UFUNCTION()
+		void ShootArrowProjectile();
+
+	UFUNCTION()
+		void StartAiming();
+
+	UFUNCTION()
+		void StopAiming();
+
+	UFUNCTION()
+		void StartLookingForward();
+
+	UFUNCTION()
+		void StopLookingForward();
+
+	UFUNCTION()
+		void StartZooming();
+
+	UFUNCTION()
+		void StopZooming();
+
+	UFUNCTION()
+		void UpdateRotationSettings();
+
+	UFUNCTION()
+		void UpdateZooming();
+
+	UFUNCTION()
+		void UpdateAimAlpha();
+
+	UFUNCTION()
+		FTransform GetSpawnedArrowTranform();
+
 private:
 	bool bInitialized = false;
 
@@ -452,6 +500,7 @@ private:
 	UPROPERTY()
 		FTimerHandle CrouchLoopTimer;
 
-
+	UPROPERTY()
+		FTimerHandle StopLookingForwardTimer;
 
 };

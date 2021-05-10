@@ -81,6 +81,7 @@ void AXYXDisplayedItemQuiver::SetEquipmemtComp(class UXYXEquipmentManagerCompone
 	if (EquipmentComp)
 	{
 		EquipmentComp->OnActiveItemChanged.AddDynamic(this, &AXYXDisplayedItemQuiver::HandleOnActiveItemChanged);
+		EquipmentComp->OnSlotHiddenChanged.AddDynamic(this, &AXYXDisplayedItemQuiver::HandleOnSlotHiddenChanged);
 	}
 }
 
@@ -89,5 +90,16 @@ void AXYXDisplayedItemQuiver::HandleOnActiveItemChanged(FStoredItem OldItem, FSt
 	if (Type == EItemType::EArrows && NewItem.Amount > LastUpdatedArrow.Amount)
 	{
 		UpdateQuiver();
+	}
+}
+
+void AXYXDisplayedItemQuiver::HandleOnSlotHiddenChanged(EItemType SlotType, int32 SlotIndex, FStoredItem ActiveItem, bool bIsHidden)
+{
+	if (EquipmentComp && EquipmentComp->GetIsInCombat())
+	{
+		if (SlotType == DIItemType && SlotIndex == DISlotIndex)
+		{
+			Attach();
+		}
 	}
 }

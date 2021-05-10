@@ -19,6 +19,9 @@
 #include "Components/XYXEquipmentManagerComponent.h"
 #include "Components/XYXInventoryManagerComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Actors/XYXArrowProjectileBase.h"
+#include "Items/ObjectItems/XYXItemBase.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 
@@ -41,6 +44,12 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	FollowCamera->AttachToComponent(CameraBoom, FAttachmentTransformRules::KeepRelativeTransform, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 	FollowCamera->SetRelativeRotation(FRotator(-15.f, 0.f, 0.f));
+
+	if (GetMesh())
+	{
+		ArrowSpawnLocation = CreateDefaultSubobject<USceneComponent>(TEXT("ArrowSapwnLocation"));
+		ArrowSpawnLocation->SetupAttachment(GetMesh());
+	}
 
 	SetReplicates(true);
 	SetReplicateMovement(true);
@@ -104,6 +113,8 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("Block", IE_Pressed, this, &AXYXCharacter::BlockAction);
 		PlayerInputComponent->BindAction("Block", IE_Released, this, &AXYXCharacter::StopBlockAction);
 		PlayerInputComponent->BindAction("SwitchSomething", IE_Pressed, this, &AXYXCharacter::SwitchSomethingAction);
+		PlayerInputComponent->BindAction("BowAttack", IE_Pressed, this, &AXYXCharacter::StartBowAimModeAttackAction);
+		PlayerInputComponent->BindAction("BowAttack", IE_Released, this, &AXYXCharacter::EndBowAimModeAttackAction);
 	}
 }
 
@@ -340,8 +351,10 @@ void AXYXCharacter::HandleOnActivityChanged(EActivity Activity, bool Value)
 		UpdateBlocking();
 		break;
 	case EActivity::EIsLookingForward:
+		UpdateRotationSettings();
 		break;
 	case EActivity::EIsZooming:
+		UpdateZooming();
 		break;
 	}
 }
@@ -349,6 +362,8 @@ void AXYXCharacter::HandleOnActivityChanged(EActivity Activity, bool Value)
 void AXYXCharacter::HandleOnStateChanged(EState PrevState, EState NewState)
 {
 	UpdateBlocking();
+	UpdateZooming();
+	UpdateRotationSettings();
 	if(PrevState == EState::EAttacking)
 	{
 		MeleeAttackType = EMeleeAttackType::ENone;
@@ -407,7 +422,19 @@ bool AXYXCharacter::CanMeleeAttack()
 {
 	if (StateManagerComp && StateManagerComp->GetState() == EState::EIdle &&
 		EquipmentComp && EquipmentComp->GetIsInCombat() &&
-		(EquipmentComp->GetCombatType() == ECombatType::EUnarmed || EquipmentComp->GetCombatType()== ECombatType::EMelee))
+		(EquipmentComp->GetCombatType() == ECombatType::EUnarmed || EquipmentComp->GetCombatType()== ECombatType::EMelee ||
+			(EquipmentComp->GetCombatType() == ECombatType::ERanged && EquipmentComp->bActionShootOrAimShoot))) 
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool AXYXCharacter::CanBowAttack()
+{
+	if (EquipmentComp && EquipmentComp->GetIsInCombat() && EquipmentComp->AreArrowEquipped() &&
+		EquipmentComp->GetCombatType() == ECombatType::ERanged )
 	{
 		return true;
 	}
@@ -977,7 +1004,204 @@ void AXYXCharacter::PlayBlockingTimeline(bool bInPlay)
 
 void AXYXCharacter::SwitchSomethingAction()
 {
+	if (EquipmentComp && EquipmentComp->GetWeaponType() == EWeaponType::EBow)
+	{
+		EquipmentComp->ChangeShootMode();
+	}
+}
 
+void AXYXCharacter::StartBowAimModeAttackAction()
+{
+	if (!EquipmentComp || !InputBufferComp)
+	{
+		return;
+	}
+
+	if (EquipmentComp->GetIsInCombat())
+	{
+		if (CanBowAttack())
+		{
+			StartAiming();
+			StartLookingForward();
+			UpdateZooming();
+			// show crosshair
+			// bow draw
+		}
+	}
+	else
+	{
+		InputBufferComp->UpdateKey(EInputBufferKey::EToggleCombat);
+	}
+}
+
+void AXYXCharacter::EndBowAimModeAttackAction()
+{
+	if (CanBowAttack())
+	{
+		StopAiming();
+		if (AimAlpha >= 0.8)
+		{
+			ShootArrow();
+		}
+
+		UWorld* World = GetWorld();
+		check(World);
+
+		World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, 0.8f, false);
+		// hide crosshair 
+		FTimerHandle TmpTimer;
+		World->GetTimerManager().SetTimer(TmpTimer, this, &AXYXCharacter::UpdateZooming, 0.81f, false);
+		// stop bow draw
+	}
+}
+
+void AXYXCharacter::ShootArrow()
+{
+	if (CanBowAttack() && EquipmentComp && !EquipmentComp->bActionShootOrAimShoot)
+	{
+		ShootArrowProjectile();
+
+		if (StateManagerComp && MontageManagerComp)
+		{
+			StateManagerComp->SetState(EState::EAttacking);
+			//Choose montage at index 0 (shoot and draw new arrow) if there are still arrows or at index 1 (only shoot arrow) if there are not 
+			int32 Index = EquipmentComp->AreArrowEquipped() ? 0 : 1;
+			auto Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EShootArrow, Index);
+			if (IsValid(Montage))
+			{
+				PlayAnimMontage(Montage);
+			}
+			else
+			{
+				StateManagerComp->ResetState(0.f);
+			}
+		}
+	}
+}
+
+void AXYXCharacter::ShootArrowProjectile()
+{
+	if (EquipmentComp)
+	{
+		auto TmpItem = EquipmentComp->GetActiveItem(EItemType::EArrows, 0);
+		TSubclassOf<class UXYXItemBase> ItemArrowClass = TmpItem.ItemClass;
+		if (UKismetSystemLibrary::IsValidClass(ItemArrowClass))
+		{
+			FTransform TmpTransform = GetSpawnedArrowTranform();
+
+			UWorld* const World = GetWorld();
+			check(World);
+			FActorSpawnParameters ActorSpawnParams;
+			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			ActorSpawnParams.Owner = this;
+			ActorSpawnParams.Instigator = this;
+			AXYXArrowProjectileBase* XYXActor = World->SpawnActor<AXYXArrowProjectileBase>(ItemArrowClass.Get(), TmpTransform, ActorSpawnParams);
+			if (XYXActor)
+			{
+				XYXActor->Damage = 50;
+				XYXActor->InitialSpeed = AimAlpha * 7000.0f;
+			}
+
+			if (InventoryComp)
+			{
+				auto Index = InventoryComp->FindIndexById(TmpItem.Id);
+				InventoryComp->RemoveItemAtIndex(Index, 1);
+			}
+		}
+	}
+}
+
+void AXYXCharacter::StartAiming()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsAmingPressed, true);
+	}
+}
+
+void AXYXCharacter::StopAiming()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsAmingPressed, false);
+	}
+}
+
+void AXYXCharacter::StartLookingForward()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsLookingForward, true);
+	}
+
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		World->GetTimerManager().ClearTimer(StopLookingForwardTimer);
+	}
+}
+
+void AXYXCharacter::StopLookingForward()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsLookingForward, false);
+	}
+}
+
+void AXYXCharacter::StartZooming()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsZooming, true);
+	}
+}
+
+void AXYXCharacter::StopZooming()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetActivity(EActivity::EIsZooming, false);
+	}
+}
+
+void AXYXCharacter::UpdateRotationSettings()
+{
+
+}
+
+void AXYXCharacter::UpdateZooming()
+{
+
+}
+
+void AXYXCharacter::UpdateAimAlpha()
+{
+	UWorld* const World = GetWorld();
+	if (World && EquipmentComp && StateManagerComp)
+	{
+		float To0 = UKismetMathLibrary::FInterpTo_Constant(AimAlpha, 0.f, World->GetDeltaSeconds(), 5.0f);
+		float To1 = UKismetMathLibrary::FInterpTo_Constant(AimAlpha, 1.f, World->GetDeltaSeconds(), 5.0f);
+		bool TmpCondition = StateManagerComp->GetActivityValue(EActivity::EIsAmingPressed) && IsIdleAndNotFalling();
+		AimAlpha = TmpCondition ? To1 : To0;
+	}
+}
+
+FTransform AXYXCharacter::GetSpawnedArrowTranform()
+{
+	FTransform Tmp;
+	FVector TmpArrowSpawnLocation = ArrowSpawnLocation->GetComponentLocation();
+	FVector TmpCameraDirection;
+	FRotator TmpArrowSpawnDirection;
+	if (GetController())
+	{
+		FVector TmpTo = GetActorForwardVector() * UXYXFunctionLibrary::GetCrosshairDistanceLocation() + TmpArrowSpawnLocation;
+		FVector TmpFrom = FollowCamera->GetComponentLocation();
+		TmpCameraDirection = UKismetMathLibrary::GetDirectionUnitVector(TmpFrom, TmpTo);
+		TmpArrowSpawnDirection = UKismetMathLibrary::MakeRotFromX(TmpCameraDirection);
+	}
+
+	return Tmp;
 }
 
 void AXYXCharacter::CustomJump()
@@ -1019,7 +1243,6 @@ void AXYXCharacter::Parry()
 		if (StateManagerComp)
 			StateManagerComp->ResetState(0.f);
 	}
-	
 }
 
 // Called every frame
@@ -1030,6 +1253,8 @@ void AXYXCharacter::Tick(float DeltaTime)
 	{
 		BlockingTimeline->TickComponent(DeltaTime, ELevelTick::LEVELTICK_TimeOnly, NULL);
 	}
+
+	UpdateAimAlpha();
 }
 
 void AXYXCharacter::PostInitProperties() {

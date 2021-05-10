@@ -30,3 +30,8 @@ EMontageAction UXYXFunctionLibrary::ConvertMeleeAttackTypeToAction(const EMeleeA
 
 	return Action;
 }
+
+float UXYXFunctionLibrary::GetCrosshairDistanceLocation()
+{
+	return 500.f;
+}

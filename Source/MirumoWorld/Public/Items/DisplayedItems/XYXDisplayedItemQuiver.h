@@ -46,4 +46,7 @@ public:
 
 	UFUNCTION()
 		void HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex);
+
+	UFUNCTION()
+		void HandleOnSlotHiddenChanged(EItemType SlotType, int32 SlotIndex, FStoredItem ActiveItem, bool bIsHidden);
 };

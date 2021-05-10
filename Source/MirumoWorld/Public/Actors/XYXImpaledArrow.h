@@ -29,12 +29,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
-		void SetArrowMesh(class UStaticMesh* Mesh) {
-		ArrowMesh = Mesh;
-	}
+		void SetArrowMesh(class UStaticMesh* Mesh);
+
+	virtual void OnOwnerDestroyed(AActor* DestroyedActor);
 
 };

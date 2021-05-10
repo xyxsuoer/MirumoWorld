@@ -7,21 +7,39 @@
 AXYXImpaledArrow::AXYXImpaledArrow()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+	USceneComponent* Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene Comp"));
+	Scene->SetupAttachment(RootComponent);
+
+	ImpaledArrowMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Static Mesh Comp"));
+	ImpaledArrowMesh->SetupAttachment(Scene);
 }
 
 // Called when the game starts or when spawned
 void AXYXImpaledArrow::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
-void AXYXImpaledArrow::Tick(float DeltaTime)
+void AXYXImpaledArrow::SetArrowMesh(class UStaticMesh* Mesh)
 {
-	Super::Tick(DeltaTime);
+	if (ImpaledArrowMesh)
+	{
+		ImpaledArrowMesh->SetStaticMesh(Mesh);
+	}
 
+	SetLifeSpan(LifeTime);
+
+	if (AActor* NewOwner = GetOwner())
+	{
+		NewOwner->OnDestroyed.AddDynamic(this, &AXYXImpaledArrow::OnOwnerDestroyed);
+	}
 }
 
+void AXYXImpaledArrow::OnOwnerDestroyed(AActor* DestroyedActor)
+{
+	UWorld* World = GetWorld();
+	if (World) 
+		World->DestroyActor(this);
+}

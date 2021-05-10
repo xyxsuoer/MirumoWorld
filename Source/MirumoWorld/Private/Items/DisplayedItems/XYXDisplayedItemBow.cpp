@@ -65,6 +65,7 @@ void AXYXDisplayedItemBow::SetEquipmemtComp(class UXYXEquipmentManagerComponent*
 	if (EquipmentComp)
 	{
 		EquipmentComp->OnActiveItemChanged.AddDynamic(this, &AXYXDisplayedItemBow::HandleOnActiveItemChanged);
+		EquipmentComp->OnSlotHiddenChanged.AddDynamic(this, &AXYXDisplayedItemBow::HandleOnSlotHiddenChanged);
 	}
 }
 

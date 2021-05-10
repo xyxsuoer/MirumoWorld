@@ -19,4 +19,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = XYXLibrary)
 		static EMontageAction ConvertMeleeAttackTypeToAction(const EMeleeAttackType Type);
+
+	UFUNCTION(BlueprintCallable, Category = XYXLibrary)
+		static float GetCrosshairDistanceLocation();
 };

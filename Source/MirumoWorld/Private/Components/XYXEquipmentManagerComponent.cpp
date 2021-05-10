@@ -361,7 +361,6 @@ void UXYXEquipmentManagerComponent::SlotHiddenChangedBroadcast()
 	}
 }
 
-
 void UXYXEquipmentManagerComponent::UpdateItemInSlot(EItemType Type, int32 SlotIndex, int32 ItemIndex, FStoredItem Item, EHandleSameItemMethod HandleSameItemMethod)
 {
 	if(!IsItemIndexValid(Type, SlotIndex, ItemIndex))
@@ -1160,3 +1159,7 @@ void UXYXEquipmentManagerComponent::HandleOnGameLoaded()
 	}
 }
 
+void UXYXEquipmentManagerComponent::ChangeShootMode()
+{
+	bActionShootOrAimShoot = !bActionShootOrAimShoot;
+}

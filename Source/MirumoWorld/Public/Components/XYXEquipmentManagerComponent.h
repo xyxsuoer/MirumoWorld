@@ -190,6 +190,9 @@ public:
 	UFUNCTION()
 		void SlotHiddenChangedBroadcast();
 
+	UFUNCTION()
+		void ChangeShootMode();
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -208,7 +211,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TArray<EItemType> MainHandTypes = {
 			EItemType::EMeleeWeapon,
-			//EItemType::ERangeWeapon,
+			EItemType::ERangeWeapon,
 			//EItemType::ESpell,
 			EItemType::ENone
 		};
@@ -233,6 +236,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TArray<FGuid> ActiveItems = {};
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bActionShootOrAimShoot = true; // true ΪActionShoot false ΪAimShoot 
 
 	struct TempDataInfo
 	{
