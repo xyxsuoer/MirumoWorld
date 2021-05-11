@@ -7,3 +7,8 @@ UXYXItemArrow::UXYXItemArrow()
 {
 
 }
+
+TSubclassOf<AXYXArrowProjectileBase> UXYXItemArrow::GetProjectile_Implementation()
+{
+	return Projectile;
+}

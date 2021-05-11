@@ -22,6 +22,7 @@
 #include "Actors/XYXArrowProjectileBase.h"
 #include "Items/ObjectItems/XYXItemBase.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Items/ObjectItems/XYXItemArrow.h"
 
 
 
@@ -183,9 +184,16 @@ bool AXYXCharacter::DoesHoldBowString_Implementation()
 	}
 
 	if (IsIdleAndNotFalling() && EquipmentComp->GetIsInCombat() &&
-		EquipmentComp->GetCombatType() == ECombatType::ERanged )
+		EquipmentComp->GetCombatType() == ECombatType::ERanged)
 	{
-		return true;
+		if (EquipmentComp->bActionShootOrAimShoot)
+		{
+		
+		}
+		else
+		{
+			return true;
+		}
 	}
 
 	return false;
@@ -322,15 +330,29 @@ void AXYXCharacter::HandleMovementStateEnd(EMovementState State)
 
 void AXYXCharacter::HandleOnInCombatChanged(bool bIsInCombat)
 {
-	if (StateManagerComp)
+	UpdateRotationSettings();
+	if (!bIsInCombat)
 	{
-		StateManagerComp->SetActivity(EActivity::EIsBlockingPressed, false);
+		if (StateManagerComp)
+		{
+			StateManagerComp->SetActivity(EActivity::EIsBlockingPressed, false);
+		}
+
+		ResetAimingMode();
 	}
 }
 
 void AXYXCharacter::HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex)
 {
 	PlayMainHandTypeChangedMontage(Type);
+	if (Type == EItemType::EArrows)
+	{
+		if (!EquipmentComp->AreArrowEquipped() && EquipmentComp->GetIsInCombat() && 
+			EquipmentComp->GetCombatType() == ECombatType::ERanged)
+		{
+			ResetAimingMode();
+		}
+	}
 }
 
 void AXYXCharacter::HandleOnMainHandTypeChanged(EItemType Type)
@@ -340,7 +362,7 @@ void AXYXCharacter::HandleOnMainHandTypeChanged(EItemType Type)
 
 void AXYXCharacter::HandleOnCombatTypeChanged(ECombatType CombatType)
 {
-
+	ResetAimingMode();
 }
 
 void AXYXCharacter::HandleOnActivityChanged(EActivity Activity, bool Value)
@@ -882,10 +904,19 @@ void AXYXCharacter::SwitchMainHandItem(bool bForward)
 
 void AXYXCharacter::ToggleCombatAction()
 {
-	if (InputBufferComp)
+	if (StateManagerComp && StateManagerComp->GetActivityValue(EActivity::EIsAmingPressed) &&
+		IsIdleAndNotFalling())
 	{
-		InputBufferComp->UpdateKey(EInputBufferKey::EToggleCombat);
+		ResetAimingMode();
 	}
+	else
+	{
+		if (InputBufferComp)
+		{
+			InputBufferComp->UpdateKey(EInputBufferKey::EToggleCombat);
+		}
+	}
+
 }
 
 void AXYXCharacter::ToggleCombat()
@@ -1087,25 +1118,28 @@ void AXYXCharacter::ShootArrowProjectile()
 		TSubclassOf<class UXYXItemBase> ItemArrowClass = TmpItem.ItemClass;
 		if (UKismetSystemLibrary::IsValidClass(ItemArrowClass))
 		{
-			FTransform TmpTransform = GetSpawnedArrowTranform();
-
-			UWorld* const World = GetWorld();
-			check(World);
-			FActorSpawnParameters ActorSpawnParams;
-			ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			ActorSpawnParams.Owner = this;
-			ActorSpawnParams.Instigator = this;
-			AXYXArrowProjectileBase* XYXActor = World->SpawnActor<AXYXArrowProjectileBase>(ItemArrowClass.Get(), TmpTransform, ActorSpawnParams);
-			if (XYXActor)
+			UXYXItemArrow* ItemArrow = NewObject<UXYXItemArrow>(this, ItemArrowClass);
+			if (UKismetSystemLibrary::IsValidClass(ItemArrow->GetProjectile()))
 			{
-				XYXActor->Damage = 50;
-				XYXActor->InitialSpeed = AimAlpha * 7000.0f;
-			}
+				FTransform TmpTransform = GetSpawnedArrowTranform();
+				UWorld* const World = GetWorld();
+				check(World);
+				FActorSpawnParameters ActorSpawnParams;
+				ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				ActorSpawnParams.Owner = this;
+				ActorSpawnParams.Instigator = this;
+				AXYXArrowProjectileBase* XYXActor = World->SpawnActor<AXYXArrowProjectileBase>(ItemArrow->GetProjectile(), TmpTransform, ActorSpawnParams);
+				if (XYXActor)
+				{
+					XYXActor->Damage = 50;
+					XYXActor->InitialSpeed = AimAlpha * 7000.0f;
+				}
 
-			if (InventoryComp)
-			{
-				auto Index = InventoryComp->FindIndexById(TmpItem.Id);
-				InventoryComp->RemoveItemAtIndex(Index, 1);
+				if (InventoryComp)
+				{
+					auto Index = InventoryComp->FindIndexById(TmpItem.Id);
+					InventoryComp->RemoveItemAtIndex(Index, 1);
+				}
 			}
 		}
 	}
@@ -1178,7 +1212,7 @@ void AXYXCharacter::UpdateZooming()
 void AXYXCharacter::UpdateAimAlpha()
 {
 	UWorld* const World = GetWorld();
-	if (World && EquipmentComp && StateManagerComp)
+	if (World && EquipmentComp && !EquipmentComp->bActionShootOrAimShoot && StateManagerComp)
 	{
 		float To0 = UKismetMathLibrary::FInterpTo_Constant(AimAlpha, 0.f, World->GetDeltaSeconds(), 5.0f);
 		float To1 = UKismetMathLibrary::FInterpTo_Constant(AimAlpha, 1.f, World->GetDeltaSeconds(), 5.0f);
@@ -1212,7 +1246,7 @@ FTransform AXYXCharacter::GetSpawnedArrowTranform()
 			TArray<AActor*> actorsToIgnore;
 			TmpCurTraceDirection = UKismetMathLibrary::GetDirectionUnitVector(TmpLineTraceStart, TmpLineTo);
 			if (UKismetSystemLibrary::LineTraceSingle(this, TmpLineTraceStart - TmpFVec, TmpLineTraceEnd - TmpFVec,
-				UEngineTypes::ConvertToTraceType(ECC_Camera), false, actorsToIgnore, EDrawDebugTrace::None, HitResult, true, 
+				UEngineTypes::ConvertToTraceType(ECC_XYXProjectileChannel), false, actorsToIgnore, EDrawDebugTrace::None, HitResult, true,
 				FLinearColor::Red, FLinearColor::Green, 10.0f))
 			{
 				FVector TmpImpactPoint = HitResult.ImpactPoint;
@@ -1265,6 +1299,14 @@ FTransform AXYXCharacter::GetSpawnedArrowTranform()
 	}
 
 	return FTransform(TmpArrowSpawnDirection, TmpArrowSpawnLocation, FVector(1.f, 1.f, 1.f));
+}
+
+void AXYXCharacter::ResetAimingMode()
+{
+	StopLookingForward();
+	StopAiming();
+	StopZooming();
+	// hide crosshair
 }
 
 void AXYXCharacter::CustomJump()

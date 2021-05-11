@@ -135,3 +135,8 @@ void AXYXDisplayedItemBow::HandleOnActiveItemChanged(FStoredItem OldItem, FStore
 		UpdateArrowMesh();
 	}
 }
+
+void AXYXDisplayedItemBow::SetHandAttachmentSocket(FName SocketName)
+{
+	HandAttachmentSocket = SocketName;
+}

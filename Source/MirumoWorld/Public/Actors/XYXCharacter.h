@@ -12,8 +12,8 @@
 #include "Components/TimelineComponent.h"
 #include "XYXCharacter.generated.h"
 
-#define ECC_ACFHeroesChannel  ECollisionChannel::ECC_GameTraceChannel1
-#define ECC_ACFEnemiesChannel  ECollisionChannel::ECC_GameTraceChannel2
+#define ECC_XYXProjectileChannel		ECollisionChannel::ECC_GameTraceChannel1
+#define ECC_XYXInteractableChannel  ECollisionChannel::ECC_GameTraceChannel2
 
 UCLASS()
 class MIRUMOWORLD_API AXYXCharacter : public ACharacter,
@@ -487,6 +487,9 @@ public:
 
 	UFUNCTION()
 		FTransform GetSpawnedArrowTranform();
+
+	UFUNCTION()
+		void ResetAimingMode();
 
 private:
 	bool bInitialized = false;

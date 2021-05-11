@@ -30,14 +30,14 @@ void AXYXImpaledArrow::SetArrowMesh(class UStaticMesh* Mesh)
 	}
 
 	SetLifeSpan(LifeTime);
-
-	if (AActor* NewOwner = GetOwner())
+	AActor* NewOwner = GetOwner();
+	if (NewOwner)
 	{
-		NewOwner->OnDestroyed.AddDynamic(this, &AXYXImpaledArrow::OnOwnerDestroyed);
+		NewOwner->OnDestroyed.AddDynamic(this, &AXYXImpaledArrow::OwnerDestroyed);
 	}
 }
 
-void AXYXImpaledArrow::OnOwnerDestroyed(AActor* DestroyedActor)
+void AXYXImpaledArrow::OwnerDestroyed(AActor* DestroyedActor)
 {
 	UWorld* World = GetWorld();
 	if (World) 

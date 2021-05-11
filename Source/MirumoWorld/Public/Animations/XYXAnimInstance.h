@@ -130,6 +130,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsBlocking = false;
 
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		bool bIsBowActionMode = false;
+
 	UFUNCTION()
 		void HandleOnInCombatChanged(bool bInCombat);
 

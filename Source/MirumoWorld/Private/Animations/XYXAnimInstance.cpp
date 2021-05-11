@@ -123,6 +123,11 @@ void UXYXAnimInstance::StoreCharacterInfo()
 			bIsBlocking = StateManagerComp->GetActivityValue(EActivity::EIsBlockingPressed);
 		}
 
+		if (IsValid(EquipmentComp))
+		{
+			bIsBowActionMode = EquipmentComp->bActionShootOrAimShoot;
+		}
+
 		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 		if (PlayerController)
 		{

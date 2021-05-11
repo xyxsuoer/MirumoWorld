@@ -33,6 +33,7 @@ public:
 	UFUNCTION()
 		void SetArrowMesh(class UStaticMesh* Mesh);
 
-	virtual void OnOwnerDestroyed(AActor* DestroyedActor);
+	UFUNCTION()
+	void OwnerDestroyed(AActor* DestroyedActor);
 
 };

@@ -9,6 +9,7 @@
 
 struct FModifier;
 class AXYXDisplayedItem;
+class AXYXArrowProjectileBase;
 
 UCLASS()
 class MIRUMOWORLD_API UXYXItemArrow : public UXYXItemBase,
@@ -27,6 +28,9 @@ public:
 		TSubclassOf<AXYXDisplayedItem> DisplayedItem;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		TSubclassOf<AXYXArrowProjectileBase> Projectile;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<FModifier> Modifiers;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
@@ -40,5 +44,7 @@ public:
 	virtual TArray<FModifier> GetModifiers_Implementation() override {
 		return Modifiers;
 	}
-	
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		TSubclassOf<AXYXArrowProjectileBase>  GetProjectile();
 };

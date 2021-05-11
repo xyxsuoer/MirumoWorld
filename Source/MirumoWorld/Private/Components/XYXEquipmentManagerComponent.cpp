@@ -13,6 +13,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Items/DisplayedItems/XYXDisplayedItemBow.h"
 
 
 // Sets default values for this component's properties
@@ -1162,4 +1163,17 @@ void UXYXEquipmentManagerComponent::HandleOnGameLoaded()
 void UXYXEquipmentManagerComponent::ChangeShootMode()
 {
 	bActionShootOrAimShoot = !bActionShootOrAimShoot;
+
+	AXYXDisplayedItem* DIOne = nullptr;
+	AXYXDisplayedItem* DISecond = nullptr;
+	GetDisplayedItem(EItemType::ERangeWeapon, 0, DIOne, DISecond);
+	if (IsValid(DIOne))
+	{
+		AXYXDisplayedItemBow* DIBow = Cast<AXYXDisplayedItemBow>(DIOne);
+		if (DIBow)
+		{
+			DIBow->SetHandAttachmentSocket(bActionShootOrAimShoot ? TEXT("bow_use_action") : TEXT("bow_use_aim"));
+			DIBow->Attach();
+		}
+	}
 }
