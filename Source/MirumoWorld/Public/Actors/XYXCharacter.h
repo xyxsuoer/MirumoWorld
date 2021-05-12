@@ -249,6 +249,14 @@ public:
 			FName GetBowStringSocketName();
 		virtual FName GetBowStringSocketName_Implementation();
 
+		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+			FRotator GetDesiredRotation();
+		virtual FRotator GetDesiredRotation_Implementation() override;
+
+		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+			bool TakeAttackDamage(FHitData HitData, EAttackResult& ResultType);
+		virtual bool TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType) override;
+
 		// =================================================================
 
 	UFUNCTION()

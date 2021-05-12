@@ -119,7 +119,7 @@ void AXYXArrowProjectileBase::OnArrowHit(FHitResult Hit)
 				TmpData.Damage = TmpDamage;
 				TmpData.DamageCauser = GetOwner();
 				EAttackResult ResultType;
-				bool Result = TmpHitObj->TakeDamage(TmpData, ResultType);
+				bool Result = TmpHitObj->TakeAttackDamage(TmpData, ResultType);
 				if (ResultType != EAttackResult::EFailed)
 				{
 					if (Result)
@@ -163,7 +163,7 @@ bool AXYXArrowProjectileBase::IsEnemy(AActor* Target)
 
 void AXYXArrowProjectileBase::SpawnImpaledArrow(class USceneComponent* Comp, FName SocketName, AActor* InActor, FVector InLocation)
 {
-	if (ProjectileMovement)
+	if (ProjectileMovement && UKismetSystemLibrary::IsValidClass(ImpledArrowClass))
 	{
 		ProjectileMovement->StopMovementImmediately();
 		FTransform TmpTransform = UKismetMathLibrary::MakeTransform(InLocation, GetActorRotation(), GetActorScale3D());
@@ -173,7 +173,7 @@ void AXYXArrowProjectileBase::SpawnImpaledArrow(class USceneComponent* Comp, FNa
 		ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		ActorSpawnParams.Owner = InActor;
 		ActorSpawnParams.Instigator = GetOwner()->GetInstigator();
-		AXYXImpaledArrow* XYXActor = World->SpawnActor<AXYXImpaledArrow>(AXYXImpaledArrow::StaticClass(), TmpTransform, ActorSpawnParams);
+		AXYXImpaledArrow* XYXActor = World->SpawnActor<AXYXImpaledArrow>(ImpledArrowClass, TmpTransform, ActorSpawnParams);
 		if (XYXActor)
 		{
 			XYXActor->SetArrowMesh(StaticMeshComp->GetStaticMesh());

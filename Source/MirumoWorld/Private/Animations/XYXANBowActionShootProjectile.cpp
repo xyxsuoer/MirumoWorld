@@ -2,7 +2,9 @@
 
 
 #include "Animations/XYXANBowActionShootProjectile.h"
+#include "Components/XYXEquipmentManagerComponent.h"
 #include "Actors/XYXCharacter.h"
+#include "Items/DisplayedItems/XYXDisplayedItemQuiver.h"
 
 void UXYXANBowActionShootProjectile::Notify(class USkeletalMeshComponent* MeshComp, class UAnimSequenceBase* Animation)
 {
@@ -12,6 +14,22 @@ void UXYXANBowActionShootProjectile::Notify(class USkeletalMeshComponent* MeshCo
 		if (CharacterOwner)
 		{
 			CharacterOwner->ShootArrowProjectile();
+
+			UXYXEquipmentManagerComponent* EquipmentComp = CharacterOwner->GetEquipmentManagerComponent();
+			if (EquipmentComp)
+			{
+				AXYXDisplayedItem* DIOne = nullptr;
+				AXYXDisplayedItem* DISecond = nullptr;
+				EquipmentComp->GetDisplayedItem(EItemType::EArrows, 0, DIOne, DISecond);
+				if (IsValid(DIOne))
+				{
+					AXYXDisplayedItemQuiver* DIQuiver = Cast<AXYXDisplayedItemQuiver>(DIOne);
+					if (DIQuiver)
+					{
+						DIQuiver->UpdateQuiver();
+					}
+				}
+			}
 		}
 	}
 }

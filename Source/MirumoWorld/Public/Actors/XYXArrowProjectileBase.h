@@ -42,6 +42,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		class UXYXCollisionHandlerComponent* CollisionHandler;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		TSubclassOf<class AXYXImpaledArrow> ImpledArrowClass;
+
 protected:
 
 	virtual void BeginPlay() override;

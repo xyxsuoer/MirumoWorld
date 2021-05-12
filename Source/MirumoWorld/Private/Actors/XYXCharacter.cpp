@@ -204,6 +204,18 @@ FName AXYXCharacter::GetBowStringSocketName_Implementation()
 	return TEXT("bow_string");
 }
 
+FRotator AXYXCharacter::GetDesiredRotation_Implementation() 
+{
+	FRotator aa;
+	return aa;
+}
+
+bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType)
+{
+	ResultType = EAttackResult::EFailed;
+	return false;
+}
+
 void AXYXCharacter::InitialzeCharacter()
 {
 	if (InputBufferComp) 
@@ -445,7 +457,7 @@ bool AXYXCharacter::CanMeleeAttack()
 	if (StateManagerComp && StateManagerComp->GetState() == EState::EIdle &&
 		EquipmentComp && EquipmentComp->GetIsInCombat() &&
 		(EquipmentComp->GetCombatType() == ECombatType::EUnarmed || EquipmentComp->GetCombatType()== ECombatType::EMelee ||
-			(EquipmentComp->GetCombatType() == ECombatType::ERanged && EquipmentComp->bActionShootOrAimShoot))) 
+			(EquipmentComp->GetCombatType() == ECombatType::ERanged && EquipmentComp->bActionShootOrAimShoot && EquipmentComp->AreArrowEquipped())))
 	{
 		return true;
 	}
