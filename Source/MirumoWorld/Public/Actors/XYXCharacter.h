@@ -69,6 +69,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXInventoryManagerComponent* InventoryComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXRotatingComponent* RotatingComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXDynamicTargetingComponent* DynamicTargetingComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UArrowComponent* TargetArrow;
+
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXInputBufferComponent* GetInputBufferComponent() const { return InputBufferComp; }
 
@@ -86,6 +95,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXInventoryManagerComponent* GetInventoryManagerComponent() const { return InventoryComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXRotatingComponent* GetRotatingComponent() const { return RotatingComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXDynamicTargetingComponent* GetDynamicTargetingComponent() const { return DynamicTargetingComp; }
 
 	// =================================================
 
@@ -188,11 +203,18 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		UTimelineComponent* BlockingTimeline;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		UCurveFloat* BlockingFloatCurve;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TEnumAsByte<ETimelineDirection::Type> BlockingTimelineDirection;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		UTimelineComponent* ZoomingTimeline;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		UCurveFloat* ZoomingFloatCurve;
+
 
 	// Movement Input
 	virtual void MoveRight(float Val);
@@ -489,6 +511,18 @@ public:
 
 	UFUNCTION()
 		void UpdateZooming();
+
+	UFUNCTION()
+		void RegisterZoomingTimeline();
+
+	UFUNCTION()
+		void ZoomingTimelineCallback(float Val);
+
+	UFUNCTION()
+		void ZoomingTimelineFinishedCallback();
+
+	UFUNCTION()
+		void PlayZoomingTimeline(bool bInPlay);
 
 	UFUNCTION()
 		void UpdateAimAlpha();

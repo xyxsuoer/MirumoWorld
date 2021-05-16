@@ -23,6 +23,9 @@
 #include "Items/ObjectItems/XYXItemBase.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Items/ObjectItems/XYXItemArrow.h"
+#include <Components/XYXRotatingComponent.h>
+#include <Components/XYXDynamicTargetingComponent.h>
+#include <Components/ArrowComponent.h>
 
 
 
@@ -52,6 +55,9 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 		ArrowSpawnLocation->SetupAttachment(GetMesh());
 	}
 
+	TargetArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow Component"));
+	TargetArrow->SetupAttachment(RootComponent);
+
 	SetReplicates(true);
 	SetReplicateMovement(true);
 
@@ -75,6 +81,8 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	MovementSpeedComp = CreateDefaultSubobject<UXYXMovementSpeedComponent>(TEXT("Movement Speed Component"));
 	EquipmentComp = CreateDefaultSubobject<UXYXEquipmentManagerComponent>(TEXT("Equipment Manager Component"));
 	InventoryComp = CreateDefaultSubobject<UXYXInventoryManagerComponent>(TEXT("Inventory Manager Component"));
+	RotatingComp = CreateDefaultSubobject<UXYXRotatingComponent>(TEXT("Rotating Component"));
+	DynamicTargetingComp = CreateDefaultSubobject<UXYXDynamicTargetingComponent>(TEXT("Dynamic Targeting Component"));
 
 	static const ConstructorHelpers::FObjectFinder<UCurveFloat> Curve(TEXT("CurveFloat'/Game/Mirumo/CurveFloats/Blocking_Timeline.Blocking_Timeline'"));
 	check(Curve.Succeeded());
@@ -125,12 +133,13 @@ void AXYXCharacter::BeginPlay()
 	Super::BeginPlay();
 	InitialzeCharacter();
 	RegisterBlockingTimeline();
+	RegisterZoomingTimeline();
 }
 
 void AXYXCharacter::RegisterBlockingTimeline()
 {
-	FOnTimelineFloat onTimelineCallback;
-	FOnTimelineEventStatic onTimelineFinishedCallback;
+	FOnTimelineFloat BlockingOnTimelineCallback;
+	FOnTimelineEventStatic BlockingOnTimelineFinishedCallback;
 
 	if (BlockingFloatCurve)
 	{
@@ -150,13 +159,45 @@ void AXYXCharacter::RegisterBlockingTimeline()
 		BlockingTimeline->SetPlaybackPosition(0.0f, false);
 
 		//Add the float curve to the timeline and connect it to your timelines's interpolation function
-		onTimelineCallback.BindUFunction(this, FName{ TEXT("BlockingTimelineCallback") });
-		onTimelineFinishedCallback.BindUFunction(this, FName{ TEXT("BlockingTimelineFinishedCallback") });
-		BlockingTimeline->AddInterpFloat(BlockingFloatCurve, onTimelineCallback);
-		BlockingTimeline->SetTimelineFinishedFunc(onTimelineFinishedCallback);
+		BlockingOnTimelineCallback.BindUFunction(this, FName{ TEXT("BlockingTimelineCallback") });
+		BlockingOnTimelineFinishedCallback.BindUFunction(this, FName{ TEXT("BlockingTimelineFinishedCallback") });
+		BlockingTimeline->AddInterpFloat(BlockingFloatCurve, BlockingOnTimelineCallback);
+		BlockingTimeline->SetTimelineFinishedFunc(BlockingOnTimelineFinishedCallback);
 
 		BlockingTimeline->RegisterComponent();
 	}
+}
+
+void AXYXCharacter::RegisterZoomingTimeline()
+{
+	FOnTimelineFloat ZoomingOnTimelineCallback;
+	FOnTimelineEventStatic ZoomingOnTimelineFinishedCallback;
+
+	if (ZoomingFloatCurve)
+	{
+		ZoomingTimeline = NewObject<UTimelineComponent>(this, FName("ZoomingTimelineAnimation"));
+		ZoomingTimeline->CreationMethod = EComponentCreationMethod::UserConstructionScript; // Indicate it comes from a blueprint so it gets cleared when we rerun construction scripts
+		this->BlueprintCreatedComponents.Add(ZoomingTimeline); // Add to array so it gets saved
+		ZoomingTimeline->SetNetAddressable();	// This component has a stable name that can be referenced for replication
+
+		ZoomingTimeline->SetPropertySetObject(this); // Set which object the timeline should drive properties on
+
+		ZoomingTimeline->SetLooping(false);
+		ZoomingTimeline->SetTimelineLength(1.f);
+		ZoomingTimeline->SetPlayRate(2.0f);
+		ZoomingTimeline->SetTimelineLengthMode(ETimelineLengthMode::TL_LastKeyFrame);
+
+		ZoomingTimeline->SetPlaybackPosition(0.0f, false);
+
+		//Add the float curve to the timeline and connect it to your timelines's interpolation function
+		ZoomingOnTimelineCallback.BindUFunction(this, FName{ TEXT("ZoomingTimelineCallback") });
+		ZoomingOnTimelineFinishedCallback.BindUFunction(this, FName{ TEXT("ZoomingTimelineFinishedCallback") });
+		ZoomingTimeline->AddInterpFloat(ZoomingFloatCurve, ZoomingOnTimelineCallback);
+		ZoomingTimeline->SetTimelineFinishedFunc(ZoomingOnTimelineFinishedCallback);
+
+		ZoomingTimeline->RegisterComponent();
+	}
+
 }
 
 
@@ -1027,7 +1068,13 @@ void AXYXCharacter::BlockingTimelineCallback(float Val)
 
 void AXYXCharacter::BlockingTimelineFinishedCallback()
 {
-	
+	switch(BlockingTimelineDirection)
+	{
+	case ETimelineDirection::Type::Forward:
+		break;
+	case ETimelineDirection::Type::Backward:
+		break;
+	}
 }
 
 void AXYXCharacter::PlayBlockingTimeline(bool bInPlay)
@@ -1218,7 +1265,44 @@ void AXYXCharacter::UpdateRotationSettings()
 
 void AXYXCharacter::UpdateZooming()
 {
+	bool bPlay = false;
+	if (StateManagerComp && StateManagerComp->GetActivityValue(EActivity::EIsLookingForward) &&
+		(StateManagerComp->GetState() == EState::EAttacking || IsIdleAndNotFalling()) &&
+		StateManagerComp->GetActivityValue(EActivity::EIsZooming) || bAutoZoom)
+	{
+		bPlay = true;
+	}
 
+	PlayZoomingTimeline(bPlay);
+}
+
+
+void AXYXCharacter::ZoomingTimelineCallback(float Val)
+{
+	ZoomAlpha = ZoomingTimeline->GetPlaybackPosition();
+	FollowCamera->SetRelativeRotation(UKismetMathLibrary::RLerp(StartCameraSettings.Rotation, ZoomedCameraSettings.Rotation, ZoomAlpha, false));
+	CameraBoom->TargetArmLength = UKismetMathLibrary::Lerp(StartCameraSettings.ArmLength, ZoomedCameraSettings.ArmLength, ZoomAlpha);
+	CameraBoom->SocketOffset = UKismetMathLibrary::VLerp(StartCameraSettings.SocketOffset, ZoomedCameraSettings.SocketOffset, ZoomAlpha);
+}
+
+void AXYXCharacter::ZoomingTimelineFinishedCallback()
+{
+
+}
+
+void AXYXCharacter::PlayZoomingTimeline(bool bInPlay)
+{
+	if (ZoomingTimeline != NULL)
+	{
+		if (bInPlay)
+		{
+			ZoomingTimeline->PlayFromStart();
+		}
+		else
+		{
+			ZoomingTimeline->ReverseFromEnd();
+		}
+	}
 }
 
 void AXYXCharacter::UpdateAimAlpha()
