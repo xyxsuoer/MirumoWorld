@@ -39,8 +39,10 @@ void UXYXAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (XYXCharacter)
 	{
 		StoreCharacterInfo();
+		UpdateLeanAmount();
+		UpdateLookatValues();
+		UpdateAimOffsetAlpha();
 	}
-
 }
 
 void UXYXAnimInstance::SetReferences()
@@ -94,6 +96,39 @@ void UXYXAnimInstance::HandleOnActivityChanged(EActivity Activity, bool Value)
 	if (Activity == EActivity::EIsLookingForward)
 	{
 		bIsLookingForward = Value;
+	}
+}
+
+void UXYXAnimInstance::UpdateLeanAmount()
+{
+	float TmpLeanAmount = 0;
+	float TmpInterpSpeed = 1.f;
+	if (XYXCharacter && GetWorld())
+	{
+		XYXCharacter->CalculateLeanAmount(TmpLeanAmount, TmpInterpSpeed);
+		LeanAmount = UKismetMathLibrary::FInterpTo(LeanAmount, TmpLeanAmount, GetWorld()->GetDeltaSeconds(), TmpInterpSpeed);
+	}
+}
+
+void UXYXAnimInstance::UpdateLookatValues()
+{
+	if (XYXCharacter && GetWorld())
+	{
+		FRotator TmpRotator = UKismetMathLibrary::NormalizedDeltaRotator(XYXCharacter->GetControlRotation(), XYXCharacter->GetActorRotation());
+		FRotator TmpRotator2 = UKismetMathLibrary::MakeRotator(0.f, LookAtPitch, LookAtYaw);
+		FRotator TmpRotator3 = UKismetMathLibrary::RInterpTo(TmpRotator, TmpRotator2, GetWorld()->GetDeltaSeconds(), 15.f);
+
+		LookAtPitch = UKismetMathLibrary::ClampAngle(TmpRotator3.Pitch, -90.f, 90.f);
+		LookAtYaw = UKismetMathLibrary::ClampAngle(TmpRotator3.Yaw, -90.f, 90.f);
+	}
+}
+
+void UXYXAnimInstance::UpdateAimOffsetAlpha()
+{
+	if (GetWorld())
+	{
+		float TargetValue = bIsLookingForward ? 1.f : 0.f;
+		AimOffsetAlpha = UKismetMathLibrary::FInterpTo(AimOffsetAlpha, TargetValue, GetWorld()->GetDeltaSeconds(), 5.f);
 	}
 }
 

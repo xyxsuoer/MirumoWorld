@@ -84,9 +84,13 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	RotatingComp = CreateDefaultSubobject<UXYXRotatingComponent>(TEXT("Rotating Component"));
 	DynamicTargetingComp = CreateDefaultSubobject<UXYXDynamicTargetingComponent>(TEXT("Dynamic Targeting Component"));
 
-	static const ConstructorHelpers::FObjectFinder<UCurveFloat> Curve(TEXT("CurveFloat'/Game/Mirumo/CurveFloats/Blocking_Timeline.Blocking_Timeline'"));
-	check(Curve.Succeeded());
-	BlockingFloatCurve = Curve.Object;
+	static const ConstructorHelpers::FObjectFinder<UCurveFloat> BlockingCurve(TEXT("CurveFloat'/Game/Mirumo/CurveFloats/Blocking_Timeline.Blocking_Timeline'"));
+	check(BlockingCurve.Succeeded());
+	BlockingFloatCurve = BlockingCurve.Object;
+
+	static const ConstructorHelpers::FObjectFinder<UCurveFloat> ZoomingCurve(TEXT("CurveFloat'/Game/Mirumo/CurveFloats/Zooming_Timeline.Zooming_Timeline'"));
+	check(ZoomingCurve.Succeeded());
+	ZoomingFloatCurve = ZoomingCurve.Object;
 
 }
 
@@ -124,6 +128,8 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("SwitchSomething", IE_Pressed, this, &AXYXCharacter::SwitchSomethingAction);
 		PlayerInputComponent->BindAction("BowAttack", IE_Pressed, this, &AXYXCharacter::StartBowAimModeAttackAction);
 		PlayerInputComponent->BindAction("BowAttack", IE_Released, this, &AXYXCharacter::EndBowAimModeAttackAction);
+		PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &AXYXCharacter::StartZooming);
+		PlayerInputComponent->BindAction("Zoom", IE_Released, this, &AXYXCharacter::StopZooming);
 	}
 }
 
@@ -247,8 +253,83 @@ FName AXYXCharacter::GetBowStringSocketName_Implementation()
 
 FRotator AXYXCharacter::GetDesiredRotation_Implementation() 
 {
-	FRotator aa;
-	return aa;
+	FRotator OutRotator = FRotator::ZeroRotator;
+	if (!StateManagerComp || !DynamicTargetingComp || !MontageManagerComp)
+	{
+		return OutRotator;
+	}
+
+	if (StateManagerComp->GetState() == EState::EBackstabbing)
+	{
+		if (IsValid(BackstabbedActor))
+		{
+			OutRotator.Roll = this->GetActorRotation().Roll;
+			OutRotator.Pitch = this->GetActorRotation().Pitch;
+			OutRotator.Yaw = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), BackstabbedActor->GetActorLocation()).Yaw;
+			return OutRotator;
+		}
+	}
+
+	if (DynamicTargetingComp->IsTargetingEnabled())
+	{
+		bool RotateTowardsSelectedTarget = false;
+		if (HasMovementInput())
+		{
+			if (StateManagerComp->GetState() == EState::ERolling)
+			{
+				if (MontageManagerComp->GetLastRequestedAction() == EMontageAction::ERollForward)
+				{
+					OutRotator = UKismetMathLibrary::MakeRotFromX(this->GetLastMovementInputVector());
+				}
+				else
+				{
+					RotateTowardsSelectedTarget = true;
+				}
+			}
+			else
+			{
+				RotateTowardsSelectedTarget = true;
+			}
+		}
+		else
+		{
+			if (StateManagerComp->GetState() == EState::ERolling)
+			{
+				if (MontageManagerComp->GetLastRequestedAction() == EMontageAction::ERollForward)
+				{
+					OutRotator = this->GetActorRotation();
+				}
+				else
+				{
+					RotateTowardsSelectedTarget = true;
+				}
+			}
+			else
+			{
+				RotateTowardsSelectedTarget = true;
+			}
+		}
+
+		if (RotateTowardsSelectedTarget && DynamicTargetingComp->SelectedActor)
+		{
+			OutRotator.Roll = this->GetActorRotation().Roll;
+			OutRotator.Pitch = this->GetActorRotation().Pitch;
+			OutRotator.Yaw = UKismetMathLibrary::FindLookAtRotation(this->GetActorLocation(), DynamicTargetingComp->SelectedActor->GetActorLocation()).Yaw;
+		}
+	}
+	else
+	{
+		if (HasMovementInput())
+		{
+			OutRotator = UKismetMathLibrary::MakeRotFromX(this->GetLastMovementInputVector());
+		}
+		else
+		{
+			OutRotator = this->GetActorRotation();
+		}
+	}
+
+	return OutRotator;
 }
 
 bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType)
@@ -284,6 +365,16 @@ void AXYXCharacter::InitialzeCharacter()
 	{
 		StateManagerComp->OnActivityChanged.AddDynamic(this, &AXYXCharacter::HandleOnActivityChanged);
 		StateManagerComp->OnStateChanged.AddDynamic(this, &AXYXCharacter::HandleOnStateChanged);
+	}
+
+	if (RotatingComp)
+	{
+		RotatingComp->OnRotatingEnd.AddDynamic(this, &AXYXCharacter::HandleOnRotatingEnd);
+	}
+
+	if (DynamicTargetingComp)
+	{
+		DynamicTargetingComp->OnTargetingToggled.AddDynamic(this, &AXYXCharacter::HandleOnTargetingToggled);
 	}
 
 	StartCameraSettings.Rotation = FollowCamera->GetRelativeRotation();
@@ -444,6 +535,21 @@ void AXYXCharacter::HandleOnStateChanged(EState PrevState, EState NewState)
 		MeleeAttackType = EMeleeAttackType::ENone;
 		BackstabbedActor = nullptr;
 	}
+}
+
+void AXYXCharacter::HandleOnRotatingEnd()
+{
+	if (StateManagerComp && StateManagerComp->GetState() == EState::EAttacking &&
+		(EquipmentComp && EquipmentComp->GetCombatType() == ECombatType::EUnarmed || EquipmentComp->GetCombatType() == ECombatType::EMelee) &&
+		EquipmentComp->GetIsInCombat() && DynamicTargetingComp && DynamicTargetingComp->IsTargetingEnabled() && RotatingComp)
+	{
+		RotatingComp->StartRotatingWithTime(0.5f, 720.f);
+	}
+}
+
+void AXYXCharacter::HandleOnTargetingToggled(bool bEnabled)
+{
+	UpdateRotationSettings();
 }
 
 void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
@@ -1083,11 +1189,11 @@ void AXYXCharacter::PlayBlockingTimeline(bool bInPlay)
 	{
 		if (bInPlay)
 		{
-			BlockingTimeline->PlayFromStart();
+			BlockingTimeline->Play();
 		}
 		else
 		{
-			BlockingTimeline->ReverseFromEnd();
+			BlockingTimeline->Reverse();
 		}
 	}
 }
@@ -1260,7 +1366,60 @@ void AXYXCharacter::StopZooming()
 
 void AXYXCharacter::UpdateRotationSettings()
 {
-
+	if (StateManagerComp && StateManagerComp->GetActivityValue(EActivity::EIsLookingForward) && 
+		(IsIdleAndNotFalling() || StateManagerComp->GetState() == EState::EAttacking || 
+			StateManagerComp->GetState() == EState::EParrying || StateManagerComp->GetState() == EState::EBackstabbing ))
+	{
+		VerticalLookRate = 25.f;
+		HorizontalLookRate = 25.f;
+		SetCameraLagSmoothly(ZoomedCameraSettings.CameraLagSpeed);
+		if (DynamicTargetingComp && RotatingComp)
+		{
+			// free camera and face towards camera direction
+			DynamicTargetingComp->SetFreeCamera(true);
+			RotatingComp->SetRotationMode(ERotationMode::EFaceCamera);
+		}
+	}
+	else
+	{
+		VerticalLookRate = 45.f;
+		HorizontalLookRate = 45.f;
+		SetCameraLagSmoothly(StartCameraSettings.CameraLagSpeed);
+		if (DynamicTargetingComp && RotatingComp && DynamicTargetingComp->IsTargetingEnabled())
+		{
+			if (EquipmentComp->GetIsInCombat())
+			{
+				// set free camera and rotation mode (only if not in roll) based on combat type
+				switch(EquipmentComp->GetCombatType())
+				{
+					case ECombatType::EUnarmed:
+					case ECombatType::EMelee:
+						DynamicTargetingComp->SetFreeCamera(false);
+						RotatingComp->SetRotationMode(ERotationMode::EFaceCamera);
+						break;
+					case ECombatType::EMagic:
+					case ECombatType::ERanged:
+						DynamicTargetingComp->SetFreeCamera(true);
+						RotatingComp->SetRotationMode(ERotationMode::EOrientToMovement);
+						break;
+				}
+			}
+			else
+			{
+				// free camera and update rotation mode only if state is not equal roll (because roll should use OrientToMovement)
+				DynamicTargetingComp->SetFreeCamera(false);
+				RotatingComp->SetRotationMode(ERotationMode::EFaceCamera);
+			}
+		}
+		else
+		{
+			if (RotatingComp)
+			{
+				// orient to movement (character rotates towards movement input)
+				RotatingComp->SetRotationMode(ERotationMode::EOrientToMovement);
+			}
+		}
+	}
 }
 
 void AXYXCharacter::UpdateZooming()
@@ -1268,7 +1427,7 @@ void AXYXCharacter::UpdateZooming()
 	bool bPlay = false;
 	if (StateManagerComp && StateManagerComp->GetActivityValue(EActivity::EIsLookingForward) &&
 		(StateManagerComp->GetState() == EState::EAttacking || IsIdleAndNotFalling()) &&
-		StateManagerComp->GetActivityValue(EActivity::EIsZooming) || bAutoZoom)
+		StateManagerComp->GetActivityValue(EActivity::EIsZooming) && EquipmentComp && !EquipmentComp->bActionShootOrAimShoot)
 	{
 		bPlay = true;
 	}
@@ -1296,11 +1455,11 @@ void AXYXCharacter::PlayZoomingTimeline(bool bInPlay)
 	{
 		if (bInPlay)
 		{
-			ZoomingTimeline->PlayFromStart();
+			ZoomingTimeline->Play();
 		}
 		else
 		{
-			ZoomingTimeline->ReverseFromEnd();
+			ZoomingTimeline->Reverse();
 		}
 	}
 }
@@ -1319,9 +1478,14 @@ void AXYXCharacter::UpdateAimAlpha()
 
 FTransform AXYXCharacter::GetSpawnedArrowTranform()
 {
-	FVector TmpArrowSpawnLocation = ArrowSpawnLocation->GetComponentLocation();
-	FVector TmpCameraDirection; 
+	FVector TmpArrowSpawnLocation;
+	FVector TmpCameraDirection;
 	FRotator TmpArrowSpawnDirection;
+	if (ArrowSpawnLocation)
+	{
+		TmpArrowSpawnLocation = ArrowSpawnLocation->GetComponentLocation();
+	}
+
 	if (GetController())
 	{
 		FVector TmpTo = GetActorForwardVector() * UXYXFunctionLibrary::GetCrosshairDistanceLocation() + TmpArrowSpawnLocation;
@@ -1342,7 +1506,7 @@ FTransform AXYXCharacter::GetSpawnedArrowTranform()
 			TArray<AActor*> actorsToIgnore;
 			TmpCurTraceDirection = UKismetMathLibrary::GetDirectionUnitVector(TmpLineTraceStart, TmpLineTo);
 			if (UKismetSystemLibrary::LineTraceSingle(this, TmpLineTraceStart - TmpFVec, TmpLineTraceEnd - TmpFVec,
-				UEngineTypes::ConvertToTraceType(ECC_XYXProjectileChannel), false, actorsToIgnore, EDrawDebugTrace::None, HitResult, true,
+				UEngineTypes::ConvertToTraceType(ECC_XYXProjectileChannel), false, actorsToIgnore, EDrawDebugTrace::ForDuration, HitResult, true,
 				FLinearColor::Red, FLinearColor::Green, 10.0f))
 			{
 				FVector TmpImpactPoint = HitResult.ImpactPoint;
@@ -1403,6 +1567,50 @@ void AXYXCharacter::ResetAimingMode()
 	StopAiming();
 	StopZooming();
 	// hide crosshair
+}
+
+
+
+void AXYXCharacter::SetCameraLagSmoothly(float InTargetLagSpeed)
+{
+	TargetLagSpeed = InTargetLagSpeed;
+	UWorld* World = GetWorld();
+	check(World);
+	World->GetTimerManager().SetTimer(UpdateCameraLagTimer, this, &AXYXCharacter::UpdateCameraLag, 0.016f, true);
+}
+
+void AXYXCharacter::UpdateCameraLag()
+{
+	if (CameraBoom && GetWorld())
+	{
+		CameraBoom->CameraLagSpeed = UKismetMathLibrary::FInterpTo_Constant(
+			CameraBoom->CameraLagSpeed, TargetLagSpeed, GetWorld()->GetDeltaSeconds(), 120.f);
+		if (UKismetMathLibrary::NearlyEqual_FloatFloat(CameraBoom->CameraLagSpeed, TargetLagSpeed, 0.1))
+		{
+			GetWorld()->GetTimerManager().ClearTimer(UpdateCameraLagTimer);
+		}
+	}
+}
+
+void AXYXCharacter::CalculateLeanAmount(float& LeanAmount, float& InterpSpeed)
+{
+	// Keep leaning if character:
+	//	*	Is in Jog / Sprint movement state
+	//	* Is Idle * not falling
+	//	* IsMoving(Velocity > 10)
+	//	* LookingForward is disabled
+
+	bool TmpCondition = false;
+	if (MovementSpeedComp && StateManagerComp)
+	{
+			TmpCondition = IsIdleAndNotFalling() &&
+			(MovementSpeedComp->GetMovementState() == EMovementState::EJog || MovementSpeedComp->GetMovementState() == EMovementState::ESprint) &&
+			UKismetMathLibrary::VSize(GetCharacterMovement()->Velocity) > 10.f &&
+			!StateManagerComp->GetActivityValue(EActivity::EIsLookingForward);
+	}
+
+	LeanAmount = TmpCondition ? UKismetMathLibrary::Clamp(HorizontalLookValue, -1.f, 1.f) : 0.f;
+	InterpSpeed = TmpCondition ? 10.f : 1.f;
 }
 
 void AXYXCharacter::CustomJump()
@@ -1663,6 +1871,7 @@ void AXYXCharacter::AddControllerYawInput(float Val)
 
 	if (Val != 0.f)
 	{
+		HorizontalLookValue = Val;
 		Val = Val * HorizontalLookRate * World->GetDeltaSeconds();
 		APawn::AddControllerYawInput(Val);
 	}

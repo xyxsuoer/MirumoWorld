@@ -154,6 +154,15 @@ protected:
 	UFUNCTION()
 		void HandleOnActivityChanged(EActivity Activity, bool Value);
 
+	UFUNCTION()
+		void UpdateLeanAmount();
+
+	UFUNCTION()
+		void UpdateLookatValues();
+
+	UFUNCTION()
+		void UpdateAimOffsetAlpha();
+
 private:
 
 	void StoreCharacterInfo();

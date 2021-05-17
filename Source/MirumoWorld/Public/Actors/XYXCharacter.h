@@ -173,9 +173,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		float SlowMotionStaminaCost = 1.f;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		bool bAutoZoom = false;
-
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		FCameraSettings ZoomedCameraSettings = FCameraSettings(FRotator(0.f, 0.f, 0.f), 150.f, FVector(0.f, 50.f, 100.f), 30.f);
 
@@ -313,6 +310,12 @@ public:
 
 	UFUNCTION()
 		void HandleOnStateChanged(EState PrevState, EState NewState);
+
+	UFUNCTION()
+		void HandleOnRotatingEnd();
+
+	UFUNCTION()
+		void HandleOnTargetingToggled(bool bEnabled);
 
 	UFUNCTION()
 		void MeleeAttack(EMeleeAttackType AttackType);
@@ -533,8 +536,19 @@ public:
 	UFUNCTION()
 		void ResetAimingMode();
 
+	UFUNCTION()
+		void SetCameraLagSmoothly(float InTargetLagSpeed);
+
+	UFUNCTION()
+		void UpdateCameraLag();
+
+	UFUNCTION()
+		void CalculateLeanAmount(float& LeanAmount, float& InterpSpeed);
+
 private:
 	bool bInitialized = false;
+
+	float HorizontalLookValue = 0.f;
 
 	UPROPERTY()
 		FTimerHandle ResetMeleeAttackCounterTimer;
@@ -547,5 +561,8 @@ private:
 
 	UPROPERTY()
 		FTimerHandle StopLookingForwardTimer;
+
+	UPROPERTY()
+		FTimerHandle UpdateCameraLagTimer;
 
 };
