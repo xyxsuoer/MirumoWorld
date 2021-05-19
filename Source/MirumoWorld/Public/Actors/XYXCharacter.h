@@ -326,6 +326,9 @@ public:
 		void BowActionAttack(EMeleeAttackType AttackType);
 
 	UFUNCTION()
+		void PlayBowActionAttackMontage();
+
+	UFUNCTION()
 		bool CanMeleeAttack();
 
 	UFUNCTION()

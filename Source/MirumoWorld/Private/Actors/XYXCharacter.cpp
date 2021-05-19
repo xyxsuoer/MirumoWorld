@@ -559,14 +559,21 @@ void AXYXCharacter::CombatAttack(EMeleeAttackType AttackType)
 		return;
 	}
 
-	if (EquipmentComp->GetCombatType() == ECombatType::EMelee)
+	if (EquipmentComp->GetCombatType() == ECombatType::EMelee || EquipmentComp->GetCombatType() == ECombatType::EUnarmed)
 	{
 		MeleeAttack(AttackType);
 	}
 	
 	if(EquipmentComp->GetCombatType() == ECombatType::ERanged )
 	{
+		StartLookingForward();
+
 		BowActionAttack(AttackType);
+
+		UWorld* World = GetWorld();
+		check(World);
+		FTimerHandle BowActionAttackTimer;
+		World->GetTimerManager().SetTimer(BowActionAttackTimer, this, &AXYXCharacter::PlayBowActionAttackMontage, 0.2f, false);
 	}
 }
 
@@ -604,7 +611,7 @@ void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 			Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, AttackSpeed, EMontagePlayReturnType::Duration);
 			if (Duration > 0.f)
 			{
-				Duration *= 0.99f;
+				Duration *= 0.99f ;
 				World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration, false);
 			}
 		}
@@ -632,10 +639,41 @@ void AXYXCharacter::BowActionAttack(EMeleeAttackType AttackType)
 	{
 		MeleeAttackType = AttackType;
 	}
+}
 
-	if (StateManagerComp)
-		StateManagerComp->SetState(EState::EAttacking);
+void AXYXCharacter::PlayBowActionAttackMontage()
+{
+	UWorld* World = GetWorld();
+	check(World);
 
+	UAnimMontage* Montage = GetMeleeAttackMontage(MeleeAttackType);
+	if (IsValid(Montage))
+	{
+		World->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
+
+		if (GetMesh() && GetMesh()->GetAnimInstance() && IsIdleAndNotFalling())
+		{
+			if (StateManagerComp)
+				StateManagerComp->SetState(EState::EAttacking);
+
+			float Duration = -1.f;
+			float AttackSpeed = 1.0f;
+			Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, AttackSpeed, EMontagePlayReturnType::Duration);
+			if (Duration > 0.f)
+			{
+				Duration = Duration * 0.99f;
+				World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration, false);
+				World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, Duration, false);
+			}
+		}
+	}
+	else
+	{
+		if (StateManagerComp)
+			StateManagerComp->ResetState(0.f);
+		ResetMeleeAttackCounter();
+		StopLookingForward();
+	}
 }
 
 bool AXYXCharacter::CanMeleeAttack()
@@ -653,7 +691,7 @@ bool AXYXCharacter::CanMeleeAttack()
 bool AXYXCharacter::CanBowAttack()
 {
 	if (EquipmentComp && EquipmentComp->GetIsInCombat() && EquipmentComp->AreArrowEquipped() &&
-		EquipmentComp->GetCombatType() == ECombatType::ERanged )
+		EquipmentComp->GetCombatType() == ECombatType::ERanged)
 	{
 		return true;
 	}
@@ -1255,11 +1293,7 @@ void AXYXCharacter::StartBowAimModeAttackAction()
 	{
 		if (CanBowAttack())
 		{
-			if (EquipmentComp->bActionShootOrAimShoot)
-			{
-				StartLookingForward();
-			}
-			else
+			if (!EquipmentComp->bActionShootOrAimShoot)
 			{
 				StartAiming();
 				StartLookingForward();
@@ -1282,35 +1316,7 @@ void AXYXCharacter::EndBowAimModeAttackAction()
 		UWorld* World = GetWorld();
 		check(World);
 
-		if (EquipmentComp->bActionShootOrAimShoot)
-		{
-			World->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
-
-			UAnimMontage* Montage = GetMeleeAttackMontage(MeleeAttackType);
-			if (IsValid(Montage))
-			{
-				if (GetMesh() && GetMesh()->GetAnimInstance())
-				{
-					float Duration = -1.f;
-					float AttackSpeed = 1.0f;
-					Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, AttackSpeed, EMontagePlayReturnType::Duration);
-					if (Duration > 0.f)
-					{
-						Duration *= 0.99f;
-						World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration, false);
-					}
-				}
-			}
-			else
-			{
-				if (StateManagerComp)
-					StateManagerComp->ResetState(0.f);
-				ResetMeleeAttackCounter();
-			}
-
-			World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, 0.2f, false);
-		}
-		else
+		if (!EquipmentComp->bActionShootOrAimShoot)
 		{
 			StopAiming();
 			if (AimAlpha >= 0.8)
