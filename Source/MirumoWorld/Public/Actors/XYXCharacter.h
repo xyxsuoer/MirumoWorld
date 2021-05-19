@@ -212,7 +212,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		UCurveFloat* ZoomingFloatCurve;
 
-
 	// Movement Input
 	virtual void MoveRight(float Val);
 
@@ -318,7 +317,13 @@ public:
 		void HandleOnTargetingToggled(bool bEnabled);
 
 	UFUNCTION()
+		void CombatAttack(EMeleeAttackType AttackType);
+
+	UFUNCTION()
 		void MeleeAttack(EMeleeAttackType AttackType);
+
+	UFUNCTION()
+		void BowActionAttack(EMeleeAttackType AttackType);
 
 	UFUNCTION()
 		bool CanMeleeAttack();

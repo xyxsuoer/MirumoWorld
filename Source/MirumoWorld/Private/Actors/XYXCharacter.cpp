@@ -393,19 +393,19 @@ void AXYXCharacter::HandleInputBufferConsumed(const EInputBufferKey key)
 	switch(key)
 	{
 	case EInputBufferKey::ELightAttack:
-		MeleeAttack(EMeleeAttackType::ELight);
+		CombatAttack(EMeleeAttackType::ELight);
 		break;
 	case EInputBufferKey::EHeavyAttack:
-		MeleeAttack(EMeleeAttackType::EHeavy);
+		CombatAttack(EMeleeAttackType::EHeavy);
 		break;
 	case EInputBufferKey::ESpecialAttack:
-		MeleeAttack(EMeleeAttackType::ESpecial);
+		CombatAttack(EMeleeAttackType::ESpecial);
 		break;
 	case EInputBufferKey::EFallingAttack: 
-		MeleeAttack(EMeleeAttackType::EFalling);
+		CombatAttack(EMeleeAttackType::EFalling);
 		break;
 	case EInputBufferKey::EThrustAttack:
-		MeleeAttack(EMeleeAttackType::EThrust);
+		CombatAttack(EMeleeAttackType::EThrust);
 		break;
 	case EInputBufferKey::ERoll:
 		Roll();
@@ -552,6 +552,24 @@ void AXYXCharacter::HandleOnTargetingToggled(bool bEnabled)
 	UpdateRotationSettings();
 }
 
+void AXYXCharacter::CombatAttack(EMeleeAttackType AttackType)
+{
+	if (!EquipmentComp)
+	{
+		return;
+	}
+
+	if (EquipmentComp->GetCombatType() == ECombatType::EMelee)
+	{
+		MeleeAttack(AttackType);
+	}
+	
+	if(EquipmentComp->GetCombatType() == ECombatType::ERanged )
+	{
+		BowActionAttack(AttackType);
+	}
+}
+
 void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 {
 	if (!CanMeleeAttack())
@@ -575,7 +593,7 @@ void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 	check(World);
 
 	World->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
-	
+
 	UAnimMontage* Montage = GetMeleeAttackMontage(MeleeAttackType);
 	if (IsValid(Montage))
 	{
@@ -599,12 +617,32 @@ void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 	}
 }
 
+void AXYXCharacter::BowActionAttack(EMeleeAttackType AttackType)
+{
+	if (!CanBowAttack() || !EquipmentComp->bActionShootOrAimShoot)
+	{
+		return;
+	}
+
+	if (GetCharacterMovement()->IsFalling())
+	{
+		MeleeAttackType = EMeleeAttackType::EFalling;
+	}
+	else
+	{
+		MeleeAttackType = AttackType;
+	}
+
+	if (StateManagerComp)
+		StateManagerComp->SetState(EState::EAttacking);
+
+}
+
 bool AXYXCharacter::CanMeleeAttack()
 {
 	if (StateManagerComp && StateManagerComp->GetState() == EState::EIdle &&
 		EquipmentComp && EquipmentComp->GetIsInCombat() &&
-		(EquipmentComp->GetCombatType() == ECombatType::EUnarmed || EquipmentComp->GetCombatType()== ECombatType::EMelee ||
-			(EquipmentComp->GetCombatType() == ECombatType::ERanged && EquipmentComp->bActionShootOrAimShoot && EquipmentComp->AreArrowEquipped())))
+		(EquipmentComp->GetCombatType() == ECombatType::EUnarmed || EquipmentComp->GetCombatType()== ECombatType::EMelee ))
 	{
 		return true;
 	}
@@ -1217,11 +1255,18 @@ void AXYXCharacter::StartBowAimModeAttackAction()
 	{
 		if (CanBowAttack())
 		{
-			StartAiming();
-			StartLookingForward();
-			UpdateZooming();
-			// show crosshair
-			// bow draw
+			if (EquipmentComp->bActionShootOrAimShoot)
+			{
+				StartLookingForward();
+			}
+			else
+			{
+				StartAiming();
+				StartLookingForward();
+				UpdateZooming();
+				// show crosshair
+				// bow draw
+			}
 		}
 	}
 	else
@@ -1234,26 +1279,57 @@ void AXYXCharacter::EndBowAimModeAttackAction()
 {
 	if (CanBowAttack())
 	{
-		StopAiming();
-		if (AimAlpha >= 0.8)
-		{
-			ShootArrow();
-		}
-
 		UWorld* World = GetWorld();
 		check(World);
 
-		World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, 0.8f, false);
-		// hide crosshair 
-		FTimerHandle TmpTimer;
-		World->GetTimerManager().SetTimer(TmpTimer, this, &AXYXCharacter::UpdateZooming, 0.81f, false);
-		// stop bow draw
+		if (EquipmentComp->bActionShootOrAimShoot)
+		{
+			World->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
+
+			UAnimMontage* Montage = GetMeleeAttackMontage(MeleeAttackType);
+			if (IsValid(Montage))
+			{
+				if (GetMesh() && GetMesh()->GetAnimInstance())
+				{
+					float Duration = -1.f;
+					float AttackSpeed = 1.0f;
+					Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, AttackSpeed, EMontagePlayReturnType::Duration);
+					if (Duration > 0.f)
+					{
+						Duration *= 0.99f;
+						World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration, false);
+					}
+				}
+			}
+			else
+			{
+				if (StateManagerComp)
+					StateManagerComp->ResetState(0.f);
+				ResetMeleeAttackCounter();
+			}
+
+			World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, 0.2f, false);
+		}
+		else
+		{
+			StopAiming();
+			if (AimAlpha >= 0.8)
+			{
+				ShootArrow();
+			}
+
+			World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, 0.8f, false);
+			// hide crosshair 
+			FTimerHandle TmpTimer;
+			World->GetTimerManager().SetTimer(TmpTimer, this, &AXYXCharacter::UpdateZooming, 0.81f, false);
+			// stop bow draw
+		}
 	}
 }
 
 void AXYXCharacter::ShootArrow()
 {
-	if (CanBowAttack() && EquipmentComp && !EquipmentComp->bActionShootOrAimShoot)
+	if (CanBowAttack() && EquipmentComp )
 	{
 		ShootArrowProjectile();
 
@@ -1488,7 +1564,13 @@ FTransform AXYXCharacter::GetSpawnedArrowTranform()
 
 	if (GetController())
 	{
-		FVector TmpTo = GetActorForwardVector() * UXYXFunctionLibrary::GetCrosshairDistanceLocation() + TmpArrowSpawnLocation;
+		const FRotator Rotation = GetController()->GetControlRotation();
+		const FRotator YawRotation(Rotation.Pitch, Rotation.Yaw, 0.f);
+		const FVector Direction = YawRotation.Vector();
+
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Warning! %s "), *GetActorForwardVector().ToString()));
+
+		FVector TmpTo = Direction * UXYXFunctionLibrary::GetCrosshairDistanceLocation() + TmpArrowSpawnLocation;
 		FVector TmpFrom = FollowCamera->GetComponentLocation();
 		TmpCameraDirection = UKismetMathLibrary::GetDirectionUnitVector(TmpFrom, TmpTo);
 		TmpArrowSpawnDirection = UKismetMathLibrary::MakeRotFromX(TmpCameraDirection);
@@ -1506,7 +1588,7 @@ FTransform AXYXCharacter::GetSpawnedArrowTranform()
 			TArray<AActor*> actorsToIgnore;
 			TmpCurTraceDirection = UKismetMathLibrary::GetDirectionUnitVector(TmpLineTraceStart, TmpLineTo);
 			if (UKismetSystemLibrary::LineTraceSingle(this, TmpLineTraceStart - TmpFVec, TmpLineTraceEnd - TmpFVec,
-				UEngineTypes::ConvertToTraceType(ECC_XYXProjectileChannel), false, actorsToIgnore, EDrawDebugTrace::ForDuration, HitResult, true,
+				UEngineTypes::ConvertToTraceType(ECC_XYXProjectileChannel), false, actorsToIgnore, EDrawDebugTrace::None, HitResult, true,
 				FLinearColor::Red, FLinearColor::Green, 10.0f))
 			{
 				FVector TmpImpactPoint = HitResult.ImpactPoint;
