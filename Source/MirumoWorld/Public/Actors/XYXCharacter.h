@@ -558,6 +558,8 @@ private:
 
 	float HorizontalLookValue = 0.f;
 
+	float DelayPlayBowActionAttackMontage = 0.28f;
+
 	UPROPERTY()
 		FTimerHandle ResetMeleeAttackCounterTimer;
 

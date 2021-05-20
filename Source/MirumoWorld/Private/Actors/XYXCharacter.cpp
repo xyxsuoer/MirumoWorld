@@ -566,14 +566,12 @@ void AXYXCharacter::CombatAttack(EMeleeAttackType AttackType)
 	
 	if(EquipmentComp->GetCombatType() == ECombatType::ERanged )
 	{
-		StartLookingForward();
-
 		BowActionAttack(AttackType);
 
 		UWorld* World = GetWorld();
 		check(World);
 		FTimerHandle BowActionAttackTimer;
-		World->GetTimerManager().SetTimer(BowActionAttackTimer, this, &AXYXCharacter::PlayBowActionAttackMontage, 0.2f, false);
+		World->GetTimerManager().SetTimer(BowActionAttackTimer, this, &AXYXCharacter::PlayBowActionAttackMontage, DelayPlayBowActionAttackMontage, false);
 	}
 }
 
@@ -639,10 +637,20 @@ void AXYXCharacter::BowActionAttack(EMeleeAttackType AttackType)
 	{
 		MeleeAttackType = AttackType;
 	}
+
+	StartLookingForward();
 }
 
 void AXYXCharacter::PlayBowActionAttackMontage()
 {
+	if (StateManagerComp && StateManagerComp->GetState() != EState::EIdle)
+	{
+		return;
+	}
+
+	if (StateManagerComp)
+		StateManagerComp->SetState(EState::EAttacking);
+
 	UWorld* World = GetWorld();
 	check(World);
 
@@ -650,8 +658,9 @@ void AXYXCharacter::PlayBowActionAttackMontage()
 	if (IsValid(Montage))
 	{
 		World->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
+		World->GetTimerManager().ClearTimer(StopLookingForwardTimer);
 
-		if (GetMesh() && GetMesh()->GetAnimInstance() && IsIdleAndNotFalling())
+		if (GetMesh() && GetMesh()->GetAnimInstance())
 		{
 			if (StateManagerComp)
 				StateManagerComp->SetState(EState::EAttacking);
@@ -662,8 +671,8 @@ void AXYXCharacter::PlayBowActionAttackMontage()
 			if (Duration > 0.f)
 			{
 				Duration = Duration * 0.99f;
-				World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration, false);
-				World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, Duration, false);
+				World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration + DelayPlayBowActionAttackMontage, false);
+				World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, Duration + 0.8f, false);
 			}
 		}
 	}
@@ -672,7 +681,6 @@ void AXYXCharacter::PlayBowActionAttackMontage()
 		if (StateManagerComp)
 			StateManagerComp->ResetState(0.f);
 		ResetMeleeAttackCounter();
-		StopLookingForward();
 	}
 }
 
@@ -690,7 +698,8 @@ bool AXYXCharacter::CanMeleeAttack()
 
 bool AXYXCharacter::CanBowAttack()
 {
-	if (EquipmentComp && EquipmentComp->GetIsInCombat() && EquipmentComp->AreArrowEquipped() &&
+	if (StateManagerComp && StateManagerComp->GetState() == EState::EIdle &&
+		EquipmentComp && EquipmentComp->GetIsInCombat() && EquipmentComp->AreArrowEquipped() &&
 		EquipmentComp->GetCombatType() == ECombatType::ERanged)
 	{
 		return true;
