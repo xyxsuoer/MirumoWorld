@@ -26,6 +26,7 @@
 #include <Components/XYXRotatingComponent.h>
 #include <Components/XYXDynamicTargetingComponent.h>
 #include <Components/ArrowComponent.h>
+#include "UI/XYXUserWidgetInGame.h"
 
 
 
@@ -352,6 +353,11 @@ void AXYXCharacter::InitialzeCharacter()
 		MovementSpeedComp->OnMovementStateEnd.AddDynamic(this, &AXYXCharacter::HandleMovementStateEnd);
 	}
 
+	if (DynamicTargetingComp && TargetArrow)
+	{
+		DynamicTargetingComp->Initialize(TargetArrow);
+	}
+
 	if (EquipmentComp)
 	{
 		EquipmentComp->Initialize();
@@ -376,6 +382,9 @@ void AXYXCharacter::InitialzeCharacter()
 	{
 		DynamicTargetingComp->OnTargetingToggled.AddDynamic(this, &AXYXCharacter::HandleOnTargetingToggled);
 	}
+
+	WBInGame = CreateWidget<UXYXUserWidgetInGame>(GetWorld(), WBInGameClass);
+	WBInGame->AddToViewport(0);
 
 	StartCameraSettings.Rotation = FollowCamera->GetRelativeRotation();
 	StartCameraSettings.ArmLength = CameraBoom->TargetArmLength;
@@ -639,6 +648,8 @@ void AXYXCharacter::BowActionAttack(EMeleeAttackType AttackType)
 	}
 
 	StartLookingForward();
+
+	ShowCrosshair(nullptr);
 }
 
 void AXYXCharacter::PlayBowActionAttackMontage()
@@ -659,12 +670,10 @@ void AXYXCharacter::PlayBowActionAttackMontage()
 	{
 		World->GetTimerManager().ClearTimer(ResetMeleeAttackCounterTimer);
 		World->GetTimerManager().ClearTimer(StopLookingForwardTimer);
+		World->GetTimerManager().ClearTimer(HideCrosshairTimer);
 
 		if (GetMesh() && GetMesh()->GetAnimInstance())
 		{
-			if (StateManagerComp)
-				StateManagerComp->SetState(EState::EAttacking);
-
 			float Duration = -1.f;
 			float AttackSpeed = 1.0f;
 			Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, AttackSpeed, EMontagePlayReturnType::Duration);
@@ -673,6 +682,7 @@ void AXYXCharacter::PlayBowActionAttackMontage()
 				Duration = Duration * 0.99f;
 				World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration + DelayPlayBowActionAttackMontage, false);
 				World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, Duration + 0.8f, false);
+				World->GetTimerManager().SetTimer(HideCrosshairTimer, this, &AXYXCharacter::HideCrosshair, Duration + 0.8f, false);
 			}
 		}
 	}
@@ -1307,7 +1317,7 @@ void AXYXCharacter::StartBowAimModeAttackAction()
 				StartAiming();
 				StartLookingForward();
 				UpdateZooming();
-				// show crosshair
+				ShowCrosshair(nullptr);
 				// bow draw
 			}
 		}
@@ -1334,7 +1344,7 @@ void AXYXCharacter::EndBowAimModeAttackAction()
 			}
 
 			World->GetTimerManager().SetTimer(StopLookingForwardTimer, this, &AXYXCharacter::StopLookingForward, 0.8f, false);
-			// hide crosshair 
+			World->GetTimerManager().SetTimer(HideCrosshairTimer, this, &AXYXCharacter::HideCrosshair, 0.8f, false);
 			FTimerHandle TmpTimer;
 			World->GetTimerManager().SetTimer(TmpTimer, this, &AXYXCharacter::UpdateZooming, 0.81f, false);
 			// stop bow draw
@@ -1663,7 +1673,7 @@ void AXYXCharacter::ResetAimingMode()
 	StopLookingForward();
 	StopAiming();
 	StopZooming();
-	// hide crosshair
+	HideCrosshair();
 }
 
 
@@ -1708,6 +1718,44 @@ void AXYXCharacter::CalculateLeanAmount(float& LeanAmount, float& InterpSpeed)
 
 	LeanAmount = TmpCondition ? UKismetMathLibrary::Clamp(HorizontalLookValue, -1.f, 1.f) : 0.f;
 	InterpSpeed = TmpCondition ? 10.f : 1.f;
+}
+
+void AXYXCharacter::ShowCrosshair(UTexture2D* InTexture)
+{
+	GetWorld()->GetTimerManager().ClearTimer(HideCrosshairTimer);
+
+	if (IsValid(WBInGame))
+	{
+		WBInGame->ShowCrosshair(InTexture);
+	}
+}
+
+void AXYXCharacter::HideCrosshair()
+{
+	if (IsValid(WBInGame))
+	{
+		WBInGame->HideCrosshair();
+	}
+}
+
+void AXYXCharacter::UpdateCrosshairPosition()
+{
+	FVector TmpArrowSpawnLocation;
+	if (ArrowSpawnLocation)
+	{
+		TmpArrowSpawnLocation = ArrowSpawnLocation->GetComponentLocation();
+	}
+
+	const FRotator Rotation = GetController()->GetControlRotation();
+	const FRotator YawRotation(Rotation.Pitch, Rotation.Yaw, 0.f);
+	const FVector Direction = YawRotation.Vector();
+
+	FVector TmpTo = Direction * UXYXFunctionLibrary::GetCrosshairDistanceLocation() + TmpArrowSpawnLocation;
+
+	if (IsValid(WBInGame))
+	{
+		WBInGame->UpdateCrosshairPosition(TmpTo);
+	}
 }
 
 void AXYXCharacter::CustomJump()
@@ -1761,6 +1809,7 @@ void AXYXCharacter::Tick(float DeltaTime)
 	}
 
 	UpdateAimAlpha();
+	UpdateCrosshairPosition();
 }
 
 void AXYXCharacter::PostInitProperties() {

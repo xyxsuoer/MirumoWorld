@@ -212,6 +212,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		UCurveFloat* ZoomingFloatCurve;
 
+	UPROPERTY(EditAnywhere, Category = XYX)
+		TSubclassOf<class UXYXUserWidgetInGame> WBInGameClass;
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		class UXYXUserWidgetInGame* WBInGame;
+
 	// Movement Input
 	virtual void MoveRight(float Val);
 
@@ -553,6 +559,15 @@ public:
 	UFUNCTION()
 		void CalculateLeanAmount(float& LeanAmount, float& InterpSpeed);
 
+	UFUNCTION()
+		void ShowCrosshair(UTexture2D* InTexture);
+
+	UFUNCTION()
+		void HideCrosshair();
+
+	UFUNCTION()
+		void UpdateCrosshairPosition();
+
 private:
 	bool bInitialized = false;
 
@@ -574,5 +589,8 @@ private:
 
 	UPROPERTY()
 		FTimerHandle UpdateCameraLagTimer;
+
+	UPROPERTY()
+		FTimerHandle HideCrosshairTimer;
 
 };
