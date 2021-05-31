@@ -541,6 +541,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		AActor* Applier;
 
+	bool operator==(FEffect Rhs) const { 
+		return Type == Rhs.Type && Duration == Rhs.Duration && Applier == Rhs.Applier;
+	}
+
 };
 
 USTRUCT(BlueprintType)

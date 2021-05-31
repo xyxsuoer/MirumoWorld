@@ -39,4 +39,7 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 		FRotator GetDesiredRotation();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		bool CanEffectBeApplied(EEffectType Type, AActor* Applier);
+
 };

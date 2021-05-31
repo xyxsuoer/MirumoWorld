@@ -27,6 +27,8 @@
 #include <Components/XYXDynamicTargetingComponent.h>
 #include <Components/ArrowComponent.h>
 #include "UI/XYXUserWidgetInGame.h"
+#include <Components/XYXCollisionHandlerComponent.h>
+#include <Components/XYXEffectsComponent.h>
 
 
 
@@ -84,6 +86,8 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	InventoryComp = CreateDefaultSubobject<UXYXInventoryManagerComponent>(TEXT("Inventory Manager Component"));
 	RotatingComp = CreateDefaultSubobject<UXYXRotatingComponent>(TEXT("Rotating Component"));
 	DynamicTargetingComp = CreateDefaultSubobject<UXYXDynamicTargetingComponent>(TEXT("Dynamic Targeting Component"));
+	CollisionHandlerComp = CreateDefaultSubobject<UXYXCollisionHandlerComponent>(TEXT("Collision Handler Component"));
+	EffectsManagerComp = CreateDefaultSubobject<UXYXEffectsComponent>(TEXT("Effects Manager Component"));
 
 	static const ConstructorHelpers::FObjectFinder<UCurveFloat> BlockingCurve(TEXT("CurveFloat'/Game/Mirumo/CurveFloats/Blocking_Timeline.Blocking_Timeline'"));
 	check(BlockingCurve.Succeeded());
@@ -215,7 +219,12 @@ bool AXYXCharacter::IsEntityAlive_Implementation()
 		return StateManagerComp->GetState() == EState::EDead ? false : true;
 	}
 
-	return !bIsDead;
+	return true;
+}
+
+FName AXYXCharacter::GetHeadSocket_Implementation()
+{
+	return TEXT("head");
 }
 
 float AXYXCharacter::GetAimAlpha_Implementation()
@@ -337,6 +346,11 @@ bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackRes
 {
 	ResultType = EAttackResult::EFailed;
 	return false;
+}
+
+bool AXYXCharacter::CanEffectBeApplied_Implementation(EEffectType Type, AActor* Applier)
+{
+	return true;
 }
 
 void AXYXCharacter::InitialzeCharacter()
@@ -1824,7 +1838,7 @@ void AXYXCharacter::PostInitializeComponents() {
 	Super::PostInitializeComponents();
 }
 
-UXYXAnimInstance* AXYXCharacter::GetACFAnimInstance() const {
+UXYXAnimInstance* AXYXCharacter::GetXYXAnimInstance() const {
 	return Cast<UXYXAnimInstance>(GetMesh()->GetAnimInstance());
 }
 

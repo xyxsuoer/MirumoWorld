@@ -78,6 +78,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UArrowComponent* TargetArrow;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXCollisionHandlerComponent* CollisionHandlerComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXEffectsComponent* EffectsManagerComp;
+
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXInputBufferComponent* GetInputBufferComponent() const { return InputBufferComp; }
 
@@ -102,19 +108,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXDynamicTargetingComponent* GetDynamicTargetingComponent() const { return DynamicTargetingComp; }
 
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXCollisionHandlerComponent* GetCollisionHandlerComponent() const { return CollisionHandlerComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXEffectsComponent* GetEffectsComponent() const { return EffectsManagerComp; }
+
 	// =================================================
 
 	UPROPERTY(EditDefaultsOnly, Category = XYX)
 		FName CharacterName = TEXT("SaulXu");
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
-		bool bIsDead = false;
-
 	UPROPERTY(Replicated)
 		ETeam CombatTeam = ETeam::EHeroesTeam;
 
 	UFUNCTION(BlueprintPure, Category = XYX)
-		class UXYXAnimInstance* GetACFAnimInstance() const;
+		class UXYXAnimInstance* GetXYXAnimInstance() const;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		int32 MeleeAttackCounter = 0.f;
@@ -262,6 +271,10 @@ public:
 		virtual bool IsEntityAlive_Implementation();
 
 		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+			FName GetHeadSocket();
+		virtual FName GetHeadSocket_Implementation();
+
+		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 			float GetAimAlpha();
 		virtual float GetAimAlpha_Implementation();
 
@@ -280,6 +293,10 @@ public:
 		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 			bool TakeAttackDamage(FHitData HitData, EAttackResult& ResultType);
 		virtual bool TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType) override;
+
+		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+			bool CanEffectBeApplied(EEffectType Type, AActor* Applier);
+		virtual bool CanEffectBeApplied_Implementation(EEffectType Type, AActor* Applier) override;
 
 		// =================================================================
 
