@@ -217,9 +217,12 @@ bool AXYXBaseNPC::CanBeStunned()
 
 bool AXYXBaseNPC::CanBeAttacked()
 {
-	if (IsEntityAlive() && StateManagerComp && !StateManagerComp->GetActivityValue(EActivity::EIsImmortal))
+	if (IsEntityAlive())
 	{
-		return true;
+		if (StateManagerComp)
+		{
+			return !StateManagerComp->GetActivityValue(EActivity::EIsImmortal);
+		}
 	}
 
 	return false;

@@ -30,5 +30,7 @@ UXYXGameInstance::UXYXGameInstance()
 	MontageDataTables.Emplace(TEXT("Heroe_TwinBlade"), pDataTable);
 	pDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/Heroes/Heroe_Bow.Heroe_Bow'"));
 	MontageDataTables.Emplace(TEXT("Heroe_Bow"), pDataTable);
+
+	SoundDataTable = LoadObject<UDataTable>(NULL, UTF8_TO_TCHAR("DataTable'/Game/Mirumo/DataTables/SFX/SFX_Sounds.SFX_Sounds'"));
 }
 

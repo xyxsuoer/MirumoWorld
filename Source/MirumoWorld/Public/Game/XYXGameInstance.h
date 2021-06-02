@@ -27,4 +27,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
 		TMap<FString, UDataTable*> MontageDataTables;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
+		UDataTable* SoundDataTable;
+
 };

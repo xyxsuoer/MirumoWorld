@@ -34,7 +34,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXEquipmentManagerComponent* EquipmentComp;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		TArray<FAttributes> Stats;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)

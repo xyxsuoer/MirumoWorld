@@ -12,6 +12,9 @@
 #include <Components/XYXCollisionHandlerComponent.h>
 #include "Kismet/KismetMathLibrary.h"
 #include "Actors/XYXImpaledArrow.h"
+#include "Game/XYXFunctionLibrary.h"
+#include <Components/XYXEffectsComponent.h>
+#include "Game/XYXGameInstance.h"
 
 // Sets default values
 AXYXArrowProjectileBase::AXYXArrowProjectileBase()
@@ -125,6 +128,13 @@ void AXYXArrowProjectileBase::OnArrowHit(FHitResult Hit)
 					if (Result)
 					{
 						// Play hit sound and Apply Stun Effect to hit actor
+						UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
+						UXYXFunctionLibrary::PlayHitSound(GameInstance, GetOwner(), TmpHitActor, TmpHitLocation);
+						auto EffectComp = Cast<UXYXEffectsComponent>(TmpHitActor->GetComponentByClass(UXYXEffectsComponent::StaticClass()));
+						if (EffectComp)
+						{
+							bool bTmpApplied = EffectComp->ApplyEffect(EEffectType::EStun, 1.f, EApplyEffectMethod::EReplace, GetOwner());
+						}
 					}
 
 					SpawnImpaledArrow(TmpHitComp, TmpHitBoneName, TmpHitActor, TmpHitLocation);

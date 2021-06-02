@@ -562,6 +562,17 @@ public:
 
 };
 
+USTRUCT(BlueprintType)
+struct FSoundFX : public FTableRowBase
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
+		USoundBase* SoundBase;
+};
+
 
 
 UCLASS()

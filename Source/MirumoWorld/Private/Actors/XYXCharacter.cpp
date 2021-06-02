@@ -29,6 +29,12 @@
 #include "UI/XYXUserWidgetInGame.h"
 #include <Components/XYXCollisionHandlerComponent.h>
 #include <Components/XYXEffectsComponent.h>
+#include "Components/XYXStatsManagerComponent.h"
+#include "Components/XYXExtendedStatComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Items/DisplayedItems/XYXDisplayedItem.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/AudioComponent.h"
 
 
 
@@ -56,6 +62,9 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	{
 		ArrowSpawnLocation = CreateDefaultSubobject<USceneComponent>(TEXT("ArrowSapwnLocation"));
 		ArrowSpawnLocation->SetupAttachment(GetMesh());
+
+		EffectsAudio = CreateDefaultSubobject<UAudioComponent>(TEXT("Effects Audio"));
+		EffectsAudio->SetupAttachment(GetMesh());
 	}
 
 	TargetArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("Arrow Component"));
@@ -88,6 +97,10 @@ AXYXCharacter::AXYXCharacter(const FObjectInitializer& ObjectInitializer)
 	DynamicTargetingComp = CreateDefaultSubobject<UXYXDynamicTargetingComponent>(TEXT("Dynamic Targeting Component"));
 	CollisionHandlerComp = CreateDefaultSubobject<UXYXCollisionHandlerComponent>(TEXT("Collision Handler Component"));
 	EffectsManagerComp = CreateDefaultSubobject<UXYXEffectsComponent>(TEXT("Effects Manager Component"));
+	StatsManagerComp = CreateDefaultSubobject<UXYXStatsManagerComponent>(TEXT("Stats Manager Component"));
+	ExtendedHealth = CreateDefaultSubobject<UXYXExtendedStatComponent>(TEXT("Extended Stat Health"));
+	ExtendedStamina = CreateDefaultSubobject<UXYXExtendedStatComponent>(TEXT("Extended Stat Stamina"));
+	ExtendedMana = CreateDefaultSubobject<UXYXExtendedStatComponent>(TEXT("Extended Stat Mana"));
 
 	static const ConstructorHelpers::FObjectFinder<UCurveFloat> BlockingCurve(TEXT("CurveFloat'/Game/Mirumo/CurveFloats/Blocking_Timeline.Blocking_Timeline'"));
 	check(BlockingCurve.Succeeded());
@@ -135,6 +148,26 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("BowAttack", IE_Released, this, &AXYXCharacter::EndBowAimModeAttackAction);
 		PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &AXYXCharacter::StartZooming);
 		PlayerInputComponent->BindAction("Zoom", IE_Released, this, &AXYXCharacter::StopZooming);
+		PlayerInputComponent->BindAction("SlowMotion", IE_Pressed, this, &AXYXCharacter::StartSlowMotion);
+		PlayerInputComponent->BindAction("SlowMotion", IE_Released, this, &AXYXCharacter::StopSlowMotion);
+	}
+}
+
+void AXYXCharacter::OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PrevCustomMode)
+{
+	Super::OnMovementModeChanged(PrevMovementMode, PrevCustomMode);
+	UpdateRotationSettings();
+	UpdateZooming();
+	StopBowDrawSound();
+	/*const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EMovementMode"), true);
+	UE_LOG(LogTemp, Log, TEXT("Previous movement mode is %s"), *EnumPtr->GetNameStringByValue((int64)PrevMovementMode));*/
+
+	/*const UEnum* EnumPtrZwa = FindObject<UEnum>(ANY_PACKAGE, TEXT("EMovementMode"), true);
+	UE_LOG(LogTemp, Log, TEXT("Current movement mode is %s"), *EnumPtrZwa->GetNameStringByValue((int64)GetCharacterMovement()->MovementMode.GetValue()));*/
+
+	if (GetCharacterMovement()->MovementMode.GetValue() == EMovementMode::MOVE_Walking)
+	{
+		AttemptPlayBowDrawSound();
 	}
 }
 
@@ -146,6 +179,92 @@ void AXYXCharacter::BeginPlay()
 	RegisterBlockingTimeline();
 	RegisterZoomingTimeline();
 }
+
+
+void AXYXCharacter::InitialzeCharacter()
+{
+
+	if (DynamicTargetingComp)
+	{
+		DynamicTargetingComp->Initialize(TargetArrow);
+		DynamicTargetingComp->OnTargetingToggled.AddDynamic(this, &AXYXCharacter::HandleOnTargetingToggled);
+	}
+
+	if (StatsManagerComp)
+	{
+		StatsManagerComp->Initialize();
+	}
+
+	if (EquipmentComp)
+	{
+		EquipmentComp->Initialize();
+		EquipmentComp->OnInCombatChanged.AddDynamic(this, &AXYXCharacter::HandleOnInCombatChanged);
+		EquipmentComp->OnActiveItemChanged.AddDynamic(this, &AXYXCharacter::HandleOnActiveItemChanged);
+		EquipmentComp->OnMainHandTypeChanged.AddDynamic(this, &AXYXCharacter::HandleOnMainHandTypeChanged);
+		EquipmentComp->OnCombatTypeChanged.AddDynamic(this, &AXYXCharacter::HandleOnCombatTypeChanged);
+	}
+
+	if (InputBufferComp)
+	{
+		InputBufferComp->OnInputBufferConsumed.AddDynamic(this, &AXYXCharacter::HandleInputBufferConsumed);
+		InputBufferComp->OnInputBufferClose.AddDynamic(this, &AXYXCharacter::HandleInputBufferClose);
+	}
+
+	if (MovementSpeedComp)
+	{
+		MovementSpeedComp->OnMovementStateStart.AddDynamic(this, &AXYXCharacter::HandleMovementStateStart);
+		MovementSpeedComp->OnMovementStateEnd.AddDynamic(this, &AXYXCharacter::HandleMovementStateEnd);
+	}
+
+	if (DynamicTargetingComp && TargetArrow)
+	{
+		DynamicTargetingComp->Initialize(TargetArrow);
+	}
+
+	if (StateManagerComp)
+	{
+		StateManagerComp->OnActivityChanged.AddDynamic(this, &AXYXCharacter::HandleOnActivityChanged);
+		StateManagerComp->OnStateChanged.AddDynamic(this, &AXYXCharacter::HandleOnStateChanged);
+	}
+
+	if (RotatingComp)
+	{
+		RotatingComp->OnRotatingEnd.AddDynamic(this, &AXYXCharacter::HandleOnRotatingEnd);
+	}
+
+	if (CollisionHandlerComp)
+	{
+		CollisionHandlerComp->OnHit.AddDynamic(this, &AXYXCharacter::HandleOnHit);
+		CollisionHandlerComp->OnCollisionActivated.AddDynamic(this, &AXYXCharacter::HandleOnCollisionActivated);
+	}
+
+	if (EffectsManagerComp)
+	{
+		EffectsManagerComp->OnEffectApplied.AddDynamic(this, &AXYXCharacter::HandleOnEffectApplied);
+		EffectsManagerComp->OnEffectRemoved.AddDynamic(this, &AXYXCharacter::HandleOnEffectRemoved);
+	}
+
+	if (ExtendedStamina)
+	{
+		ExtendedStamina->OnValueChanged.AddDynamic(this, &AXYXCharacter::HandleExtendedStaminaOnValueChanged);
+	}
+
+	if (ExtendedHealth)
+	{
+		ExtendedHealth->OnValueChanged.AddDynamic(this, &AXYXCharacter::HandleExtendedHealthOnValueChanged);
+	}
+
+	WBInGame = CreateWidget<UXYXUserWidgetInGame>(GetWorld(), WBInGameClass);
+	WBInGame->AddToViewport(0);
+
+	StartCameraSettings.Rotation = FollowCamera->GetRelativeRotation();
+	StartCameraSettings.ArmLength = CameraBoom->TargetArmLength;
+	StartCameraSettings.SocketOffset = CameraBoom->SocketOffset;
+	StartCameraSettings.CameraLagSpeed = CameraBoom->CameraLagSpeed;
+
+	bInitialized = true;
+}
+
 
 void AXYXCharacter::RegisterBlockingTimeline()
 {
@@ -344,68 +463,84 @@ FRotator AXYXCharacter::GetDesiredRotation_Implementation()
 
 bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType)
 {
+	UWorld* World = GetWorld();
+	check(World);
+
 	ResultType = EAttackResult::EFailed;
-	return false;
+	bool TmpResult = false;
+	if (CanBeAttacked())
+	{
+		UpdateReceivedHitDirection(HitData.HitFromDirection);
+		if (HitData.Damage != 0.f)
+		{
+			// If hit was successfully Parried, apply Parried effect on attacker and don't subtract health
+			bool bTmpParried = ReceivedHitDirection == EDirection::EFront && 
+				StateManagerComp && StateManagerComp->GetActivityValue(EActivity::ECanParryHit) &&
+				HitData.CanBeParried;
+
+			if (bTmpParried)
+			{
+				auto EffectComp = Cast<UXYXEffectsComponent>(HitData.DamageCauser->GetComponentByClass(UXYXEffectsComponent::StaticClass()));
+				if (EffectComp)
+				{
+					bool bTmpApplied = EffectComp->ApplyEffect(EEffectType::EParried, 1.f, EApplyEffectMethod::EReplace, this);
+					if (bTmpApplied)
+					{
+						UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
+						UXYXFunctionLibrary::PlayParrySound(GameInstance, this, HitData.DamageCauser, this->GetActorLocation());
+					}
+				}
+				ResultType = EAttackResult::EParried;
+				return TmpResult;
+			}
+
+			// Check if hit was successfully blocked
+			bool bTmpBlocked = ReceivedHitDirection == EDirection::EFront && BlockAlpha >= 1.0f && HitData.CanBeBlocked;
+
+			// Ignore stamina if hit was not blocked
+			if (StatsManagerComp)
+			{
+				StatsManagerComp->TakeDamage(HitData.Damage, !bTmpBlocked);
+
+				// If hit was blockedand character is still alive, call block function
+				if (IsEntityAlive() && bTmpBlocked)
+				{
+					UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
+					UXYXFunctionLibrary::PlayBlockSound(GameInstance, this, HitData.DamageCauser, this->GetActorLocation());
+					
+					Block();
+
+					// If there is still some stamina left after blocked hit, try to apply Impact effect on attacker
+					if (ExtendedStamina && ExtendedStamina->GetCurrentValue() > 0.f)
+					{
+						// Don't apply if hit was blocked with hands
+						if (EquipmentComp && 
+							(EquipmentComp->IsShieldEquipped() || !(EquipmentComp->GetCombatType() == ECombatType::EUnarmed)))
+						{
+							auto EffectComp = Cast<UXYXEffectsComponent>(HitData.DamageCauser->GetComponentByClass(UXYXEffectsComponent::StaticClass()));
+							if (EffectComp)
+							{
+								bool bTmpApplied = EffectComp->ApplyEffect(EEffectType::EImpact, 1.f, EApplyEffectMethod::EReplace, this);
+							}
+						}
+					}
+					
+					ResultType = EAttackResult::EBlocked;
+					return TmpResult;
+				}
+			}
+
+			ResultType = EAttackResult::ESuccess;
+			TmpResult = true;
+		}
+	}
+
+	return TmpResult;
 }
 
 bool AXYXCharacter::CanEffectBeApplied_Implementation(EEffectType Type, AActor* Applier)
 {
 	return true;
-}
-
-void AXYXCharacter::InitialzeCharacter()
-{
-	if (InputBufferComp) 
-	{
-		InputBufferComp->OnInputBufferConsumed.AddDynamic(this, &AXYXCharacter::HandleInputBufferConsumed);
-		InputBufferComp->OnInputBufferClose.AddDynamic(this, &AXYXCharacter::HandleInputBufferClose);
-	}
-
-	if (MovementSpeedComp)
-	{
-		MovementSpeedComp->OnMovementStateStart.AddDynamic(this, &AXYXCharacter::HandleMovementStateStart);
-		MovementSpeedComp->OnMovementStateEnd.AddDynamic(this, &AXYXCharacter::HandleMovementStateEnd);
-	}
-
-	if (DynamicTargetingComp && TargetArrow)
-	{
-		DynamicTargetingComp->Initialize(TargetArrow);
-	}
-
-	if (EquipmentComp)
-	{
-		EquipmentComp->Initialize();
-		EquipmentComp->OnInCombatChanged.AddDynamic(this, &AXYXCharacter::HandleOnInCombatChanged);
-		EquipmentComp->OnActiveItemChanged.AddDynamic(this, &AXYXCharacter::HandleOnActiveItemChanged);
-		EquipmentComp->OnMainHandTypeChanged.AddDynamic(this, &AXYXCharacter::HandleOnMainHandTypeChanged);
-		EquipmentComp->OnCombatTypeChanged.AddDynamic(this, &AXYXCharacter::HandleOnCombatTypeChanged);
-	}
-
-	if (StateManagerComp)
-	{
-		StateManagerComp->OnActivityChanged.AddDynamic(this, &AXYXCharacter::HandleOnActivityChanged);
-		StateManagerComp->OnStateChanged.AddDynamic(this, &AXYXCharacter::HandleOnStateChanged);
-	}
-
-	if (RotatingComp)
-	{
-		RotatingComp->OnRotatingEnd.AddDynamic(this, &AXYXCharacter::HandleOnRotatingEnd);
-	}
-
-	if (DynamicTargetingComp)
-	{
-		DynamicTargetingComp->OnTargetingToggled.AddDynamic(this, &AXYXCharacter::HandleOnTargetingToggled);
-	}
-
-	WBInGame = CreateWidget<UXYXUserWidgetInGame>(GetWorld(), WBInGameClass);
-	WBInGame->AddToViewport(0);
-
-	StartCameraSettings.Rotation = FollowCamera->GetRelativeRotation();
-	StartCameraSettings.ArmLength = CameraBoom->TargetArmLength;
-	StartCameraSettings.SocketOffset = CameraBoom->SocketOffset;
-	StartCameraSettings.CameraLagSpeed = CameraBoom->CameraLagSpeed;
-
-	bInitialized = true;
 }
 
 void AXYXCharacter::HandleInputBufferConsumed(const EInputBufferKey key)
@@ -558,6 +693,12 @@ void AXYXCharacter::HandleOnStateChanged(EState PrevState, EState NewState)
 		MeleeAttackType = EMeleeAttackType::ENone;
 		BackstabbedActor = nullptr;
 	}
+
+	StopBowDrawSound();
+	if (NewState == EState::EIdle)
+	{
+		AttemptPlayBowDrawSound();
+	}
 }
 
 void AXYXCharacter::HandleOnRotatingEnd()
@@ -628,12 +769,22 @@ void AXYXCharacter::MeleeAttack(EMeleeAttackType AttackType)
 		if (GetMesh() && GetMesh()->GetAnimInstance())
 		{
 			float Duration = -1.f;
-			float AttackSpeed = 1.0f;
+			float AttackSpeed = StatsManagerComp ? StatsManagerComp->GetStatValue(EAttributesType::EAttackSpeed, true) : 1.0f;
 			Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, AttackSpeed, EMontagePlayReturnType::Duration);
 			if (Duration > 0.f)
 			{
 				Duration *= 0.99f ;
 				World->GetTimerManager().SetTimer(ResetMeleeAttackCounterTimer, this, &AXYXCharacter::ResetMeleeAttackCounter, Duration, false);
+
+				if (StatsManagerComp)
+				{
+					float StaminaCost = StatsManagerComp->GetStatValue(EAttributesType::EMeleeAttackStaminaCost, true);
+					StaminaCost =	UXYXFunctionLibrary::ScaleMeleeAttackStaminaCostByType(StaminaCost, MeleeAttackType);
+					if (ExtendedStamina)
+					{
+						ExtendedStamina->ModifyStat(StaminaCost * -1.f, true);
+					}
+				}
 			}
 		}
 	}
@@ -861,7 +1012,18 @@ void AXYXCharacter::LightAttack()
 
 	if (EquipmentComp->GetIsInCombat())
 	{
-		InputBufferComp->UpdateKey(EInputBufferKey::ELightAttack);
+		if (EquipmentComp->GetCombatType() == ECombatType::EMelee)
+		{
+			if (!AttemptBackstab())
+			{
+				InputBufferComp->UpdateKey(EInputBufferKey::ELightAttack);
+			}
+		}
+		else if(EquipmentComp->GetCombatType() == ECombatType::EUnarmed || 
+			EquipmentComp->GetCombatType() == ECombatType::ERanged)
+		{
+			InputBufferComp->UpdateKey(EInputBufferKey::ELightAttack);
+		}
 	}
 	else
 	{
@@ -1011,6 +1173,10 @@ void AXYXCharacter::Roll()
 	if (IsValid(Montage))
 	{
 		PlayAnimMontage(Montage);
+		if (ExtendedStamina)
+		{
+			ExtendedStamina->ModifyStat(RollStaminaCost * -1.f, true);
+		}
 	}
 	else
 	{
@@ -1086,10 +1252,18 @@ void AXYXCharacter::SetSprintOrCrouch(bool bActivate, EMovementState MovementSta
 
 void AXYXCharacter::SprintLoop()
 {
-	if (MovementSpeedComp && 
-		MovementSpeedComp->GetMovementState() == EMovementState::ESprint)
+	if (MovementSpeedComp && ExtendedStamina && StateManagerComp &&
+		MovementSpeedComp->GetMovementState() == EMovementState::ESprint &&
+		ExtendedStamina->GetCurrentValue() >= SprintStaminaCost &&
+		!StateManagerComp->GetActivityValue(EActivity::EIsLookingForward))
 	{
-
+		if (IsIdleAndNotFalling() && UKismetMathLibrary::VSize(this->GetVelocity()) > 10.f)
+		{
+			if (ExtendedStamina)
+			{
+				ExtendedStamina->ModifyStat(SprintStaminaCost * -1.0f, true);
+			}
+		}
 	}
 	else
 	{
@@ -1099,10 +1273,18 @@ void AXYXCharacter::SprintLoop()
 
 void AXYXCharacter::CrouchLoop()
 {
-	if (MovementSpeedComp && 
-		MovementSpeedComp->GetMovementState() == EMovementState::ECrouch)
+	if (MovementSpeedComp && ExtendedStamina && StateManagerComp &&
+		MovementSpeedComp->GetMovementState() == EMovementState::ECrouch &&
+		ExtendedStamina->GetCurrentValue() >= CrouchStaminaCost &&
+		!StateManagerComp->GetActivityValue(EActivity::EIsLookingForward))
 	{
-
+		if (IsIdleAndNotFalling() && UKismetMathLibrary::VSize(this->GetVelocity()) > 2.f)
+		{
+			if (ExtendedStamina)
+			{
+				ExtendedStamina->ModifyStat(CrouchStaminaCost * -1.0f, true);
+			}
+		}
 	}
 	else
 	{
@@ -1176,6 +1358,7 @@ void AXYXCharacter::ToggleCombatAction()
 		IsIdleAndNotFalling())
 	{
 		ResetAimingMode();
+		StopBowDrawSound();
 	}
 	else
 	{
@@ -1285,9 +1468,21 @@ void AXYXCharacter::BlockingTimelineFinishedCallback()
 {
 	switch(BlockingTimelineDirection)
 	{
-	case ETimelineDirection::Type::Forward:
+	case ETimelineDirection::Type::Forward: 
+		{
+			if (ExtendedStamina)
+			{
+				ExtendedStamina->ChangeRegenPercent(25);
+			}
+		}
 		break;
 	case ETimelineDirection::Type::Backward:
+		{
+			if (ExtendedStamina)
+			{
+				ExtendedStamina->ChangeRegenPercent(100);
+			}
+		}
 		break;
 	}
 }
@@ -1332,7 +1527,7 @@ void AXYXCharacter::StartBowAimModeAttackAction()
 				StartLookingForward();
 				UpdateZooming();
 				ShowCrosshair(nullptr);
-				// bow draw
+				AttemptPlayBowDrawSound();
 			}
 		}
 	}
@@ -1361,7 +1556,7 @@ void AXYXCharacter::EndBowAimModeAttackAction()
 			World->GetTimerManager().SetTimer(HideCrosshairTimer, this, &AXYXCharacter::HideCrosshair, 0.8f, false);
 			FTimerHandle TmpTimer;
 			World->GetTimerManager().SetTimer(TmpTimer, this, &AXYXCharacter::UpdateZooming, 0.81f, false);
-			// stop bow draw
+			StopBowDrawSound();
 		}
 	}
 }
@@ -1409,9 +1604,9 @@ void AXYXCharacter::ShootArrowProjectile()
 				ActorSpawnParams.Owner = this;
 				ActorSpawnParams.Instigator = this;
 				AXYXArrowProjectileBase* XYXActor = World->SpawnActor<AXYXArrowProjectileBase>(ItemArrow->GetProjectile(), TmpTransform, ActorSpawnParams);
-				if (XYXActor)
+				if (XYXActor && StatsManagerComp)
 				{
-					XYXActor->Damage = 50;
+					XYXActor->Damage = AimAlpha * StatsManagerComp->GetDamage();
 					XYXActor->InitialSpeed = AimAlpha * 7000.0f;
 				}
 
@@ -1422,6 +1617,58 @@ void AXYXCharacter::ShootArrowProjectile()
 				}
 			}
 		}
+	}
+}
+
+void AXYXCharacter::AttemptPlayBowDrawSound()
+{
+	UWorld* World = GetWorld();
+	check(World);
+
+	World->GetTimerManager().SetTimer(PlayBowDrawSoundTimer, this, &AXYXCharacter::PlayBowDrawSound, 0.1f, true);
+	
+	FTimerDelegate TimerCallback;
+	TimerCallback.BindLambda([=]
+		{
+			World->GetTimerManager().ClearTimer(PlayBowDrawSoundTimer);
+		}
+	);
+
+	World->GetTimerManager().SetTimer(ClearPlayBowDrawSoundTimer, TimerCallback, 1.f, true);
+}
+
+void AXYXCharacter::PlayBowDrawSound()
+{
+	if (IsIdleAndNotFalling() && CanBowAttack() && StateManagerComp && 
+		StateManagerComp->GetActivityValue(EActivity::EIsAmingPressed))
+	{
+		UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(GetGameInstance());
+		if (EffectsAudio && GameInstance)
+		{
+			USoundBase* TmpSound = nullptr;
+			FSoundFX* pRow = GameInstance->SoundDataTable->FindRow<FSoundFX>(TEXT("DrawBow"), "");
+			if (pRow)
+			{
+				TmpSound = pRow->SoundBase;
+				EffectsAudio->SetSound(TmpSound);
+				EffectsAudio->Play(0.f);
+				UWorld* World = GetWorld();
+				check(World);
+				World->GetTimerManager().ClearTimer(PlayBowDrawSoundTimer);
+			}
+
+		}
+	}
+}
+
+void AXYXCharacter::StopBowDrawSound()
+{
+	UWorld* World = GetWorld();
+	check(World);
+	World->GetTimerManager().ClearTimer(PlayBowDrawSoundTimer);
+	if (EffectsAudio)
+	{
+		EffectsAudio->Stop();
 	}
 }
 
@@ -1584,8 +1831,10 @@ void AXYXCharacter::UpdateAimAlpha()
 	UWorld* const World = GetWorld();
 	if (World && EquipmentComp && !EquipmentComp->bActionShootOrAimShoot && StateManagerComp)
 	{
-		float To0 = UKismetMathLibrary::FInterpTo_Constant(AimAlpha, 0.f, World->GetDeltaSeconds(), 5.0f);
-		float To1 = UKismetMathLibrary::FInterpTo_Constant(AimAlpha, 1.f, World->GetDeltaSeconds(), 5.0f);
+		float AttackSpeed = StatsManagerComp ? StatsManagerComp->GetStatValue(EAttributesType::EAttackSpeed, true) : 1.0f;
+
+		float To0 = UKismetMathLibrary::FInterpTo_Constant(AimAlpha, 0.f, World->GetDeltaSeconds(), 2.0f);
+		float To1 = UKismetMathLibrary::FInterpTo_Constant(AimAlpha, 1.f, World->GetDeltaSeconds(), AttackSpeed);
 		bool TmpCondition = StateManagerComp->GetActivityValue(EActivity::EIsAmingPressed) && IsIdleAndNotFalling();
 		AimAlpha = TmpCondition ? To1 : To0;
 	}
@@ -1690,8 +1939,6 @@ void AXYXCharacter::ResetAimingMode()
 	HideCrosshair();
 }
 
-
-
 void AXYXCharacter::SetCameraLagSmoothly(float InTargetLagSpeed)
 {
 	TargetLagSpeed = InTargetLagSpeed;
@@ -1716,10 +1963,10 @@ void AXYXCharacter::UpdateCameraLag()
 void AXYXCharacter::CalculateLeanAmount(float& LeanAmount, float& InterpSpeed)
 {
 	// Keep leaning if character:
-	//	*	Is in Jog / Sprint movement state
-	//	* Is Idle * not falling
-	//	* IsMoving(Velocity > 10)
-	//	* LookingForward is disabled
+	// *	Is in Jog / Sprint movement state
+	// * Is Idle * not falling
+	// * IsMoving(Velocity > 10)
+	// * LookingForward is disabled
 
 	bool TmpCondition = false;
 	if (MovementSpeedComp && StateManagerComp)
@@ -1772,6 +2019,486 @@ void AXYXCharacter::UpdateCrosshairPosition()
 	}
 }
 
+void AXYXCharacter::Death()
+{
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetState(EState::EDead);
+
+		// Disable camera lock
+		if (DynamicTargetingComp)
+			DynamicTargetingComp->DisableCameraLock();
+		
+		// Deactivate collision handler
+		if (CollisionHandlerComp)
+			CollisionHandlerComp->DeactiveCollision();
+
+		// Remove widget
+		if (WBInGame)
+			WBInGame->RemoveFromParent();
+
+		// Enable physics on Mesh
+		GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"), true);
+		GetMesh()->SetSimulatePhysics(true);
+
+		// Enable Physics on main hand/shield items 
+		if (EquipmentComp && EquipmentComp->GetIsInCombat())
+		{
+			AXYXDisplayedItem* DIOne = nullptr;
+			AXYXDisplayedItem* DISecond = nullptr;
+			EquipmentComp->GetDisplayedItem(
+				EquipmentComp->GetSelectedMainHandType(), EquipmentComp->GetSelectedMainHandSlotIndex(), DIOne, DISecond);
+			if (DIOne)
+				DIOne->SimulatePhysics();
+			if (DISecond)
+				DISecond->SimulatePhysics();
+		}
+	}
+}
+
+void AXYXCharacter::HandleOnHit(FHitResult HitResult)
+{
+	IXYXInterfaceEntity* TmpHitActor = Cast<IXYXInterfaceEntity>(HitResult.Actor);
+	if (TmpHitActor)
+	{
+		EAttackResult ResultType;
+		bool CanAttacked =  TmpHitActor->TakeAttackDamage(MakeMeleeHitData(HitResult.GetActor()), ResultType);
+		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 15000.f);
+		if (CanAttacked)
+		{
+			UWorld* World = GetWorld();
+			check(World);
+			UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
+			UXYXFunctionLibrary::PlayHitSound(GameInstance, this, HitResult.GetActor(), HitResult.Location);
+
+			auto EffectComp = Cast<UXYXEffectsComponent>(HitResult.Actor->GetComponentByClass(UXYXEffectsComponent::StaticClass()));
+			if (EffectComp)
+			{
+				EffectComp->ApplyEffect(EEffectType::EStun, 2.f, EApplyEffectMethod::EReplace, this);
+			}
+		}
+	}
+}
+
+void AXYXCharacter::HandleOnCollisionActivated(ECollisionPart CollisionPart)
+{
+	switch(CollisionPart)
+	{
+	case ECollisionPart::EMainHandItem:
+		{
+			// Set Main Hand Item as new Collision mesh
+			if (EquipmentComp)
+			{
+				AXYXDisplayedItem* DIOne = nullptr;
+				AXYXDisplayedItem* DISecond = nullptr;
+				EquipmentComp->GetDisplayedItem(
+					EquipmentComp->GetSelectedMainHandType(), EquipmentComp->GetSelectedMainHandSlotIndex(), DIOne, DISecond);
+
+				if (DIOne && CollisionHandlerComp)
+				{
+					UPrimitiveComponent* StaticMeshComp = DIOne->GetPrimaryComponent();
+					CollisionHandlerComp->SetCollisionMesh(StaticMeshComp, StaticMeshComp->GetAllSocketNames());
+				}
+			}
+		}
+		break;
+	case ECollisionPart::ELeftHand:
+		{
+			if (CollisionHandlerComp)
+			{
+				CollisionHandlerComp->SetCollisionMesh(GetMesh(), LeftHandCollisionSockets);
+			}
+		}
+		break;
+	case ECollisionPart::ERightHand:
+		{
+			if (CollisionHandlerComp)
+			{
+				CollisionHandlerComp->SetCollisionMesh(GetMesh(), RightHandCollisionSockets);
+			}
+		}
+		break;
+	case ECollisionPart::ELeftFoot:
+		{
+			if (CollisionHandlerComp)
+			{
+				CollisionHandlerComp->SetCollisionMesh(GetMesh(), LeftFootCollisionSockets);
+			}
+		}
+		break;
+	case ECollisionPart::ERightFoot:
+		{
+			if (CollisionHandlerComp)
+			{
+				CollisionHandlerComp->SetCollisionMesh(GetMesh(), RightFootCollisionSockets);
+			}
+		}
+		break;
+	}
+}
+
+FHitData AXYXCharacter::MakeMeleeHitData(AActor* HitActor)
+{
+	FHitData TmpData;
+	if (StatsManagerComp && HitActor)
+	{
+		TmpData.Damage = UXYXFunctionLibrary::ScaleMeleeDamageByType(StatsManagerComp->GetDamage(), MeleeAttackType);
+		TmpData.DamageCauser = this;
+		TmpData.HitFromDirection = UKismetMathLibrary::GetDirectionUnitVector(this->GetActorLocation(), HitActor->GetActorLocation());
+		TmpData.CanBeParried = MeleeAttackType == EMeleeAttackType::ELight;
+		TmpData.CanBeBlocked = true;
+		TmpData.CanReceivedImpact = true;
+	}
+
+	return TmpData;
+}
+
+void AXYXCharacter::ApplyHitImpulseToCharacter(AActor* HitActor, FVector HitNormal, float ImpulsePower)
+{
+	auto XYXCharacter = Cast<AXYXCharacter>(HitActor);
+	if (XYXCharacter && XYXCharacter->GetMesh() &&
+		XYXCharacter->GetMesh()->IsAnySimulatingPhysics())
+	{
+		XYXCharacter->GetMesh()->AddImpulse(HitNormal * -1.0f * ImpulsePower);
+	}
+}
+
+bool AXYXCharacter::CanBeAttacked()
+{
+	if (IsEntityAlive())
+	{
+		if (StateManagerComp)
+		{
+			return !StateManagerComp->GetActivityValue(EActivity::EIsImmortal);
+		}
+	}
+
+	return false;
+}
+
+void AXYXCharacter::UpdateReceivedHitDirection(FVector HitFromDirection)
+{
+	ReceivedHitDirection = UXYXFunctionLibrary::GetHitDirection(HitFromDirection, this);
+}
+
+void AXYXCharacter::Block()
+{
+	auto Montage = GetBlockMontage();
+	if (Montage)
+	{
+		auto Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::Duration);
+		ResetMeleeAttackCounter();
+	}
+}
+
+void AXYXCharacter::HandleOnEffectApplied(EEffectType Type)
+{
+	switch(Type)
+	{
+	case EEffectType::EStun:
+		{
+			Stunned();
+		}
+		break;
+	case EEffectType::EBackstab:
+		{
+			Backstabbed();
+		}
+		break;
+	case EEffectType::EParried:
+		{
+			Parried();
+		}
+		break;
+	case EEffectType::EImpact:
+		{
+			Impact();
+		}
+		break;
+	}
+
+	if (StateManagerComp)
+	{
+		StateManagerComp->SetState(EState::EDisabled);
+		if (InputBufferComp)
+		{
+			InputBufferComp->UpdateKey(EInputBufferKey::ENone);
+			ResetMeleeAttackCounter();
+			// Open input buffer 	(it will be closed when effect ends)
+			InputBufferComp->OpenInputBuffer();
+		}
+	}
+}
+
+void AXYXCharacter::HandleOnEffectRemoved(EEffectType Type)
+{
+	switch (Type)
+	{
+	case EEffectType::EStun:
+	case EEffectType::EBackstab:
+	case EEffectType::EParried:
+	case EEffectType::EImpact:
+	{
+		if (EffectsManagerComp)
+		{
+			TArray<EEffectType> Types = { EEffectType::EStun, 
+				EEffectType::EKnockdown, EEffectType::EImpact, 
+				EEffectType::EParried, EEffectType::EBackstab };
+
+			bool bApplied = EffectsManagerComp->IsAnyEffectApplied(Types);
+			if (!bApplied)
+			{
+				if (StateManagerComp)
+				{
+					StateManagerComp->ResetState(0.0f);
+					// Close input buffer (Perform action based on stored key)
+					if (InputBufferComp)
+					{
+						InputBufferComp->CloseInputBuffer();
+					}
+				}
+			}
+		}
+	}
+	break;
+	}
+}
+
+void AXYXCharacter::Stunned()
+{
+	auto Montage = GetStunMontage(ReceivedHitDirection);
+	if (Montage)
+	{
+		auto Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::Duration);
+		if (EffectsManagerComp)
+		{
+			EffectsManagerComp->AdjustEffectTime(EEffectType::EStun, Duration * 0.8f);
+		}
+	}
+	else
+	{
+		if (StateManagerComp)
+		{
+			StateManagerComp->ResetState(0.f);
+		}
+	}
+}
+
+void AXYXCharacter::Backstabbed()
+{
+	if (MontageManagerComp)
+	{
+		auto Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EBackstabbed, 0);
+		if (Montage)
+		{
+			auto Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::Duration);
+			if (EffectsManagerComp)
+			{
+				EffectsManagerComp->AdjustEffectTime(EEffectType::EBackstab, Duration * 0.8f);
+			}
+		}
+		else
+		{
+			if (StateManagerComp)
+			{
+				StateManagerComp->ResetState(0.f);
+			}
+		}
+	}	
+}
+
+void AXYXCharacter::Impact()
+{
+	if (MontageManagerComp)
+	{
+		auto Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EImpact, 0);
+		if (Montage)
+		{
+			auto Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::Duration);
+			if (EffectsManagerComp)
+			{
+				EffectsManagerComp->AdjustEffectTime(EEffectType::EImpact, Duration * 0.8f);
+			}
+		}
+		else
+		{
+			if (StateManagerComp)
+			{
+				StateManagerComp->ResetState(0.f);
+			}
+		}
+	}
+}
+
+void AXYXCharacter::Parried()
+{
+	auto Montage = GetParryMontage();
+	if (Montage)
+	{
+		auto Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::Duration);
+		if (EffectsManagerComp)
+		{
+			EffectsManagerComp->AdjustEffectTime(EEffectType::EParried, Duration * 0.8f);
+		}
+	}
+	else
+	{
+		if (StateManagerComp)
+		{
+			StateManagerComp->ResetState(0.f);
+		}
+	}
+}
+
+bool AXYXCharacter::AttemptBackstab()
+{
+	if (CanMeleeAttack())
+	{
+		// Check if there is any avaialable to backstab actor in front of the character
+		FVector TmpStartLocation = GetActorLocation();
+		FVector TmpEndLocation = GetActorForwardVector() * 150.f + TmpStartLocation;
+		FHitResult HitResult;
+		TArray<AActor*> actorsToIgnore;
+		if (UKismetSystemLibrary::LineTraceSingle(this, TmpStartLocation, TmpEndLocation,
+			UEngineTypes::ConvertToTraceType(ECC_Visibility), false, actorsToIgnore, EDrawDebugTrace::None, HitResult, true,
+			FLinearColor::Red, FLinearColor::Green, 5.f))
+		{
+			AActor* TmpHitActor = HitResult.GetActor();
+			if (TmpHitActor && TmpHitActor->GetDotProductTo(this) < -0.25f)
+			{
+				// Apply Backstab effect
+				auto EffectComp = Cast<UXYXEffectsComponent>(TmpHitActor->GetComponentByClass(UXYXEffectsComponent::StaticClass()));
+				if (EffectComp && StatsManagerComp)
+				{
+					bool bApplied = EffectComp->ApplyBackstabEffect(2.f, EApplyEffectMethod::EReplace, this, StatsManagerComp->GetDamage() * 3.0f);
+					if (bApplied)
+					{
+						BackstabbedActor = TmpHitActor;
+						if (StateManagerComp)
+						{
+							StateManagerComp->SetState(EState::EBackstabbing);
+
+							if (MontageManagerComp)
+							{
+								auto Montage = MontageManagerComp->GetMontageForAction(EMontageAction::EBackstab, 0);
+								if (Montage)
+								{
+									auto Duration = GetMesh()->GetAnimInstance()->Montage_Play(Montage, 1.0f, EMontagePlayReturnType::Duration);
+									if (ExtendedStamina)
+									{
+										// Remove Stamina
+										ExtendedStamina->ModifyStat(-40.f, true);
+										return true;
+									}
+								}
+								else
+								{
+									if (StateManagerComp)
+									{
+										StateManagerComp->ResetState(0.f);
+										return true;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+float AXYXCharacter::GetCastingSpeed()
+{
+	if (StatsManagerComp)
+	{
+		return StatsManagerComp->GetStatValue(EAttributesType::ECastingSpeed, true);
+	}
+
+	return 0.f;
+}
+
+float AXYXCharacter::GetMagicDamage()
+{
+	if (StatsManagerComp)
+	{
+		return StatsManagerComp->GetStatValue(EAttributesType::EMagicDamage, true);
+	}
+
+	return 0.f;
+}
+
+void AXYXCharacter::StartSlowMotion()
+{
+	if (CanEnterSlowMotion())
+	{
+		bIsInSlowMotion = true;
+		UGameplayStatics::SetGlobalTimeDilation(this, SlowMotionTimeDilation);
+		UWorld* World = GetWorld();
+		check(World);
+		World->GetTimerManager().SetTimer(LoopSlowMotionTimer, this, &AXYXCharacter::LoopSlowMotion, 0.016f, true);
+	}
+}
+
+void AXYXCharacter::StopSlowMotion()
+{
+	bIsInSlowMotion = false; 
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.0f);
+	UWorld* World = GetWorld();
+	check(World);
+	World->GetTimerManager().ClearTimer(LoopSlowMotionTimer);
+}
+
+void AXYXCharacter::LoopSlowMotion()
+{
+	if (bIsInSlowMotion && CanEnterSlowMotion() && IsEnoughStamina(SlowMotionStaminaCost))
+	{
+		if (ExtendedStamina)
+		{
+			ExtendedStamina->ModifyStat(SlowMotionStaminaCost * -1.f, true);
+		}
+	}
+	else
+	{
+		StopSlowMotion();
+	}
+}
+
+bool AXYXCharacter::CanEnterSlowMotion()
+{
+	return StateManagerComp && StateManagerComp->GetActivityValue(EActivity::EIsLookingForward) && 
+		(StateManagerComp->GetState() == EState::EAttacking || IsIdleAndNotFalling());
+}
+
+bool AXYXCharacter::IsEnoughStamina(float Value)
+{
+	if (ExtendedStamina)
+	{
+		return ExtendedStamina->GetCurrentValue() >= Value;
+	}
+
+	return false;
+}
+
+void AXYXCharacter::HandleExtendedHealthOnValueChanged(float NewValue, float MaxValue)
+{
+	if (NewValue <= 0.f)
+	{
+		Death();
+	}
+}
+
+void AXYXCharacter::HandleExtendedStaminaOnValueChanged(float NewValue, float MaxValue)
+{
+	if (NewValue / MaxValue <= 0.1f)
+	{
+		// Update blocking if stamina drops below 10%
+		UpdateBlocking();
+	}
+}
+
 void AXYXCharacter::CustomJump()
 {
 	if (!CanJump() || !IsStateEqual(EState::EIdle))
@@ -1803,7 +2530,13 @@ void AXYXCharacter::Parry()
 	{
 		if (GetMesh() && GetMesh()->GetAnimInstance())
 		{
-			GetMesh()->GetAnimInstance()->Montage_Play(Montage, 1.f, EMontagePlayReturnType::Duration);
+			float AttackSpeed = StatsManagerComp ? StatsManagerComp->GetStatValue(EAttributesType::EAttackSpeed, true) : 1.0f;
+			GetMesh()->GetAnimInstance()->Montage_Play(Montage, AttackSpeed, EMontagePlayReturnType::Duration);
+
+			if (ExtendedStamina)
+			{
+				ExtendedStamina->ModifyStat(-15.f, true);
+			}
 		}
 	}
 	else

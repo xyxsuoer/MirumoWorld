@@ -7,6 +7,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/XYXEquipmentManagerComponent.h"
+#include "Components/XYXExtendedStatComponent.h"
+#include "Game/XYXFunctionLibrary.h"
 
 // Sets default values for this component's properties
 UXYXStatsManagerComponent::UXYXStatsManagerComponent()
@@ -28,7 +30,7 @@ void UXYXStatsManagerComponent::ExcludeItemModifiers(TSubclassOf<class UXYXItemB
 			IXYXInterfaceItem* MyInterface = Cast<IXYXInterfaceItem>(ItemBase);
 			if (MyInterface)
 			{
-				auto&& TmpVec = MyInterface->GetModifiers();
+				auto&& TmpVec = MyInterface->Execute_GetModifiers(ItemBase);
 				for (auto && e : TmpVec)
 				{
 					RemoveModifier(e.Type, e.Value);
@@ -48,7 +50,7 @@ void UXYXStatsManagerComponent::IncludeItemModifiers(TSubclassOf<class UXYXItemB
 			IXYXInterfaceItem* MyInterface = Cast<IXYXInterfaceItem>(ItemBase);
 			if (MyInterface)
 			{
-				auto&& TmpVec = MyInterface->GetModifiers();
+				auto&& TmpVec = MyInterface->Execute_GetModifiers(ItemBase);
 				for (auto&& e : TmpVec)
 				{
 					AddModifier(e.Type, e.Value);
@@ -170,6 +172,51 @@ void UXYXStatsManagerComponent::TakeDamage(float Damage, bool bIgnoreStamina)
 	RecentlyReceivedHitsCount++;
 	World->GetTimerManager().SetTimer(ResetRecentlyReceivedDamageTimer, this, &UXYXStatsManagerComponent::ResetRecentlyReceivedDamage, 4.f, false);
 
+	UXYXExtendedStatComponent* TmpHealth = UXYXFunctionLibrary::GetExtendedStatComp(GetOwner(), EAttributesType::EHealth);
+	UXYXExtendedStatComponent* TmpStamina = UXYXFunctionLibrary::GetExtendedStatComp(GetOwner(), EAttributesType::EStamina);
+	// Convert armor to percent value (0-1) and multiply by damage
+	float ArmorValue = GetStatValue(EAttributesType::EArmor, true) / 100.f * Damage;
+	// Caluclate damage reduced by Armor   Example: Damage 10, Armor 20->Reduced Damage = 8 (10 - 10 * 0.2)
+	float DamageReducedArmor = Damage - ArmorValue;
+	float TmpReducedDamage = UKismetMathLibrary::FClamp(DamageReducedArmor, 0.f, DamageReducedArmor);
+
+	if (bIgnoreStamina || !TmpStamina)
+	{
+		if (TmpHealth)
+		{
+			// If stamina is ignored, simply remove damage value reduced by armor from health
+			TmpHealth->ModifyStat(-1.f * TmpReducedDamage, true);
+			// Update successfully landed damage info
+			RecentlyReceivedSuccessfulDamage += Damage;
+			RecentlyReceivedSuccessfulHitsCount++;
+		}
+	}
+	else
+	{
+		if (TmpHealth && TmpStamina)
+		{
+			// Calculate Blocked Damage  Example: ReducedDamage 8, Block 70(%)	Blocked Damage = 5.6 (8 * 0.7)
+			float TmpBlockedDamage = GetStatValue(EAttributesType::EBlock, true) / 100.f * TmpReducedDamage;
+
+			// Is enough stamina to subtract blocked damage
+			float TmpStaminaValue = TmpStamina->GetCurrentValue();
+			if (TmpStaminaValue >= TmpBlockedDamage)
+			{
+				// Subtract blocked damage from stamina (increase it multipling by 1.25)
+				TmpStamina->ModifyStat(-1.25f * TmpBlockedDamage, true);
+			}
+			else
+			{
+				TmpStamina->SetCurrentValue(0.f, true);
+				TmpBlockedDamage = TmpStaminaValue;
+				RecentlyReceivedSuccessfulDamage += Damage;
+				RecentlyReceivedSuccessfulHitsCount++;
+			}
+
+			// Finally subtract health, even after there was enought stamina because shield absobing value may not be 100 %
+			TmpHealth->ModifyStat(-1.0f * (TmpReducedDamage - TmpBlockedDamage), true);
+		}
+	}
 }
 
 float UXYXStatsManagerComponent::GetRecentlyReceivedDamage()
@@ -227,7 +274,6 @@ void UXYXStatsManagerComponent::Initialize()
 		EquipmentComp->OnSlotHiddenChanged.AddDynamic(this, &UXYXStatsManagerComponent::HandleOnSlotHiddenChanged);
 		EquipmentComp->OnMainHandTypeChanged.AddDynamic(this, &UXYXStatsManagerComponent::HandleOnMainHandTypeChanged);
 	}
-
 }
 
 void UXYXStatsManagerComponent::HandleOnActiveItemChanged(FStoredItem OldItem, FStoredItem NewItem, EItemType Type, int32 SlotIndex, int32 ActiveIndex)

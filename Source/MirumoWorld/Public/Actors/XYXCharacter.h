@@ -84,6 +84,24 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXEffectsComponent* EffectsManagerComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXStatsManagerComponent* StatsManagerComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXExtendedStatComponent* ExtendedHealth;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXExtendedStatComponent* ExtendedStamina;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXExtendedStatComponent* ExtendedMana;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		class USceneComponent* ArrowSpawnLocation;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		class UAudioComponent* EffectsAudio;
+
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXInputBufferComponent* GetInputBufferComponent() const { return InputBufferComp; }
 
@@ -113,6 +131,15 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXEffectsComponent* GetEffectsComponent() const { return EffectsManagerComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXExtendedStatComponent* GetExtendedHealth() const { return ExtendedHealth; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXExtendedStatComponent* GetExtendedStamina() const { return ExtendedStamina; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXExtendedStatComponent* GetExtendedMana() const { return ExtendedMana; }
 
 	// =================================================
 
@@ -167,6 +194,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		float SprintStaminaCost = 0.5f;
 
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		float CrouchStaminaCost = 0.1f;
+
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsCrosshairVisible = false;
 
@@ -202,9 +232,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		int32 SelectedSpellIndex = 0;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
-		class USceneComponent* ArrowSpawnLocation;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		UTimelineComponent* BlockingTimeline;
@@ -242,6 +269,8 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual void OnMovementModeChanged(EMovementMode PrevMovementMode, uint8 PrevCustomMode) override;
 
 	//C++实现，蓝图调用
 	UFUNCTION(BlueprintCallable, Category = XYX)
@@ -521,6 +550,15 @@ public:
 
 	UFUNCTION()
 		void ShootArrowProjectile();
+	
+	UFUNCTION()
+		void AttemptPlayBowDrawSound();
+
+	UFUNCTION()
+		void PlayBowDrawSound();
+
+	UFUNCTION()
+		void StopBowDrawSound();
 
 	UFUNCTION()
 		void StartAiming();
@@ -585,6 +623,78 @@ public:
 	UFUNCTION()
 		void UpdateCrosshairPosition();
 
+	UFUNCTION()
+		void Death();
+
+	UFUNCTION()
+		void HandleOnHit(FHitResult HitResult);
+
+	UFUNCTION()
+		void HandleOnCollisionActivated(ECollisionPart CollisionPart);
+
+	UFUNCTION()
+		FHitData MakeMeleeHitData(AActor* HitActor);
+
+	UFUNCTION()
+		void ApplyHitImpulseToCharacter(AActor* HitActor, FVector HitNormal, float ImpulsePower);
+
+	UFUNCTION()
+		bool CanBeAttacked();
+
+	UFUNCTION()
+		void UpdateReceivedHitDirection(FVector HitFromDirection);
+
+	UFUNCTION()
+		void Block();
+
+	UFUNCTION()
+		void HandleOnEffectApplied(EEffectType Type);
+
+	UFUNCTION()
+		void HandleOnEffectRemoved(EEffectType Type);
+
+	UFUNCTION()
+		void Stunned();
+
+	UFUNCTION()
+		void Backstabbed();
+
+	UFUNCTION()
+		void Impact();
+
+	UFUNCTION()
+		void Parried();
+
+	UFUNCTION()
+		bool AttemptBackstab();
+
+	UFUNCTION()
+		float GetCastingSpeed();
+
+	UFUNCTION()
+		float GetMagicDamage();
+
+	UFUNCTION()
+		void StartSlowMotion();
+
+	UFUNCTION()
+		void StopSlowMotion();
+
+	UFUNCTION()
+		void LoopSlowMotion();
+
+	UFUNCTION()
+		bool CanEnterSlowMotion();
+
+	UFUNCTION()
+		bool IsEnoughStamina(float Value);
+
+	UFUNCTION()
+		void HandleExtendedHealthOnValueChanged(float NewValue, float MaxValue);
+
+	UFUNCTION()
+		void HandleExtendedStaminaOnValueChanged(float NewValue, float MaxValue);
+
 private:
 	bool bInitialized = false;
 
@@ -609,5 +719,14 @@ private:
 
 	UPROPERTY()
 		FTimerHandle HideCrosshairTimer;
+
+	UPROPERTY()
+		FTimerHandle LoopSlowMotionTimer;
+
+	UPROPERTY()
+		FTimerHandle PlayBowDrawSoundTimer;
+
+	UPROPERTY()
+		FTimerHandle ClearPlayBowDrawSoundTimer;
 
 };
