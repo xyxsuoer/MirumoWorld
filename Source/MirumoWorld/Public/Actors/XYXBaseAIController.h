@@ -13,5 +13,56 @@ UCLASS()
 class MIRUMOWORLD_API AXYXBaseAIController : public AAIController
 {
 	GENERATED_BODY()
-	
+
+public:
+	AXYXBaseAIController();
+
+protected:
+
+		virtual void OnPossess(APawn* InPawn) override;
+
+public:
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		class UAIPerceptionComponent* AIPerceptionComp;
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		FName TargetKey = TEXT("Target");
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		FName AttackTypeKey = TEXT("AttackType");
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		FName StateKey = TEXT("State");
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		FName IsInCombatKey = TEXT("IsInCombat");
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		AActor* Target;
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		class AXYXBaseNPC* PossesedAI;
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		bool bIsInCombat = false;
+
+	UPROPERTY()
+		FTimerHandle UpdateTargetTimer;
+
+	UFUNCTION()
+		void HandleOnInCombatChanged(bool bValue);
+
+	UFUNCTION()
+		void UpdateTarget();
+
+	UFUNCTION()
+		void SetTarget(AActor* NewTarget);
+
+	UFUNCTION()
+		void SetIsInCombat(bool bValue);
+
+	UFUNCTION()
+		void UpdateSenseTarget();
+
 };

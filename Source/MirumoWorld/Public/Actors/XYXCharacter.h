@@ -133,6 +133,9 @@ public:
 		FORCEINLINE class UXYXEffectsComponent* GetEffectsComponent() const { return EffectsManagerComp; }
 
 	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXStatsManagerComponent* GetStatsManagerComponent() const { return StatsManagerComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXExtendedStatComponent* GetExtendedHealth() const { return ExtendedHealth; }
 
 	UFUNCTION(BlueprintPure, Category = XYX)

@@ -43,4 +43,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = XYXLibrary)
 		static void PlayBlockSound(UXYXGameInstance* GameInstance, AActor* ActorWhoBlocked, AActor* ActorWhoWasBlocked, FVector Location);
+
+	UFUNCTION(BlueprintCallable, Category = XYXLibrary)
+		static AActor* GetClosestActor(AActor* Target, TArray<AActor*> Actors);
+
 };

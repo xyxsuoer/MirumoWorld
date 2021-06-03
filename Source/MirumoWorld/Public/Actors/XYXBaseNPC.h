@@ -55,7 +55,13 @@ public:
 		class UXYXEffectsComponent* EffectsManagerComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
-		class UBehaviorTree* BehaviorTree;
+		class UXYXStatsManagerComponent* StatsManagerComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXExtendedStatComponent* ExtendedHealth;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXExtendedStatComponent* ExtendedStamina;
 
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXMontageManagerComponent* GetMontageManagerComponent() const { return MontageManagerComp; }
@@ -77,6 +83,15 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXEffectsComponent* GetEffectsComponent() const { return EffectsManagerComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXStatsManagerComponent* GetStatsManagerComponent() const { return StatsManagerComp; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXExtendedStatComponent* GetExtendedHealth() const { return ExtendedHealth; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXExtendedStatComponent* GetExtendedStamina() const { return ExtendedStamina; }
 
 	UPROPERTY(Replicated)
 		ETeam CombatTeam = ETeam::EEnemiesTeam;
@@ -113,6 +128,18 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		TArray<AActor*> AttachedActors;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UBehaviorTree* BehaviorTree;
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		class AXYXBaseAIController* BaseAIController;
+
+	//UPROPERTY(BlueprintReadWrite, Category = XYX)
+	//	class UXYXUserWidgetInGame* TargetWidget;
+
+	//UPROPERTY(BlueprintReadWrite, Category = XYX)
+	//	class UXYXUserWidgetInGame* HealthWidget;
 
 public:
  

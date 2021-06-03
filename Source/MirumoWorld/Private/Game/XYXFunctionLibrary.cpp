@@ -338,3 +338,33 @@ void UXYXFunctionLibrary::PlayBlockSound(UXYXGameInstance* GameInstance, AActor*
 		}
 	}
 }
+
+AActor* UXYXFunctionLibrary::GetClosestActor(AActor* Target, TArray<AActor*> Actors)
+{
+	AActor* TmpClosestActor = nullptr;
+	if (!Target || Actors.Num() == 0)
+	{
+		return TmpClosestActor;
+	}
+
+	TmpClosestActor = Actors[0];
+	float TmpClosestDistance = 0;
+	for (int32 i =0; i < Actors.Num(); ++i) 
+	{
+		if (i == 0)
+		{
+			TmpClosestActor = Actors[0];
+			TmpClosestDistance = Target->GetSquaredDistanceTo(Actors[0]);
+		}
+		else
+		{
+			if (Target->GetSquaredDistanceTo(Actors[i]) < TmpClosestDistance)
+			{
+				TmpClosestDistance = Target->GetSquaredDistanceTo(Actors[i]);
+				TmpClosestActor = Actors[i];
+			}
+		}
+	}
+
+	return TmpClosestActor;
+}
