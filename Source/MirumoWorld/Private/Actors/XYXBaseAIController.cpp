@@ -71,7 +71,7 @@ void AXYXBaseAIController::HandleOnInCombatChanged(bool bValue)
 void AXYXBaseAIController::UpdateTarget()
 {
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-	auto ControlledPawn = PlayerController->GetPawn();
+	auto ControlledPawn = this->GetPawn();
 
 	IXYXInterfaceEntity* ControllerPawn = Cast<IXYXInterfaceEntity>(ControlledPawn);
 	if (!ControllerPawn || !ControllerPawn->IsEntityAlive() || !AIPerceptionComp)
@@ -151,8 +151,7 @@ void AXYXBaseAIController::UpdateSenseTarget()
 {
 	if (AIPerceptionComp)
 	{
-		APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
-		auto ControlledPawn = PlayerController->GetPawn();
+		auto ControlledPawn = this->GetPawn();
 		auto World = GetWorld();
 		check(World);
 		UAISense_Damage::ReportDamageEvent(World, ControlledPawn, Target, 1.f, ControlledPawn->GetActorLocation(), ControlledPawn->GetActorLocation());

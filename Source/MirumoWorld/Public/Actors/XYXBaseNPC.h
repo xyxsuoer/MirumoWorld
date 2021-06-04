@@ -135,11 +135,17 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		class AXYXBaseAIController* BaseAIController;
 
-	//UPROPERTY(BlueprintReadWrite, Category = XYX)
-	//	class UXYXUserWidgetInGame* TargetWidget;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		class UWidgetComponent* TargetWidget;
 
-	//UPROPERTY(BlueprintReadWrite, Category = XYX)
-	//	class UXYXUserWidgetInGame* HealthWidget;
+	UPROPERTY(EditAnywhere, Category = XYX)
+		TSubclassOf<class UXYXUserWidgetAIStatBar> WBStatsBarClass;
+
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
+		class UXYXUserWidgetAIStatBar* StatsBarWidget;
+
+	UPROPERTY()
+		FTimerHandle ResetMeleeAttackCounterTimer;
 
 public:
  
@@ -198,6 +204,9 @@ public:
 		UAnimMontage* GetParriedMontage();
 
 	UFUNCTION()
+		UAnimMontage* GetStunMontage(EDirection Direction);
+
+	UFUNCTION()
 		bool CanBeStunned();
 
 	UFUNCTION()
@@ -249,9 +258,24 @@ public:
 		float Roll(EDirection Direction);
 
 	UFUNCTION()
-		void OnCollisionActivated(ECollisionPart Selection);
+		void HandleOnCollisionActivated(ECollisionPart Selection);
 
 	UFUNCTION()
 		bool CanBeInterrupted();
+
+	UFUNCTION()
+		void HandleMeshOnDeath();
+
+	UFUNCTION()
+		void UpdateReceivedHitDirection(FVector HitFromDirection);
+
+	UFUNCTION()
+		void HandleExtendedHealthOnValueChanged(float NewValue, float MaxValue);
+
+	UFUNCTION()
+		void HandleOnEffectApplied(EEffectType Type);
+
+	UFUNCTION()
+		void InitializeStatsWidget();
 
 };
