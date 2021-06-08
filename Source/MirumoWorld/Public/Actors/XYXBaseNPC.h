@@ -99,37 +99,37 @@ public:
 	UFUNCTION(BlueprintPure, Category = XYX)
 		class UXYXAnimInstance* GetXYXAnimInstance() const;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		int32 MeleeAttackCounter = 0.f;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		EMeleeAttackType MeleeAttackType = EMeleeAttackType::ENone;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		EDirection ReceivedHitDirection = EDirection::EFront;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<FName> LeftHandCollisionSockets = { TEXT("left_hand_1"), TEXT("left_hand_2") };
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<FName> RightHandCollisionSockets = { TEXT("right_hand_1"), TEXT("right_hand_2") };
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<FName> RightFootCollisionSockets = { TEXT("right_foot_1"), TEXT("right_foot_2") };
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<FName> LeftFootCollisionSockets = { TEXT("left_foot_1"), TEXT("left_foot_2") };
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		float RecentlyReceivedDamageStunLimit = 40.f;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		int32 RecentlyReceivedHitsCountStunLimit = 2;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		TArray<AActor*> AttachedActors;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		class UBehaviorTree* BehaviorTree;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)

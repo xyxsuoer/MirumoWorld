@@ -13,9 +13,16 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
 #include <Components/XYXEquipmentManagerComponent.h>
+#include <BehaviorTree/BlackboardComponent.h>
+#include <BehaviorTree/BehaviorTreeComponent.h>
+#include "BehaviorTree/BlackboardData.h"
+#include <BehaviorTree/BehaviorTree.h>
+
 
 AXYXBaseAIController::AXYXBaseAIController()
 {
+	BlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackBoardComp"));
+
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AI Perception Component"));
 	if (AIPerceptionComp)
 	{
@@ -48,6 +55,16 @@ void AXYXBaseAIController::OnPossess(APawn* InPawn)
 	PossesedAI = Cast<AXYXBaseNPC>(InPawn);
 	if (PossesedAI->BehaviorTree)
 	{
+		UBlackboardData*  bbData = PossesedAI->BehaviorTree->BlackboardAsset;
+		if (bbData == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("This behavior Tree should be assigned with a blackborad, %s"), *InPawn->GetName());
+			return;
+		}
+
+		BlackboardComponent->InitializeBlackboard(*bbData);
+		Blackboard = BlackboardComponent;
+
 		RunBehaviorTree(PossesedAI->BehaviorTree);
 		
 		UWorld* World = GetWorld();
@@ -73,8 +90,8 @@ void AXYXBaseAIController::UpdateTarget()
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 	auto ControlledPawn = this->GetPawn();
 
-	IXYXInterfaceEntity* ControllerPawn = Cast<IXYXInterfaceEntity>(ControlledPawn);
-	if (!ControllerPawn || !ControllerPawn->IsEntityAlive() || !AIPerceptionComp)
+	IXYXInterfaceEntity* ControlledEntity = Cast<IXYXInterfaceEntity>(ControlledPawn);
+	if (!ControlledEntity || !ControlledEntity->Execute_IsEntityAlive(ControlledPawn) || !AIPerceptionComp)
 	{
 		return;
 	}
@@ -86,7 +103,7 @@ void AXYXBaseAIController::UpdateTarget()
 	for (auto&& e : KnownActors)
 	{
 		IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(e);
-		if (Entity && Entity->IsEntityAlive())
+		if (Entity && Entity->Execute_IsEntityAlive(e))
 		{
 			TmpPerceivedActors.Emplace(e);
 		}

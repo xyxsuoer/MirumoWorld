@@ -26,6 +26,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		class UAIPerceptionComponent* AIPerceptionComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ACF)
+		class UBlackboardComponent* BlackboardComponent;
+
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		FName TargetKey = TEXT("Target");
 
