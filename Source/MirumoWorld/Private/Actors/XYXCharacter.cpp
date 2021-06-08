@@ -503,7 +503,7 @@ bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackRes
 				StatsManagerComp->TakeDamage(HitData.Damage, !bTmpBlocked);
 
 				// If hit was blockedand character is still alive, call block function
-				if (IsEntityAlive() && bTmpBlocked)
+				if (Execute_IsEntityAlive(this) && bTmpBlocked)
 				{
 					UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
 					UXYXFunctionLibrary::PlayBlockSound(GameInstance, this, HitData.DamageCauser, this->GetActorLocation());
@@ -545,7 +545,7 @@ bool AXYXCharacter::CanEffectBeApplied_Implementation(EEffectType Type, AActor* 
 
 void AXYXCharacter::HandleInputBufferConsumed(const EInputBufferKey key)
 {
-	if (!IsEntityAlive())
+	if (!Execute_IsEntityAlive(this))
 		return;
 
 	switch(key)
@@ -1294,7 +1294,7 @@ void AXYXCharacter::CrouchLoop()
 
 bool AXYXCharacter::CanUseOrSwitchItem()
 {
-	if (IsEntityAlive() && IsStateEqual(EState::EIdle))
+	if (Execute_IsEntityAlive(this) && IsStateEqual(EState::EIdle))
 	{
 		return true;
 	}
@@ -2062,7 +2062,7 @@ void AXYXCharacter::HandleOnHit(FHitResult HitResult)
 	if (TmpHitActor)
 	{
 		EAttackResult ResultType;
-		bool CanAttacked =  TmpHitActor->TakeAttackDamage(MakeMeleeHitData(HitResult.GetActor()), ResultType);
+		bool CanAttacked =  TmpHitActor->Execute_TakeAttackDamage(HitResult.GetActor(), MakeMeleeHitData(HitResult.GetActor()), ResultType);
 		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 15000.f);
 		if (CanAttacked)
 		{
@@ -2165,7 +2165,7 @@ void AXYXCharacter::ApplyHitImpulseToCharacter(AActor* HitActor, FVector HitNorm
 
 bool AXYXCharacter::CanBeAttacked()
 {
-	if (IsEntityAlive())
+	if (Execute_IsEntityAlive(this))
 	{
 		if (StateManagerComp)
 		{

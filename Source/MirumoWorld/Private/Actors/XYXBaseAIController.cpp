@@ -112,7 +112,7 @@ void AXYXBaseAIController::UpdateTarget()
 	for (auto&& e: TmpPerceivedActors)
 	{
 		IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(e);
-		if (Entity && Entity->GetEntityCombatTeam() == ETeam::EHeroesTeam)
+		if (Entity && Entity->Execute_GetEntityCombatTeam(e) == ETeam::EHeroesTeam)
 		{
 			TmpEnemyActors.Emplace(e);
 		}

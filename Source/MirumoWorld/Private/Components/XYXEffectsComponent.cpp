@@ -87,7 +87,7 @@ bool UXYXEffectsComponent::ApplyEffect(EEffectType Type, float Duration, EApplyE
 	IXYXInterfaceEntity* TmpEntity = Cast<IXYXInterfaceEntity>(GetOwner());
 	if (TmpEntity)
 	{
-		if (!TmpEntity->CanEffectBeApplied(Type, Applier))
+		if (!TmpEntity->Execute_CanEffectBeApplied(GetOwner(), Type, Applier))
 		{
 			return false;
 		}
@@ -153,7 +153,7 @@ bool UXYXEffectsComponent::ApplyBackstabEffect(float Duration, EApplyEffectMetho
 	IXYXInterfaceEntity* TmpEntity = Cast<IXYXInterfaceEntity>(GetOwner());
 	if (TmpEntity)
 	{
-		if (!TmpEntity->CanEffectBeApplied(EEffectType::EBackstab, Applier))
+		if (!TmpEntity->Execute_CanEffectBeApplied(GetOwner(), EEffectType::EBackstab, Applier))
 		{
 			return false;
 		}
@@ -170,7 +170,7 @@ bool UXYXEffectsComponent::ApplyBurringEffect(float Duration, EApplyEffectMethod
 	IXYXInterfaceEntity* TmpEntity = Cast<IXYXInterfaceEntity>(GetOwner());
 	if (TmpEntity)
 	{
-		if (!TmpEntity->CanEffectBeApplied(EEffectType::EBurning, Applier))
+		if (!TmpEntity->Execute_CanEffectBeApplied(GetOwner(), EEffectType::EBurning, Applier))
 		{
 			return false;
 		}

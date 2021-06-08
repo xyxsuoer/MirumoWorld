@@ -42,6 +42,9 @@ AXYXBaseNPC::AXYXBaseNPC()
 	RotatingComp = CreateDefaultSubobject<UXYXRotatingComponent>(TEXT("Rotating Component"));
 	CollisionHandlerComp = CreateDefaultSubobject<UXYXCollisionHandlerComponent>(TEXT("Collision Handler Component"));
 	EffectsManagerComp = CreateDefaultSubobject<UXYXEffectsComponent>(TEXT("Effects Manager Component"));
+	StatsManagerComp = CreateDefaultSubobject<UXYXStatsManagerComponent>(TEXT("Stats Manager Component"));
+	ExtendedHealth = CreateDefaultSubobject<UXYXExtendedStatComponent>(TEXT("Extended Stat Health"));
+	ExtendedStamina = CreateDefaultSubobject<UXYXExtendedStatComponent>(TEXT("Extended Stat Stamina"));
 
 	TargetWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Target Widget"));
 	TargetWidget->SetupAttachment(RootComponent);
@@ -195,7 +198,7 @@ bool AXYXBaseNPC::TakeAttackDamage_Implementation(FHitData HitData, EAttackResul
 				StatsManagerComp->TakeDamage(HitData.Damage, !bTmpBlocked);
 
 				// If hit was blockedand character is still alive, call block function
-				if (IsEntityAlive() && bTmpBlocked)
+				if (Execute_IsEntityAlive(this) && bTmpBlocked)
 				{
 					UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
 					UXYXFunctionLibrary::PlayBlockSound(GameInstance, this, HitData.DamageCauser, this->GetActorLocation());
@@ -288,7 +291,7 @@ bool AXYXBaseNPC::OnDeselected_Implementation()
 
 bool AXYXBaseNPC::IsTargetable_Implementation()
 {
-	return IsEntityAlive();
+	return Execute_IsEntityAlive(this);
 }
 
 UAnimMontage* AXYXBaseNPC::GetRollMontage(EDirection Direction)
@@ -424,7 +427,7 @@ bool AXYXBaseNPC::CanBeStunned()
 
 bool AXYXBaseNPC::CanBeAttacked()
 {
-	if (IsEntityAlive())
+	if (Execute_IsEntityAlive(this))
 	{
 		if (StateManagerComp)
 		{

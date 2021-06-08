@@ -44,7 +44,7 @@ void UXYXRotatingComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 			IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(GetOwner());
 			if (Entity)
 			{
-				FRotator TargetRotation =  Entity->GetDesiredRotation();
+				FRotator TargetRotation =  Entity->Execute_GetDesiredRotation(GetOwner());
 				FRotator TmpRotation = UKismetMathLibrary::RInterpTo_Constant(GetOwner()->GetActorRotation(), TargetRotation, World->GetDeltaSeconds(), MaxDegreesPerSecond);
 				GetOwner()->SetActorRotation(TmpRotation);
 			}

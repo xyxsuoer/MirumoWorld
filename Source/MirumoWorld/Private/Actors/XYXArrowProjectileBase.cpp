@@ -111,7 +111,7 @@ void AXYXArrowProjectileBase::OnArrowHit(FHitResult Hit)
 		{
 			if (IsEnemy(TmpHitActor))
 			{
-				FName SocketName = TmpHitObj->GetHeadSocket();
+				FName SocketName = TmpHitObj->Execute_GetHeadSocket(TmpHitActor);
 				FVector HitFromDirection = UKismetMathLibrary::GetDirectionUnitVector(TmpHitLocation, TmpHitActor->GetActorLocation());
 				float TmpDamage = SocketName == TmpHitBoneName ? Damage * HeadShotDamageMultiplier : Damage;
 				FHitData TmpData;
@@ -122,7 +122,7 @@ void AXYXArrowProjectileBase::OnArrowHit(FHitResult Hit)
 				TmpData.Damage = TmpDamage;
 				TmpData.DamageCauser = GetOwner();
 				EAttackResult ResultType;
-				bool Result = TmpHitObj->TakeAttackDamage(TmpData, ResultType);
+				bool Result = TmpHitObj->Execute_TakeAttackDamage(TmpHitActor, TmpData, ResultType);
 				if (ResultType != EAttackResult::EFailed)
 				{
 					if (Result)
@@ -158,8 +158,8 @@ bool AXYXArrowProjectileBase::IsEnemy(AActor* Target)
 	IXYXInterfaceEntity* TargetObj = Cast<IXYXInterfaceEntity>(Target);
 	if (OwnerObj && TargetObj)
 	{
-		ETeam TmpOwnerTeam = OwnerObj->GetEntityCombatTeam();
-		ETeam TmpTargetTeam = TargetObj->GetEntityCombatTeam();
+		ETeam TmpOwnerTeam = OwnerObj->Execute_GetEntityCombatTeam(GetOwner());
+		ETeam TmpTargetTeam = TargetObj->Execute_GetEntityCombatTeam(Target);
 		if (TmpOwnerTeam != ETeam::ENeutral &&
 			TmpTargetTeam != ETeam::ENeutral && 
 			TmpOwnerTeam != TmpTargetTeam)
