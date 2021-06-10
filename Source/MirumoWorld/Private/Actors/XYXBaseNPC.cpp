@@ -76,6 +76,7 @@ void AXYXBaseNPC::BeginPlay()
 
 	if (CollisionHandlerComp)
 	{
+		CollisionHandlerComp->OnHit.AddDynamic(this, &AXYXBaseNPC::HandleOnHit);
 		CollisionHandlerComp->OnCollisionActivated.AddDynamic(this, &AXYXBaseNPC::HandleOnCollisionActivated);
 	}
 
@@ -425,7 +426,7 @@ bool AXYXBaseNPC::CanBeStunned()
 	return true;
 }
 
-bool AXYXBaseNPC::CanBeAttacked()
+bool AXYXBaseNPC::CanBeAttacked()				
 {
 	if (Execute_IsEntityAlive(this))
 	{
@@ -778,6 +779,30 @@ void AXYXBaseNPC::HandleOnCollisionActivated(ECollisionPart Selection)
 		}
 	}
 	break;
+	}
+}
+
+void AXYXBaseNPC::HandleOnHit(FHitResult HitResult)
+{
+	IXYXInterfaceEntity* TmpHitActor = Cast<IXYXInterfaceEntity>(HitResult.Actor);
+	if (TmpHitActor)
+	{
+		EAttackResult ResultType;
+		bool CanAttacked = TmpHitActor->Execute_TakeAttackDamage(HitResult.GetActor(), MakeMeleeHitData(HitResult.GetActor()), ResultType);
+		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 15000.f);
+		if (CanAttacked)
+		{
+			UWorld* World = GetWorld();
+			check(World);
+			UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
+			UXYXFunctionLibrary::PlayHitSound(GameInstance, this, HitResult.GetActor(), HitResult.Location);
+
+			auto EffectComp = Cast<UXYXEffectsComponent>(HitResult.Actor->GetComponentByClass(UXYXEffectsComponent::StaticClass()));
+			if (EffectComp)
+			{
+				EffectComp->ApplyEffect(EEffectType::EStun, 2.f, EApplyEffectMethod::EReplace, this);
+			}
+		}
 	}
 }
 

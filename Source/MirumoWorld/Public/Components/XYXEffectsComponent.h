@@ -43,6 +43,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		float UpdateInterval = 0.1f;
 
+	UPROPERTY()
+		FTimerHandle UpdateEffectsDurationTimer;
+
 	UFUNCTION()
 		FEffect GetEffect(EEffectType Type);
 

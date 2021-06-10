@@ -261,6 +261,9 @@ public:
 		void HandleOnCollisionActivated(ECollisionPart Selection);
 
 	UFUNCTION()
+		void HandleOnHit(FHitResult HitResult);
+
+	UFUNCTION()
 		bool CanBeInterrupted();
 
 	UFUNCTION()

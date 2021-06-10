@@ -21,16 +21,17 @@ UXYXMontageManagerComponent::UXYXMontageManagerComponent()
 void UXYXMontageManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	CharacterOwner = Cast<AXYXCharacter>(GetOwner());
 }
 
 UAnimMontage* UXYXMontageManagerComponent::GetMontageForAction(EMontageAction Action, int32 Index)
 {
 	UAnimMontage* AnimMontage = nullptr;
 	LastRequestedAction = Action;
-	if (CharacterOwner)
+
+	IXYXInterfaceMontageManagerComp* Owner = Cast<IXYXInterfaceMontageManagerComp>(GetOwner());
+	if (Owner)
 	{
-		UDataTable* DataTable = CharacterOwner->GetMontages(Action);
+		UDataTable* DataTable = Owner->Execute_GetMontages(GetOwner(), Action);
 		if (IsValid(DataTable))
 		{
 			UEnum* Enum = StaticEnum<EMontageAction>();
@@ -61,9 +62,10 @@ UAnimMontage* UXYXMontageManagerComponent::GetMontageForAction(EMontageAction Ac
 int32 UXYXMontageManagerComponent::GetMontageActionLastIndex(EMontageAction Action)
 {
 	int32 Index = -1;
-	if (CharacterOwner)
+	IXYXInterfaceMontageManagerComp* Owner = Cast<IXYXInterfaceMontageManagerComp>(GetOwner());
+	if (Owner)
 	{
-		UDataTable* pDataTable = CharacterOwner->GetMontages(Action);
+		UDataTable* pDataTable = Owner->Execute_GetMontages(GetOwner(), Action);
 		if (pDataTable)
 		{
 			UEnum* Enum = StaticEnum<EMontageAction>();

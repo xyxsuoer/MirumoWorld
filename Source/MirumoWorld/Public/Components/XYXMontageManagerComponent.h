@@ -19,9 +19,6 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		class AXYXCharacter* CharacterOwner;
-
 public:	
 
 	UFUNCTION(BlueprintCallable, Category = XYX)

@@ -21,7 +21,9 @@ void UXYXEffectsComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
+	UWorld* World = GetWorld();
+	check(World);
+	World->GetTimerManager().SetTimer(UpdateEffectsDurationTimer, this, &UXYXEffectsComponent::UpdateEffectsDuration, UpdateInterval, true);
 }
 
 
