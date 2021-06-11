@@ -26,7 +26,7 @@ public:
 		FOnMovementStateEnd OnMovementStateEnd;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		class AXYXCharacter* CharacterOwner;
+		class ACharacter* CharacterOwner;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsUpdatingSpeed = false;

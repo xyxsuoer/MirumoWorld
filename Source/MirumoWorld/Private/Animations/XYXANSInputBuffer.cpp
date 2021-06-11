@@ -9,10 +9,10 @@ void UXYXANSInputBuffer::NotifyBegin(USkeletalMeshComponent* MeshComp, UAnimSequ
 {
 	if (MeshComp)
 	{
-		AXYXCharacter* CharacterOwner = Cast<AXYXCharacter>(MeshComp->GetOwner());
+		auto CharacterOwner = MeshComp->GetOwner();
 		if (CharacterOwner)
 		{
-			UXYXInputBufferComponent* InputBuffer = CharacterOwner->GetInputBufferComponent();
+			UXYXInputBufferComponent* InputBuffer = CharacterOwner->FindComponentByClass<UXYXInputBufferComponent>();
 			if (InputBuffer)
 			{
 				InputBuffer->OpenInputBuffer();
@@ -25,10 +25,10 @@ void UXYXANSInputBuffer::NotifyEnd(USkeletalMeshComponent* MeshComp, UAnimSequen
 {
 	if (MeshComp)
 	{
-		AXYXCharacter* CharacterOwner = Cast<AXYXCharacter>(MeshComp->GetOwner());
+		auto CharacterOwner = MeshComp->GetOwner();
 		if (CharacterOwner)
 		{
-			UXYXInputBufferComponent* InputBuffer = CharacterOwner->GetInputBufferComponent();
+			UXYXInputBufferComponent* InputBuffer = CharacterOwner->FindComponentByClass<UXYXInputBufferComponent>();
 			if (InputBuffer)
 			{
 				InputBuffer->CloseInputBuffer();

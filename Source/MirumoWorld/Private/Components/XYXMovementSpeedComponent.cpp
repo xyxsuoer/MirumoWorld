@@ -21,7 +21,7 @@ void UXYXMovementSpeedComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CharacterOwner = Cast<AXYXCharacter>(GetOwner());
+	CharacterOwner = Cast<ACharacter>(GetOwner());
 	MovementState = StartMovementState;
 	SetMovementState(MovementState);
 }

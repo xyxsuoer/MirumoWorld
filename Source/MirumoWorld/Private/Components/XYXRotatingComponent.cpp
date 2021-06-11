@@ -54,7 +54,7 @@ void UXYXRotatingComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 void UXYXRotatingComponent::SetRotationMode(ERotationMode Mode)
 {
-	AXYXCharacter* CharacterOwner = Cast<AXYXCharacter>(GetOwner());
+	auto CharacterOwner = Cast<ACharacter>(GetOwner());
 	if (CharacterOwner)
 	{
 		switch(Mode)

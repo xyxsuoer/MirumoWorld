@@ -9,10 +9,10 @@ void UXYXANDisplayedItemAttach::Notify(class USkeletalMeshComponent* MeshComp, c
 {
 	if (MeshComp)
 	{
-		AXYXCharacter* CharacterOwner = Cast<AXYXCharacter>(MeshComp->GetOwner());
+		auto CharacterOwner = MeshComp->GetOwner();
 		if (CharacterOwner)
 		{
-			UXYXEquipmentManagerComponent* EquipmentComp = CharacterOwner->GetEquipmentManagerComponent();
+			UXYXEquipmentManagerComponent* EquipmentComp = CharacterOwner->FindComponentByClass<UXYXEquipmentManagerComponent>();
 			if (EquipmentComp)
 			{
 				if (bSlotHiddenChanged)

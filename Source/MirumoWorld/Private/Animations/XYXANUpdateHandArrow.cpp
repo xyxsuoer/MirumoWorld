@@ -10,10 +10,10 @@ void UXYXANUpdateHandArrow::Notify(class USkeletalMeshComponent* MeshComp, class
 {
 	if (MeshComp)
 	{
-		AXYXCharacter* CharacterOwner = Cast<AXYXCharacter>(MeshComp->GetOwner());
+		auto CharacterOwner = MeshComp->GetOwner();
 		if (CharacterOwner)
 		{
-			UXYXEquipmentManagerComponent* EquipmentComp = CharacterOwner->GetEquipmentManagerComponent();
+			UXYXEquipmentManagerComponent* EquipmentComp = CharacterOwner->FindComponentByClass<UXYXEquipmentManagerComponent>();
 			if (EquipmentComp)
 			{
 				AXYXDisplayedItem* DIOne = nullptr;
