@@ -182,9 +182,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		TArray<FName> LeftFootCollisionSockets = { TEXT("left_foot_1"), TEXT("left_foot_2") };
 
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TArray<FName> SpineCollisionSockets = { TEXT("left_spine"), TEXT("right_spine") };
+
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		float HorizontalLookRate = 45.f;
-
+		
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		float VerticalLookRate = 45.f;
 
@@ -697,6 +700,15 @@ public:
 
 	UFUNCTION()
 		void HandleExtendedStaminaOnValueChanged(float NewValue, float MaxValue);
+
+	UFUNCTION()
+		void TargetLeftAction();
+
+	UFUNCTION()
+		void TargetRightAction();
+
+	UFUNCTION()
+		void ToggleTargetAction();
 
 private:
 	bool bInitialized = false;

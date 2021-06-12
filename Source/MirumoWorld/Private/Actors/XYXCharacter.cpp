@@ -150,6 +150,10 @@ void AXYXCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		PlayerInputComponent->BindAction("Zoom", IE_Released, this, &AXYXCharacter::StopZooming);
 		PlayerInputComponent->BindAction("SlowMotion", IE_Pressed, this, &AXYXCharacter::StartSlowMotion);
 		PlayerInputComponent->BindAction("SlowMotion", IE_Released, this, &AXYXCharacter::StopSlowMotion);
+
+		PlayerInputComponent->BindAction("TargetLeft", IE_Released, this, &AXYXCharacter::TargetLeftAction);
+		PlayerInputComponent->BindAction("TargetRight", IE_Released, this, &AXYXCharacter::TargetRightAction);
+		PlayerInputComponent->BindAction("ToggleTargeting", IE_Released, this, &AXYXCharacter::ToggleTargetAction);
 	}
 }
 
@@ -2134,6 +2138,14 @@ void AXYXCharacter::HandleOnCollisionActivated(ECollisionPart CollisionPart)
 			}
 		}
 		break;
+	case ECollisionPart::ESpine:
+	{
+		if (CollisionHandlerComp)
+		{
+			CollisionHandlerComp->SetCollisionMesh(GetMesh(), SpineCollisionSockets);
+		}
+	}
+	break;
 	}
 }
 
@@ -2499,6 +2511,30 @@ void AXYXCharacter::HandleExtendedStaminaOnValueChanged(float NewValue, float Ma
 	}
 }
 
+void AXYXCharacter::TargetLeftAction()
+{
+	if (DynamicTargetingComp)
+	{
+		DynamicTargetingComp->FindTargetOnLeft();
+	}
+}
+
+void AXYXCharacter::TargetRightAction()
+{
+	if (DynamicTargetingComp)
+	{
+		DynamicTargetingComp->FindTargetOnRight();
+	}
+}
+
+void AXYXCharacter::ToggleTargetAction()
+{
+	if (Execute_IsEntityAlive(this) && DynamicTargetingComp)
+	{
+		DynamicTargetingComp->ToggleCameraLock();
+	}
+}
+
 void AXYXCharacter::CustomJump()
 {
 	if (!CanJump() || !IsStateEqual(EState::EIdle))
@@ -2767,6 +2803,11 @@ void AXYXCharacter::AddControllerYawInput(float Val)
 		HorizontalLookValue = Val;
 		Val = Val * HorizontalLookRate * World->GetDeltaSeconds();
 		APawn::AddControllerYawInput(Val);
+
+		if (DynamicTargetingComp)
+		{
+			DynamicTargetingComp->FindTargetWithAxisInput(HorizontalLookValue);
+		}
 	}
 }
 

@@ -779,6 +779,14 @@ void AXYXBaseNPC::HandleOnCollisionActivated(ECollisionPart Selection)
 		}
 	}
 	break;
+	case ECollisionPart::ESpine:
+	{
+		if (CollisionHandlerComp)
+		{
+			CollisionHandlerComp->SetCollisionMesh(GetMesh(), SpineCollisionSockets);
+		}
+	}
+	break;
 	}
 }
 

@@ -95,7 +95,7 @@ void UXYXCollisionHandlerComponent::PerformTrace()
 				check(World);
 				TArray<FHitResult> OutHits;
 				UKismetSystemLibrary::SphereTraceMultiForObjects(
-					World, TmpStartLocation, TmpEndLocation, TraceRadius, 
+					this, TmpStartLocation, TmpEndLocation, TraceRadius, 
 					ObjectTypesToCollideWith, false, ActorsHit, VisualizeTrace, OutHits, true
 				);
 

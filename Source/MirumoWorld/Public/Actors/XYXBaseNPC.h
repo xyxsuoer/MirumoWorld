@@ -120,6 +120,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		TArray<FName> LeftFootCollisionSockets = { TEXT("left_foot_1"), TEXT("left_foot_2") };
 
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TArray<FName> SpineCollisionSockets = { TEXT("left_spine"), TEXT("right_spine") };
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		float RecentlyReceivedDamageStunLimit = 40.f;
 

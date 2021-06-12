@@ -50,7 +50,7 @@ void UXYXDynamicTargetingComponent::FindTarget()
 	{
 		LocalPotentialTarget = e;
 		IXYXInterfaceTargetable* SelectTarget = Cast<IXYXInterfaceTargetable>(LocalPotentialTarget);
-		if (SelectTarget && SelectTarget->IsTargetable() && GetOwner() != SelectedActor)
+		if (SelectTarget && SelectTarget->Execute_IsTargetable(LocalPotentialTarget) && GetOwner() != SelectedActor)
 		{
 			FVector2D ScreenPosition;
 			bool bRetunValue;
@@ -132,7 +132,7 @@ void UXYXDynamicTargetingComponent::EnableCameraLock()
 	IXYXInterfaceTargetable* SelectTarget = Cast<IXYXInterfaceTargetable>(SelectedActor);
 	if (SelectTarget)
 	{
-		SelectTarget->OnSelected();
+		SelectTarget->Execute_OnSelected(SelectedActor);
 		World->GetTimerManager().SetTimer(CheckTargetHandle, this, &UXYXDynamicTargetingComponent::CheckTarget, 0.15f, true);
 		UpdateIgnoreLookInput();
 		OnTargetingToggled.Broadcast(true);
@@ -206,7 +206,7 @@ void UXYXDynamicTargetingComponent::CheckTarget()
 	{
 		World->GetTimerManager().ClearTimer(DisableCameraLockHandle);
 		IXYXInterfaceTargetable* SelectTarget = Cast<IXYXInterfaceTargetable>(SelectedActor);
-		if (SelectTarget && !SelectTarget->IsTargetable())
+		if (SelectTarget && !SelectTarget->Execute_IsTargetable(SelectedActor))
 		{
 			DisableCameraLock();
 			FindTarget();
@@ -227,7 +227,7 @@ void UXYXDynamicTargetingComponent::FindDirectionalTarget(bool bOnLeft)
 		{
 			LocalPotentialTarget = e;
 			IXYXInterfaceTargetable* SelectTarget = Cast<IXYXInterfaceTargetable>(LocalPotentialTarget);
-			if (SelectTarget && SelectTarget->IsTargetable() && 
+			if (SelectTarget && SelectTarget->Execute_IsTargetable(LocalPotentialTarget) &&
 				LocalPotentialTarget != SelectedActor && GetOwner() != SelectedActor)
 			{
 				if (GetDistanceToOwner(LocalPotentialTarget) <= TargetingMaxDistance)
@@ -278,12 +278,12 @@ void UXYXDynamicTargetingComponent::FindDirectionalTarget(bool bOnLeft)
 			IXYXInterfaceTargetable* SelectTarget = Cast<IXYXInterfaceTargetable>(SelectedActor);
 			if (SelectTarget)
 			{
-				SelectTarget->OnDeselected();
+				SelectTarget->Execute_OnDeselected(SelectedActor);
 				SelectedActor = LocalPotentialTarget;
 				SelectTarget = Cast<IXYXInterfaceTargetable>(SelectedActor);
 				if (SelectTarget)
 				{
-					SelectTarget->OnSelected();
+					SelectTarget->Execute_OnSelected(SelectedActor);
 					OnTargetChanged.Broadcast(SelectedActor);
 				}
 			}
@@ -419,18 +419,13 @@ void UXYXDynamicTargetingComponent::DisableCameraLock()
 	 IXYXInterfaceTargetable* SelectTarget = Cast<IXYXInterfaceTargetable>(SelectedActor);
 	 if (SelectTarget)
 	 {
-		 if (SelectTarget->OnDeselected())
-		 {
-			 SelectedActor = nullptr;
-
-			 UWorld* World = GetWorld();
-			 if (World)
-			 {
-				 World->GetTimerManager().ClearTimer(CheckTargetHandle);
-				 UpdateIgnoreLookInput();
-				 OnTargetingToggled.Broadcast(false);
-			 }
-		 }
+		 SelectTarget->Execute_OnDeselected(SelectedActor);
+		 SelectedActor = nullptr;
+		 UWorld* World = GetWorld();
+		 check(World)
+		 World->GetTimerManager().ClearTimer(CheckTargetHandle);
+		 UpdateIgnoreLookInput();
+		 OnTargetingToggled.Broadcast(false);
 	 }
  }
 }
@@ -474,14 +469,14 @@ void UXYXDynamicTargetingComponent::FindTargetWithAxisInput(float AxisValue)
 
 			if (!IsAnythingBlockingTrace(e.GetActor(), ActorsToIgnore))
 			{
-				if (HitActor->IsTargetable() && SelectTarget)
+				if (HitActor->Execute_IsTargetable(e.GetActor()) && SelectTarget)
 				{
-					SelectTarget->OnDeselected();
+					SelectTarget->Execute_OnDeselected(SelectedActor);
 					SelectedActor = e.GetActor();
 					SelectTarget = Cast<IXYXInterfaceTargetable>(SelectedActor);
 					if (SelectTarget)
 					{
-						SelectTarget->OnSelected();
+						SelectTarget->Execute_OnSelected(SelectedActor);
 						OnTargetChanged.Broadcast(SelectedActor);
 						break;
 					}

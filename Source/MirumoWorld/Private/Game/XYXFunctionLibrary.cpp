@@ -132,16 +132,16 @@ EDirection UXYXFunctionLibrary::GetHitDirection(FVector HitFromDirection, AActor
 	float TmpDotProduct = UKismetMathLibrary::Dot_VectorVector(
 		UKismetMathLibrary::Normal(TmpVectorOne, 0.0001), UKismetMathLibrary::Normal(TmpVectorTwo, 0.0001));
 
-	if (TmpDotProduct >= 0.25f)
+	if (TmpDotProduct >= 0.5f)
 	{
 		// Is In front
-		TmpDirection = EDirection::EBack;
+		TmpDirection = EDirection::EFront;
 		return TmpDirection;
 	}
-	else if(TmpDotProduct <= -0.25)
+	else if(TmpDotProduct <= -0.5f)
 	{
 		// Is on back
-		TmpDirection = EDirection::EFront;
+		TmpDirection = EDirection::EBack;
 		return TmpDirection;
 	}
 

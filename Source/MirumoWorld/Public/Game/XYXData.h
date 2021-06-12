@@ -195,7 +195,8 @@ enum class ECollisionPart : uint8
 	ERightHand										UMETA(DisplayName = "ERightHand"),						// ÓÒÊÖ  
 	ELeftHand											UMETA(DisplayName = "ELeftHand"),						// ×óÊÖ 
 	ERightFoot										UMETA(DisplayName = "ERightFoot"),						// ÓÒ×ã
-	ELeftFoot											UMETA(DisplayName = "ELeftFoot")							// ×ó×ã
+	ELeftFoot											UMETA(DisplayName = "ELeftFoot"),							// ×ó×ã
+	ESpine												UMETA(DisplayName = "ESpine")									// ¼¹×µ
 };
 
 
