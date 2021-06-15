@@ -44,7 +44,7 @@ public:
 		float WalkSpeed = 200.f;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
-		float JogSpeed = 400.f;
+		float JogSpeed = 500.f;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		float SprintSpeed = 700.f;

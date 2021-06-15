@@ -30,10 +30,16 @@ public:
 		FOnCollisionDeactivated OnCollisionDeactivated;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		class UPrimitiveComponent* Mesh;
+		class UPrimitiveComponent* CollisionMesh;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		TArray<FName> Sockets = {};
+		class UPrimitiveComponent* DualCollisionMesh;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TArray<FName> MeshSockets = {};
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		TArray<FName> DualMeshSockets = {};
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bCanPerformTrace = false;
@@ -76,6 +82,9 @@ public:
 
 	UFUNCTION()
 		void SetCollisionMesh(class UPrimitiveComponent* WeaponMesh, TArray<FName> InSockets);
+
+	UFUNCTION()
+		void SetDualCollisionMesh(class UPrimitiveComponent* WeaponMesh, TArray<FName> InSockets);
 
 	UFUNCTION()
 		void ActiveCollision(ECollisionPart CollisionPart);

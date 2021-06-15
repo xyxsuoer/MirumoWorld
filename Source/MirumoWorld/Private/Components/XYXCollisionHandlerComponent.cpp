@@ -48,10 +48,21 @@ bool UXYXCollisionHandlerComponent::IsCollisionActive()
 	return bCanPerformTrace;
 }
 
-void UXYXCollisionHandlerComponent::SetCollisionMesh(UPrimitiveComponent* WeaponMesh, TArray<FName> InSockets)
+void UXYXCollisionHandlerComponent::SetCollisionMesh(class UPrimitiveComponent* WeaponMesh, TArray<FName> InSockets)
 {
-	Mesh = WeaponMesh;
-	Sockets = InSockets;
+	MeshSockets.Empty();
+
+	CollisionMesh = WeaponMesh;
+	MeshSockets = InSockets;
+	UpdateLastSocketPosition();
+}
+
+void UXYXCollisionHandlerComponent::SetDualCollisionMesh(class UPrimitiveComponent* WeaponMesh, TArray<FName> InSockets)
+{
+	DualMeshSockets.Empty();
+
+	DualCollisionMesh = WeaponMesh;
+	DualMeshSockets = InSockets;
 	UpdateLastSocketPosition();
 }
 
@@ -72,27 +83,36 @@ void UXYXCollisionHandlerComponent::DeactiveCollision()
 
 void UXYXCollisionHandlerComponent::UpdateLastSocketPosition()
 {
-	if (IsValid(Mesh))
+	if (IsValid(CollisionMesh))
 	{
-		for (auto&& e : Sockets)
+		for (auto&& e : MeshSockets)
 		{
-			LastSocketLocations.Add(e, Mesh->GetSocketLocation(e));
+			LastSocketLocations.Add(e, CollisionMesh->GetSocketLocation(e));
+		}
+	}
+
+	if (IsValid(DualCollisionMesh))
+	{
+		for (auto&& e : DualMeshSockets)
+		{
+			LastSocketLocations.Add(e, DualCollisionMesh->GetSocketLocation(e));
 		}
 	}
 }
 
 void UXYXCollisionHandlerComponent::PerformTrace()
 {
-	if (IsValid(Mesh))
+	UWorld* const World = GetWorld();
+	check(World);
+
+	if (IsValid(CollisionMesh))
 	{
-		for (auto&& e : Sockets)
+		for (auto&& e : MeshSockets)
 		{
 			if (LastSocketLocations.Contains(e))
 			{
 				FVector TmpStartLocation = LastSocketLocations[e];
-				FVector TmpEndLocation = Mesh->GetSocketLocation(e);
-				UWorld* const World = GetWorld();
-				check(World);
+				FVector TmpEndLocation = CollisionMesh->GetSocketLocation(e);
 				TArray<FHitResult> OutHits;
 				UKismetSystemLibrary::SphereTraceMultiForObjects(
 					this, TmpStartLocation, TmpEndLocation, TraceRadius, 
@@ -103,6 +123,34 @@ void UXYXCollisionHandlerComponent::PerformTrace()
 				{
 					if (!ActorsHit.Contains(o.GetActor()) && 
 						!IsIgnoredClass(o.Actor->GetClass()) && 
+						!IgnoredCollisionProfileNames.Contains(o.GetComponent()->GetCollisionProfileName()))
+					{
+						ActorsHit.Add(o.GetActor());
+						OnHit.Broadcast(o);
+					}
+				}
+			}
+		}
+	}
+
+	if (IsValid(DualCollisionMesh))
+	{
+		for (auto&& e : DualMeshSockets)
+		{
+			if (LastSocketLocations.Contains(e))
+			{
+				FVector TmpStartLocation = LastSocketLocations[e];
+				FVector TmpEndLocation = DualCollisionMesh->GetSocketLocation(e);
+				TArray<FHitResult> OutHits;
+				UKismetSystemLibrary::SphereTraceMultiForObjects(
+					this, TmpStartLocation, TmpEndLocation, TraceRadius,
+					ObjectTypesToCollideWith, false, ActorsHit, VisualizeTrace, OutHits, true
+				);
+
+				for (auto&& o : OutHits)
+				{
+					if (!ActorsHit.Contains(o.GetActor()) &&
+						!IsIgnoredClass(o.Actor->GetClass()) &&
 						!IgnoredCollisionProfileNames.Contains(o.GetComponent()->GetCollisionProfileName()))
 					{
 						ActorsHit.Add(o.GetActor());

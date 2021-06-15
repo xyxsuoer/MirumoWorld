@@ -1610,8 +1610,9 @@ void AXYXCharacter::ShootArrowProjectile()
 				AXYXArrowProjectileBase* XYXActor = World->SpawnActor<AXYXArrowProjectileBase>(ItemArrow->GetProjectile(), TmpTransform, ActorSpawnParams);
 				if (XYXActor && StatsManagerComp)
 				{
-					XYXActor->Damage = AimAlpha * StatsManagerComp->GetDamage();
-					XYXActor->InitialSpeed = AimAlpha * 7000.0f;
+					float TmpValue = EquipmentComp->bActionShootOrAimShoot ? 1 : AimAlpha;
+					XYXActor->Damage = TmpValue * StatsManagerComp->GetDamage();
+					XYXActor->InitialSpeed = TmpValue * 7000.0f;
 				}
 
 				if (InventoryComp)
@@ -2098,10 +2099,18 @@ void AXYXCharacter::HandleOnCollisionActivated(ECollisionPart CollisionPart)
 				EquipmentComp->GetDisplayedItem(
 					EquipmentComp->GetSelectedMainHandType(), EquipmentComp->GetSelectedMainHandSlotIndex(), DIOne, DISecond);
 
-				if (DIOne && CollisionHandlerComp)
+				if (CollisionHandlerComp)
 				{
-					UPrimitiveComponent* StaticMeshComp = DIOne->GetPrimaryComponent();
-					CollisionHandlerComp->SetCollisionMesh(StaticMeshComp, StaticMeshComp->GetAllSocketNames());
+					if (DIOne)
+					{
+						UPrimitiveComponent* StaticMeshComp = DIOne->GetPrimaryComponent();
+						CollisionHandlerComp->SetCollisionMesh(StaticMeshComp, StaticMeshComp->GetAllSocketNames());
+					}
+					if (DISecond)
+					{
+						UPrimitiveComponent* StaticMeshComp = DISecond->GetPrimaryComponent();
+						CollisionHandlerComp->SetDualCollisionMesh(StaticMeshComp, StaticMeshComp->GetAllSocketNames());
+					}
 				}
 			}
 		}

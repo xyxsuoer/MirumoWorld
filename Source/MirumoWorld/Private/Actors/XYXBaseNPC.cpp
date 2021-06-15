@@ -739,10 +739,18 @@ void AXYXBaseNPC::HandleOnCollisionActivated(ECollisionPart Selection)
 			EquipmentComp->GetDisplayedItem(
 				EquipmentComp->GetSelectedMainHandType(), EquipmentComp->GetSelectedMainHandSlotIndex(), DIOne, DISecond);
 
-			if (DIOne && CollisionHandlerComp)
+			if (CollisionHandlerComp )
 			{
-				UPrimitiveComponent* StaticMeshComp = DIOne->GetPrimaryComponent();
-				CollisionHandlerComp->SetCollisionMesh(StaticMeshComp, StaticMeshComp->GetAllSocketNames());
+				if(DIOne)
+				{
+					UPrimitiveComponent* StaticMeshComp = DIOne->GetPrimaryComponent();
+					CollisionHandlerComp->SetCollisionMesh(StaticMeshComp, StaticMeshComp->GetAllSocketNames());
+				}
+				if(DISecond)
+				{
+					UPrimitiveComponent* StaticMeshComp = DISecond->GetPrimaryComponent();
+					CollisionHandlerComp->SetDualCollisionMesh(StaticMeshComp, StaticMeshComp->GetAllSocketNames());
+				}
 			}
 		}
 	}
