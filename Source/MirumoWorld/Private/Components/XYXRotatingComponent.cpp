@@ -22,11 +22,11 @@ void UXYXRotatingComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(GetOwner());
+	/*IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(GetOwner());
 	if (!Entity)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Warning! %s does not implement interface I_RotatingComponent"), *GetOwner()->GetClass()->GetDisplayNameText().ToString()));
-	}
+	}*/
 }
 
 // Called every frame

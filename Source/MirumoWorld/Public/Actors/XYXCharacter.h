@@ -648,6 +648,12 @@ public:
 		bool CanBeAttacked();
 
 	UFUNCTION()
+		bool CanBeStunned();
+
+	UFUNCTION()
+		bool CanBeInterrupted();
+
+	UFUNCTION()
 		void UpdateReceivedHitDirection(FVector HitFromDirection);
 
 	UFUNCTION()

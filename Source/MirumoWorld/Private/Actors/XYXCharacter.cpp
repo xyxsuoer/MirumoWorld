@@ -544,7 +544,39 @@ bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackRes
 
 bool AXYXCharacter::CanEffectBeApplied_Implementation(EEffectType Type, AActor* Applier)
 {
-	return true;
+	if (CanBeAttacked())
+	{
+		switch (Type)
+		{
+		case EEffectType::EStun:
+		{
+			return CanBeStunned() && CanBeInterrupted();
+		}
+		break;
+		case EEffectType::EBurning:
+		{
+			return true;
+		}
+		break;
+		case EEffectType::EBackstab:
+		{
+			return CanBeInterrupted() && CanBeStunned();
+		}
+		break;
+		case EEffectType::EImpact:
+		{
+			return CanBeInterrupted();
+		}
+		break;
+		case EEffectType::EParried:
+		{
+			return CanBeInterrupted();
+		}
+		break;
+		}
+	}
+
+	return false;
 }
 
 void AXYXCharacter::HandleInputBufferConsumed(const EInputBufferKey key)
@@ -1016,15 +1048,15 @@ void AXYXCharacter::LightAttack()
 
 	if (EquipmentComp->GetIsInCombat())
 	{
-		if (EquipmentComp->GetCombatType() == ECombatType::EMelee)
+		if (EquipmentComp->GetCombatType() == ECombatType::EUnarmed || 
+			EquipmentComp->GetCombatType() == ECombatType::EMelee)
 		{
 			if (!AttemptBackstab())
 			{
 				InputBufferComp->UpdateKey(EInputBufferKey::ELightAttack);
 			}
 		}
-		else if(EquipmentComp->GetCombatType() == ECombatType::EUnarmed || 
-			EquipmentComp->GetCombatType() == ECombatType::ERanged)
+		else if(EquipmentComp->GetCombatType() == ECombatType::ERanged)
 		{
 			InputBufferComp->UpdateKey(EInputBufferKey::ELightAttack);
 		}
@@ -2197,6 +2229,26 @@ bool AXYXCharacter::CanBeAttacked()
 	return false;
 }
 
+bool AXYXCharacter::CanBeStunned()
+{
+	if (GetCharacterMovement()->IsFalling() || !EffectsManagerComp ||  EffectsManagerComp->IsEffectApplied(EEffectType::EBackstab))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool AXYXCharacter::CanBeInterrupted()
+{
+	if (StateManagerComp)
+	{
+		return  !StateManagerComp->GetActivityValue(EActivity::ECanBeInterrupted);
+	}
+
+	return true;
+}
+
 void AXYXCharacter::UpdateReceivedHitDirection(FVector HitFromDirection)
 {
 	ReceivedHitDirection = UXYXFunctionLibrary::GetHitDirection(HitFromDirection, this);
@@ -2417,7 +2469,7 @@ bool AXYXCharacter::AttemptBackstab()
 									if (StateManagerComp)
 									{
 										StateManagerComp->ResetState(0.f);
-										return true;
+										return false;
 									}
 								}
 							}
