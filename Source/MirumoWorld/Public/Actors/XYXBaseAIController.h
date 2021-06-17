@@ -21,13 +21,18 @@ protected:
 
 		virtual void OnPossess(APawn* InPawn) override;
 
+		virtual void OnUnPossess() override;
+
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		class UAIPerceptionComponent* AIPerceptionComp;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ACF)
-		class UBlackboardComponent* BlackboardComponent;
+		class UBlackboardComponent* BlackboardComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = ACF)
+		class UBehaviorTreeComponent* BehaviorComp;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		FName TargetKey = TEXT("Target");

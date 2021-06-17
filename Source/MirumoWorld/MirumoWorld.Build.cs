@@ -19,7 +19,8 @@ public class MirumoWorld : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(
 			new string[] {
-				"AIModule"
+				"AIModule",
+				"GameplayTasks"
 			}
 		);
 

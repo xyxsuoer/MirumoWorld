@@ -21,7 +21,11 @@
 
 AXYXBaseAIController::AXYXBaseAIController()
 {
-	BlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackBoardComp"));
+	BlackboardComp = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackBoardComp"));
+
+	BrainComponent = BehaviorComp = CreateDefaultSubobject<UBehaviorTreeComponent>(TEXT("BehaviorComp"));
+
+	bWantsPlayerState = true;
 
 	AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AI Perception Component"));
 	if (AIPerceptionComp)
@@ -62,10 +66,12 @@ void AXYXBaseAIController::OnPossess(APawn* InPawn)
 			return;
 		}
 
-		BlackboardComponent->InitializeBlackboard(*bbData);
-		Blackboard = BlackboardComponent;
+		BlackboardComp->InitializeBlackboard(*bbData);
+		Blackboard = BlackboardComp;
 
-		RunBehaviorTree(PossesedAI->BehaviorTree);
+		//RunBehaviorTree(PossesedAI->BehaviorTree);
+
+		BehaviorComp->StartTree(*(PossesedAI->BehaviorTree));
 		
 		UWorld* World = GetWorld();
 		check(World);
@@ -78,6 +84,13 @@ void AXYXBaseAIController::OnPossess(APawn* InPawn)
 		}
 		
 	}
+}
+
+void AXYXBaseAIController::OnUnPossess()
+{
+	Super::OnUnPossess();
+
+	BehaviorComp->StopTree();
 }
 
 void AXYXBaseAIController::HandleOnInCombatChanged(bool bValue)
