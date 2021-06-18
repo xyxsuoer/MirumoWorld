@@ -63,6 +63,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXExtendedStatComponent* ExtendedStamina;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+		class UXYXPatrolComponent* PatrolComp;
+
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXMontageManagerComponent* GetMontageManagerComponent() const { return MontageManagerComp; }
 
@@ -92,6 +95,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = XYX)
 		FORCEINLINE class UXYXExtendedStatComponent* GetExtendedStamina() const { return ExtendedStamina; }
+
+	UFUNCTION(BlueprintPure, Category = XYX)
+		FORCEINLINE class UXYXPatrolComponent* GetPatrolComponent() const { return PatrolComp; }
 
 	UPROPERTY(Replicated)
 		ETeam CombatTeam = ETeam::EEnemiesTeam;

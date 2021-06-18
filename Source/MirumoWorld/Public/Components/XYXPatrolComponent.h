@@ -21,8 +21,27 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
+		TSubclassOf<class AXYXPatrolPath> PatrolPathClass;
+
+	UPROPERTY(BlueprintReadOnly, Category = XYX)
+		class AXYXPatrolPath* PatrolPath;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
+		int32 PointIndex = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
+		bool bReverseDirection = false;
+
+	UFUNCTION()
+		void UpdatePatrolIndex();
+
+	UFUNCTION()
+		FVector GetSplinePointLocation(int32 InPointIndex);
+
+	UFUNCTION()
+		bool IsPatrolPathValid();
+
+
 };

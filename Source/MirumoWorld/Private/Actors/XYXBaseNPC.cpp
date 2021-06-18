@@ -28,6 +28,7 @@
 #include "BrainComponent.h"
 #include "Items/DisplayedItems/XYXDisplayedItem.h"
 #include "UI/XYXUserWidgetAIStatBar.h"
+#include "Components/XYXPatrolComponent.h"
 
 // Sets default values
 AXYXBaseNPC::AXYXBaseNPC()
@@ -45,6 +46,7 @@ AXYXBaseNPC::AXYXBaseNPC()
 	StatsManagerComp = CreateDefaultSubobject<UXYXStatsManagerComponent>(TEXT("Stats Manager Component"));
 	ExtendedHealth = CreateDefaultSubobject<UXYXExtendedStatComponent>(TEXT("Extended Stat Health"));
 	ExtendedStamina = CreateDefaultSubobject<UXYXExtendedStatComponent>(TEXT("Extended Stat Stamina"));
+	PatrolComp = CreateDefaultSubobject<UXYXPatrolComponent>(TEXT("Patrol Component"));
 
 	TargetWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Target Widget"));
 	TargetWidget->SetupAttachment(RootComponent);
