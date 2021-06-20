@@ -23,6 +23,8 @@ protected:
 
 		virtual void OnUnPossess() override;
 
+		virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result);
+
 public:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)

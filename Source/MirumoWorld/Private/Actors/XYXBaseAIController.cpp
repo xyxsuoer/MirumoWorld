@@ -17,6 +17,7 @@
 #include <BehaviorTree/BehaviorTreeComponent.h>
 #include "BehaviorTree/BlackboardData.h"
 #include <BehaviorTree/BehaviorTree.h>
+#include <Components/XYXPatrolComponent.h>
 
 
 AXYXBaseAIController::AXYXBaseAIController()
@@ -91,6 +92,14 @@ void AXYXBaseAIController::OnUnPossess()
 	Super::OnUnPossess();
 
 	BehaviorComp->StopTree();
+}
+
+void AXYXBaseAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
+{
+	if (PossesedAI && PossesedAI->GetPatrolComponent())
+	{
+		PossesedAI->GetPatrolComponent()->UpdatePatrolIndex();
+	}
 }
 
 void AXYXBaseAIController::HandleOnInCombatChanged(bool bValue)
