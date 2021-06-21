@@ -31,31 +31,31 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		bool bIsUpdatingSpeed = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
 		EMovementState MovementState = EMovementState::EIdle;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
 		EMovementState StartMovementState = EMovementState::EJog;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		float CrouchSpeed = 100.f;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		float WalkSpeed = 200.f;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		float JogSpeed = 500.f;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		float SprintSpeed = 700.f;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		float TargetSpeed = 0.f;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		float SpeedChangeInterpSpeed = 3.f;
 
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
 		TArray<EMovementState> StateToToggle = { 
 			EMovementState::EWalk, 
 			EMovementState::EJog,

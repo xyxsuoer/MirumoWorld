@@ -8,6 +8,7 @@
 #include <Items/ObjectItems/XYXItemArrow.h>
 #include "UObject/ConstructorHelpers.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Interfaces/XYXInterfaceArcher.h"
 
 AXYXDisplayedItemBow::AXYXDisplayedItemBow()
 {
@@ -92,10 +93,11 @@ void AXYXDisplayedItemBow::UpdateArrowAttachment(bool bAttachToOwner)
 {
 	if (bAttachToOwner)
 	{
-		AXYXCharacter* Character = Cast<AXYXCharacter>(GetOwner());
-		if (Character && IsValid(ArrowMesh))
+		ACharacter* Character = Cast<ACharacter>(GetOwner());
+		IXYXInterfaceArcher* ArcherCharacter = Cast<IXYXInterfaceArcher>(Character);
+		if (Character && ArcherCharacter && IsValid(ArrowMesh))
 		{
-			FName TmpName = Character->GetBowStringSocketName();
+			FName TmpName = ArcherCharacter->Execute_GetBowStringSocketName(Character);
 			ArrowMesh->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, TmpName);
 		}
 	}

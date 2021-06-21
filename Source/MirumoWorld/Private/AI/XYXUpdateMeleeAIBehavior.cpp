@@ -2,7 +2,6 @@
 
 
 #include "AI/XYXUpdateMeleeAIBehavior.h"
-#include "BehaviorTree/Services/BTService_BlueprintBase.h"
 #include "AIController.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include <Actors/XYXBaseNPC.h>
@@ -17,22 +16,23 @@
 
 UXYXUpdateMeleeAIBehavior::UXYXUpdateMeleeAIBehavior()
 {
-	bCreateNodeInstance = true;
+	
 }
 
 void UXYXUpdateMeleeAIBehavior::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
-
 	Update();
 }
 
-void UXYXUpdateMeleeAIBehavior::ReceiveSearchStartAI(AAIController* OwnerController, APawn* ControlledPawn)
+void UXYXUpdateMeleeAIBehavior::OnSearchStart(FBehaviorTreeSearchData& SearchData)
 {
-	ControlledCharacter = Cast<AXYXBaseNPC>(ControlledPawn);
-	AIController = Cast<AXYXBaseAIController>(OwnerController);
+	Super::OnSearchStart(SearchData);
 
-	if (ControlledCharacter )
+	AIController = Cast<AXYXBaseAIController>(SearchData.OwnerComp.GetAIOwner());
+	if(AIController)
+		ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
+	if (ControlledCharacter)
 	{
 		UXYXStateManagerComponent* StateComp = ControlledCharacter->GetStateManagerComponent();
 		UXYXExtendedStatComponent* ExtendedStamina = ControlledCharacter->GetExtendedStamina();
@@ -46,7 +46,6 @@ void UXYXUpdateMeleeAIBehavior::ReceiveSearchStartAI(AAIController* OwnerControl
 			ExtendedStamina->OnValueChanged.AddDynamic(this, &UXYXUpdateMeleeAIBehavior::HandleOnStaminaValueChanged);
 		}
 	}
-
 }
 
 void UXYXUpdateMeleeAIBehavior::Update()

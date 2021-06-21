@@ -5,17 +5,18 @@
 #include "Components/XYXEquipmentManagerComponent.h"
 #include "Actors/XYXCharacter.h"
 #include "Items/DisplayedItems/XYXDisplayedItemQuiver.h"
+#include "Interfaces/XYXInterfaceArcher.h"
 
 void UXYXANBowActionShootProjectile::Notify(class USkeletalMeshComponent* MeshComp, class UAnimSequenceBase* Animation)
 {
 	if (MeshComp)
 	{
-		AXYXCharacter* CharacterOwner = Cast<AXYXCharacter>(MeshComp->GetOwner());
-		if (CharacterOwner)
+		ACharacter* CharacterOwner = Cast<ACharacter>(MeshComp->GetOwner());
+		IXYXInterfaceArcher* ArcherCharacter = Cast<IXYXInterfaceArcher>(CharacterOwner);
+		if (ArcherCharacter)
 		{
-			CharacterOwner->ShootArrowProjectile();
-
-			UXYXEquipmentManagerComponent* EquipmentComp = CharacterOwner->GetEquipmentManagerComponent();
+			ArcherCharacter->Execute_ShootArrowProjectile(CharacterOwner);
+			UXYXEquipmentManagerComponent* EquipmentComp = CharacterOwner->FindComponentByClass<UXYXEquipmentManagerComponent>();
 			if (EquipmentComp)
 			{
 				AXYXDisplayedItem* DIOne = nullptr;

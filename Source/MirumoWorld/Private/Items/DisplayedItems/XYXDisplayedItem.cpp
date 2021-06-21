@@ -69,7 +69,7 @@ bool AXYXDisplayedItem::Attach()
 	UPrimitiveComponent* MeshComp = GetPrimaryComponent();
 	if (IsValid(MeshComp))
 	{
-		AXYXCharacter* Character = Cast<AXYXCharacter>(GetOwner());
+		ACharacter* Character = Cast<ACharacter>(GetOwner());
 		if (Character)
 		{
 			MeshComp->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, GetAttachmentSocket());

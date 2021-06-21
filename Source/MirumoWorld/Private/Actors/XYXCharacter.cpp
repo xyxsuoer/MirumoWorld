@@ -1601,8 +1601,7 @@ void AXYXCharacter::ShootArrow()
 {
 	if (CanBowAttack() && EquipmentComp )
 	{
-		ShootArrowProjectile();
-
+		Execute_ShootArrowProjectile(this);
 		if (StateManagerComp && MontageManagerComp)
 		{
 			StateManagerComp->SetState(EState::EAttacking);
@@ -1621,7 +1620,7 @@ void AXYXCharacter::ShootArrow()
 	}
 }
 
-void AXYXCharacter::ShootArrowProjectile()
+void AXYXCharacter::ShootArrowProjectile_Implementation()
 {
 	if (EquipmentComp)
 	{

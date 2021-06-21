@@ -16,8 +16,6 @@ class MIRUMOWORLD_API UXYXElvenBowAnimInstance : public UAnimInstance
 	
 public:
 
-	friend class AXYXCharacter;
-
 	virtual void NativeInitializeAnimation() override;
 
 	virtual void NativeUpdateAnimation(float DeltaTime) override;
@@ -25,7 +23,7 @@ public:
 protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
-		class AXYXCharacter* XYXCharacter;
+		class ACharacter* CurCharacter;
 
 	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		float AimAlpha = 0.f;

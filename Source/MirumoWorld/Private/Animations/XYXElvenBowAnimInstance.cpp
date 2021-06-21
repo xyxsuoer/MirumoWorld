@@ -9,27 +9,29 @@ void UXYXElvenBowAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
-	XYXCharacter = Cast<AXYXCharacter>(GetOwningActor()->GetOwner());
+	CurCharacter = Cast<ACharacter>(GetOwningActor()->GetOwner());
 	DefaultStringLocation = StringLocation;
 }
 
 void UXYXElvenBowAnimInstance::NativeUpdateAnimation(float DeltaTime)
 {
-	if (XYXCharacter)
+	IXYXInterfaceArcher* ArcherCharacter = Cast<IXYXInterfaceArcher>(CurCharacter);
+	if (ArcherCharacter)
 	{
-		AimAlpha = XYXCharacter->GetAimAlpha();
+		AimAlpha = ArcherCharacter->Execute_GetAimAlpha(CurCharacter);
 		UpdateStringLocation();
 	}
 }
 
 void UXYXElvenBowAnimInstance::UpdateStringLocation()
 {
-	if (XYXCharacter && GetWorld())
+	IXYXInterfaceArcher* ArcherCharacter = Cast<IXYXInterfaceArcher>(CurCharacter);
+	if (ArcherCharacter && GetWorld())
 	{
 		FVector TmpTargetLocation;
-		if (XYXCharacter->DoesHoldBowString())
+		if (ArcherCharacter->Execute_DoesHoldBowString(CurCharacter))
 		{
-			FVector TmpLocation = XYXCharacter->GetMesh()->GetSocketLocation(XYXCharacter->GetBowStringSocketName());
+			FVector TmpLocation = CurCharacter->GetMesh()->GetSocketLocation(ArcherCharacter->Execute_GetBowStringSocketName(CurCharacter));
 			TmpTargetLocation =	UKismetMathLibrary::InverseTransformLocation(GetOwningComponent()->GetComponentTransform(), TmpLocation);
 		}
 		else

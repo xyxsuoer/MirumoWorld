@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BehaviorTree/Services/BTService_BlueprintBase.h"
+#include "BehaviorTree/BTService.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 #include "XYXAIStrafe.generated.h"
 
@@ -11,7 +11,7 @@
  * 
  */
 UCLASS()
-class MIRUMOWORLD_API UXYXAIStrafe : public UBTService_BlueprintBase
+class MIRUMOWORLD_API UXYXAIStrafe : public UBTService
 {
 	GENERATED_BODY()
 
@@ -19,13 +19,13 @@ public:
 
 	UXYXAIStrafe();
 
+	virtual void OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+
+	virtual void OnCeaseRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
-	void ReceiveTickAI(AAIController* OwnerController, APawn* ControlledPawn, float DeltaSeconds);
-
-	void ReceiveActivationAI(AAIController* OwnerController, APawn* ControlledPawn);
-
-	void ReceiveDeactivationAI(AAIController* OwnerController, APawn* ControlledPawn);
+	virtual void OnSearchStart(FBehaviorTreeSearchData& SearchData) override;
 
 	UFUNCTION()
 		UEnvQuery* GetStrafeQuery();

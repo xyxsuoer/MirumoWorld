@@ -31,4 +31,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 		FName GetBowStringSocketName();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+		void ShootArrowProjectile();
 };

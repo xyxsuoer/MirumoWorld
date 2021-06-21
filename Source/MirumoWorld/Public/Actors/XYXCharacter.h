@@ -322,6 +322,10 @@ public:
 		virtual FName GetBowStringSocketName_Implementation();
 
 		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
+			void ShootArrowProjectile();
+		virtual void ShootArrowProjectile_Implementation();
+
+		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 			FRotator GetDesiredRotation();
 		virtual FRotator GetDesiredRotation_Implementation() override;
 
@@ -553,9 +557,6 @@ public:
 
 	UFUNCTION()
 		void ShootArrow();
-
-	UFUNCTION()
-		void ShootArrowProjectile();
 	
 	UFUNCTION()
 		void AttemptPlayBowDrawSound();

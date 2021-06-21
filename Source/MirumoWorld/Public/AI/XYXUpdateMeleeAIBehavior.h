@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BehaviorTree/Services/BTService_BlueprintBase.h"
+#include "BehaviorTree/BTService.h"
 #include "XYXUpdateMeleeAIBehavior.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MIRUMOWORLD_API UXYXUpdateMeleeAIBehavior : public UBTService_BlueprintBase
+class MIRUMOWORLD_API UXYXUpdateMeleeAIBehavior : public UBTService
 {
 	GENERATED_BODY()
 
@@ -20,7 +20,7 @@ public:
 
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
-	void ReceiveSearchStartAI(class AAIController* OwnerController, APawn* ControlledPawn);
+	virtual void OnSearchStart(FBehaviorTreeSearchData& SearchData);
 
 public:
 

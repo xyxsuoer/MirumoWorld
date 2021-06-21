@@ -9,23 +9,14 @@
 
 UXYXAIStrafe::UXYXAIStrafe()
 {
-	bCreateNodeInstance = true;
+
 }
 
-void UXYXAIStrafe::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+void UXYXAIStrafe::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
-}
-
-void UXYXAIStrafe::ReceiveTickAI(AAIController* OwnerController, APawn* ControlledPawn, float DeltaSeconds)
-{
-	Strafe();
-}
-
-void UXYXAIStrafe::ReceiveActivationAI(AAIController* OwnerController, APawn* ControlledPawn)
-{
-	ControlledCharacter = Cast<AXYXBaseNPC>(ControlledPawn);
-	AIController = Cast<AXYXBaseAIController>(OwnerController);
+	//AIController = Cast<AXYXBaseAIController>(OwnerComp.GetAIOwner());
+	//if (AIController)
+	//	ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
 
 	AActor* NewFocus = UBTFunctionLibrary::GetBlackboardValueAsActor(this, TargetKey);
 	if (AIController)
@@ -40,16 +31,37 @@ void UXYXAIStrafe::ReceiveActivationAI(AAIController* OwnerController, APawn* Co
 	}
 }
 
-void UXYXAIStrafe::ReceiveDeactivationAI(AAIController* OwnerController, APawn* ControlledPawn)
+void UXYXAIStrafe::OnCeaseRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	OwnerController->ClearFocus(EAIFocusPriority::Gameplay);
-	OwnerController->StopMovement();
-
-	auto TargetNPC = Cast<AXYXBaseNPC>(ControlledPawn);
-	if (TargetNPC && TargetNPC->GetRotatingComponent())
+	//AIController = Cast<AXYXBaseAIController>(OwnerComp.GetAIOwner());
+	if (AIController) 
 	{
-		TargetNPC->GetRotatingComponent()->SetRotationMode(ERotationMode::EOrientToMovement);
+		//ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
+
+		AIController->ClearFocus(EAIFocusPriority::Gameplay);
+		AIController->StopMovement();
+
+		if (ControlledCharacter && ControlledCharacter->GetRotatingComponent())
+		{
+			ControlledCharacter->GetRotatingComponent()->SetRotationMode(ERotationMode::EOrientToMovement);
+		}
 	}
+}
+
+void UXYXAIStrafe::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
+{
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
+
+	Strafe();
+}
+
+void UXYXAIStrafe::OnSearchStart(FBehaviorTreeSearchData& SearchData)
+{
+	Super::OnSearchStart(SearchData);
+
+	AIController = Cast<AXYXBaseAIController>(SearchData.OwnerComp.GetAIOwner());
+	if (AIController)
+		ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
 }
 
 UEnvQuery* UXYXAIStrafe::GetStrafeQuery()
