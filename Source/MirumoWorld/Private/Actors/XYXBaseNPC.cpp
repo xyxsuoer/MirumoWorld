@@ -51,6 +51,9 @@ AXYXBaseNPC::AXYXBaseNPC()
 	TargetWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Target Widget"));
 	TargetWidget->SetupAttachment(RootComponent);
 
+	StatsBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Stats Bar Widget"));
+	StatsBarWidget->SetupAttachment(GetMesh());
+
 	AutoPossessPlayer = EAutoReceiveInput::Type::Disabled;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AXYXBaseAIController::StaticClass();
@@ -94,8 +97,6 @@ void AXYXBaseNPC::BeginPlay()
 	}
 
 	BaseAIController = Cast<AXYXBaseAIController>(GetController());
-
-	StatsBarWidget = CreateWidget<UXYXUserWidgetAIStatBar>(GetWorld(), WBStatsBarClass);
 
 	InitializeStatsWidget();
 }
@@ -456,7 +457,7 @@ void AXYXBaseNPC::ShowStatsWidget()
 {
 	if (StatsBarWidget)
 	{
-		StatsBarWidget->SetVisibility(ESlateVisibility::Visible);
+		StatsBarWidget->SetHiddenInGame(false, false);
 	}
 }
 
@@ -464,7 +465,7 @@ void AXYXBaseNPC::HideStatsWidget()
 {
 	if (StatsBarWidget)
 	{
-		StatsBarWidget->SetVisibility(ESlateVisibility::Hidden);
+		StatsBarWidget->SetHiddenInGame(true, false);
 	}
 }
 
@@ -908,7 +909,11 @@ void AXYXBaseNPC::InitializeStatsWidget()
 {
 	if (StatsBarWidget)
 	{
-		StatsBarWidget->InitializeHealth(ExtendedHealth);
-		StatsBarWidget->InitializeStamina(ExtendedStamina);
+		auto WBAIStatsBars = Cast<UXYXUserWidgetAIStatBar>(StatsBarWidget->GetUserWidgetObject());
+		if (WBAIStatsBars)
+		{
+			WBAIStatsBars->InitializeHealth(ExtendedHealth);
+			WBAIStatsBars->InitializeStamina(ExtendedStamina);
+		}
 	}
 }

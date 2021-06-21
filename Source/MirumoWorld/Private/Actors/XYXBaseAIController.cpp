@@ -109,7 +109,7 @@ void AXYXBaseAIController::HandleOnInCombatChanged(bool bValue)
 
 void AXYXBaseAIController::UpdateTarget()
 {
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0);
 	auto ControlledPawn = this->GetPawn();
 
 	IXYXInterfaceEntity* ControlledEntity = Cast<IXYXInterfaceEntity>(ControlledPawn);
@@ -121,7 +121,7 @@ void AXYXBaseAIController::UpdateTarget()
 	TArray<AActor*> KnownActors;
 	TArray<AActor*> TmpPerceivedActors;
 	TArray<AActor*> TmpEnemyActors;
-	PerceptionComponent->GetKnownPerceivedActors(UAISense::StaticClass(), KnownActors);
+	PerceptionComponent->GetKnownPerceivedActors(UAISense_Sight::StaticClass(), KnownActors);
 	for (auto&& e : KnownActors)
 	{
 		IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(e);
@@ -151,7 +151,7 @@ void AXYXBaseAIController::UpdateTarget()
 	}
 
 	// If player is in perceived actors, show health bar
-	if (PlayerController && TmpPerceivedActors.Contains(PlayerController))
+	if (PlayerCharacter && TmpPerceivedActors.Contains(PlayerCharacter))
 	{
 		PossesedAI->ShowStatsWidget();
 	}

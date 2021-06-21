@@ -6,6 +6,7 @@
 #include "Actors/XYXBaseAIController.h"
 #include "Components/XYXRotatingComponent.h"
 #include "BehaviorTree/BTFunctionLibrary.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 UXYXAIStrafe::UXYXAIStrafe()
 {
@@ -14,13 +15,9 @@ UXYXAIStrafe::UXYXAIStrafe()
 
 void UXYXAIStrafe::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	//AIController = Cast<AXYXBaseAIController>(OwnerComp.GetAIOwner());
-	//if (AIController)
-	//	ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
-
-	AActor* NewFocus = UBTFunctionLibrary::GetBlackboardValueAsActor(this, TargetKey);
 	if (AIController)
 	{
+		auto NewFocus = Cast<AActor>(AIController->BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
 		AIController->SetFocus(NewFocus);
 	}
 

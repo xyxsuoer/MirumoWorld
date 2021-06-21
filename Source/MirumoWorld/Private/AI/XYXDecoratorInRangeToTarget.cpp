@@ -6,6 +6,7 @@
 #include "Actors/XYXBaseAIController.h"
 #include "BehaviorTree/BTFunctionLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 UXYXDecoratorInRangeToTarget::UXYXDecoratorInRangeToTarget()
 {
@@ -16,10 +17,13 @@ bool UXYXDecoratorInRangeToTarget::PerformConditionCheckAI(AAIController* OwnerC
 {
 	auto ControlledCharacter = Cast<AXYXBaseNPC>(ControlledPawn);
 	auto AIController = Cast<AXYXBaseAIController>(OwnerController);
+	if (!AIController || !ControlledCharacter)
+	{
+		return false;
+	}
 
-	AActor* OtherActor = UBTFunctionLibrary::GetBlackboardValueAsActor(this, TargetKey);
+	auto OtherActor = Cast<AActor>(AIController->BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
 	float TmpValue = ControlledCharacter->GetDistanceTo(OtherActor);
 
 	return UKismetMathLibrary::InRange_FloatFloat(TmpValue, GreaterThan, LessThan, true, true);
-
 }

@@ -13,6 +13,8 @@
 #include "Components/XYXEquipmentManagerComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Game/XYXData.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/Blackboard/BlackboardKeyType_Enum.h"
 
 UXYXUpdateMeleeAIBehavior::UXYXUpdateMeleeAIBehavior()
 {
@@ -56,7 +58,7 @@ void UXYXUpdateMeleeAIBehavior::Update()
 
 void UXYXUpdateMeleeAIBehavior::UpdateBehavior()
 {
-	if (!AIController || !ControlledCharacter)
+	if (!AIController || !ControlledCharacter || !AIController->BlackboardComp)
 	{
 		return;
 	}
@@ -76,7 +78,7 @@ void UXYXUpdateMeleeAIBehavior::UpdateBehavior()
 	}
 	else
 	{
-		auto TmpTarget =  UBTFunctionLibrary::GetBlackboardValueAsActor(this, TargetKey);
+		auto TmpTarget = Cast<AActor>(AIController->BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
 		IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(TmpTarget);
 		// Check if target is set and if it's alive
 		if (Entity && Entity->Execute_IsEntityAlive(TmpTarget))
@@ -194,7 +196,7 @@ void UXYXUpdateMeleeAIBehavior::UpdateBehavior()
 
 void UXYXUpdateMeleeAIBehavior::UpdateActivities()
 {
-	if (!AIController || !ControlledCharacter)
+	if (!AIController || !ControlledCharacter || !AIController->BlackboardComp)
 	{
 		return;
 	}
@@ -206,7 +208,8 @@ void UXYXUpdateMeleeAIBehavior::UpdateActivities()
 	}
 
 	// Turn On/Off blocking
-	auto TmpSelection = (EAIBehavior)UBTFunctionLibrary::GetBlackboardValueAsEnum(this, BehaviorKey);
+	auto TmpSelection = (EAIBehavior)AIController->BlackboardComp->GetValueAsEnum(BehaviorKey.SelectedKeyName);
+
 	switch(TmpSelection)
 	{
 		case EAIBehavior::EIdle:
@@ -234,7 +237,10 @@ void UXYXUpdateMeleeAIBehavior::UpdateActivities()
 
 void UXYXUpdateMeleeAIBehavior::SetBehavior(EAIBehavior Behavior)
 {
-	UBTFunctionLibrary::SetBlackboardValueAsEnum(this, BehaviorKey, (uint8)Behavior);
+	if (AIController && AIController->BlackboardComp)
+	{
+		AIController->BlackboardComp->SetValue<UBlackboardKeyType_Enum>(BehaviorKey.SelectedKeyName, (uint8)Behavior);
+	}
 }
 
 void UXYXUpdateMeleeAIBehavior::HandleOnStateChanged(EState PrevState, EState NewState)

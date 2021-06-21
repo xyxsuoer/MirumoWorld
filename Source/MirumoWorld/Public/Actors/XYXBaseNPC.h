@@ -147,11 +147,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		class UWidgetComponent* TargetWidget;
 
-	UPROPERTY(EditAnywhere, Category = XYX)
-		TSubclassOf<class UXYXUserWidgetAIStatBar> WBStatsBarClass;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
+		class UWidgetComponent* StatsBarWidget;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
-		class UXYXUserWidgetAIStatBar* StatsBarWidget;
+	//UPROPERTY(EditAnywhere, Category = XYX)
+	//	TSubclassOf<class UXYXUserWidgetAIStatBar> WBStatsBarClass;
+
+	//UPROPERTY(BlueprintReadWrite, Category = XYX)
+	//	class UXYXUserWidgetAIStatBar* StatsBarWidget;
 
 	UPROPERTY()
 		FTimerHandle ResetMeleeAttackCounterTimer;
