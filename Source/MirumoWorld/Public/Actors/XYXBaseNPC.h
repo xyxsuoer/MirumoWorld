@@ -291,6 +291,9 @@ public:
 		void HandleOnEffectApplied(EEffectType Type);
 
 	UFUNCTION()
+		void HandleOnEffectRemoved(EEffectType Type);
+
+	UFUNCTION()
 		void InitializeStatsWidget();
 
 };

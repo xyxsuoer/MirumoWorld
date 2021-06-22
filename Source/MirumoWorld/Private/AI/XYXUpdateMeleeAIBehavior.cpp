@@ -24,14 +24,12 @@ UXYXUpdateMeleeAIBehavior::UXYXUpdateMeleeAIBehavior()
 
 void UXYXUpdateMeleeAIBehavior::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
-	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 	Update();
+	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 }
 
 void UXYXUpdateMeleeAIBehavior::OnSearchStart(FBehaviorTreeSearchData& SearchData)
 {
-	Super::OnSearchStart(SearchData);
-
 	AIController = Cast<AXYXBaseAIController>(SearchData.OwnerComp.GetAIOwner());
 	if(AIController)
 		ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
@@ -49,6 +47,8 @@ void UXYXUpdateMeleeAIBehavior::OnSearchStart(FBehaviorTreeSearchData& SearchDat
 			ExtendedStamina->OnValueChanged.AddDynamic(this, &UXYXUpdateMeleeAIBehavior::HandleOnStaminaValueChanged);
 		}
 	}
+
+	Super::OnSearchStart(SearchData);
 }
 
 void UXYXUpdateMeleeAIBehavior::Update()

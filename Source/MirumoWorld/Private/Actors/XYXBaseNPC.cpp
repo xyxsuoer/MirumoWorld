@@ -94,6 +94,7 @@ void AXYXBaseNPC::BeginPlay()
 	if (EffectsManagerComp)
 	{
 		EffectsManagerComp->OnEffectApplied.AddDynamic(this, &AXYXBaseNPC::HandleOnEffectApplied);
+		EffectsManagerComp->OnEffectRemoved.AddDynamic(this, &AXYXBaseNPC::HandleOnEffectRemoved);
 	}
 
 	BaseAIController = Cast<AXYXBaseAIController>(GetController());
@@ -902,6 +903,35 @@ void AXYXBaseNPC::HandleOnEffectApplied(EEffectType Type)
 	if (StateManagerComp)
 	{
 		StateManagerComp->SetState(EState::EDisabled);
+	}
+}
+
+void AXYXBaseNPC::HandleOnEffectRemoved(EEffectType Type)
+{
+	switch (Type)
+	{
+	case EEffectType::EStun:
+	case EEffectType::EBackstab:
+	case EEffectType::EParried:
+	case EEffectType::EImpact:
+	{
+		if (EffectsManagerComp)
+		{
+			TArray<EEffectType> Types = { EEffectType::EStun,
+				EEffectType::EKnockdown, EEffectType::EImpact,
+				EEffectType::EParried, EEffectType::EBackstab };
+
+			bool bApplied = EffectsManagerComp->IsAnyEffectApplied(Types);
+			if (!bApplied)
+			{
+				if (StateManagerComp)
+				{
+					StateManagerComp->ResetState(0.0f);
+				}
+			}
+		}
+	}
+	break;
 	}
 }
 

@@ -135,13 +135,13 @@ EDirection UXYXFunctionLibrary::GetHitDirection(FVector HitFromDirection, AActor
 	if (TmpDotProduct >= 0.5f)
 	{
 		// Is In front
-		TmpDirection = EDirection::EFront;
+		TmpDirection = EDirection::EBack;
 		return TmpDirection;
 	}
 	else if(TmpDotProduct <= -0.5f)
 	{
 		// Is on back
-		TmpDirection = EDirection::EBack;
+		TmpDirection = EDirection::EFront;
 		return TmpDirection;
 	}
 
