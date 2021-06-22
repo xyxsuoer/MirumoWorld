@@ -4,6 +4,7 @@
 #include "Components/XYXPatrolComponent.h"
 #include "Actors/XYXPatrolPath.h"
 #include "Components/SplineComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values for this component's properties
 UXYXPatrolComponent::UXYXPatrolComponent()
@@ -21,7 +22,11 @@ void UXYXPatrolComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PatrolPath = NewObject<AXYXPatrolPath>(this, PatrolPathClass);
+	if (UKismetSystemLibrary::IsValidClass(PatrolPathClass))
+	{
+		PatrolPath = NewObject<AXYXPatrolPath>(this, PatrolPathClass);
+	}
+
 }
 
 

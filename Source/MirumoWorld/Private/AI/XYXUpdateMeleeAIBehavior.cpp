@@ -15,6 +15,7 @@
 #include "Game/XYXData.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Enum.h"
+#include "Components/XYXPatrolComponent.h"
 
 UXYXUpdateMeleeAIBehavior::UXYXUpdateMeleeAIBehavior()
 {
@@ -58,7 +59,7 @@ void UXYXUpdateMeleeAIBehavior::Update()
 
 void UXYXUpdateMeleeAIBehavior::UpdateBehavior()
 {
-	if (!AIController || !ControlledCharacter || !AIController->BlackboardComp)
+	if (!AIController || !ControlledCharacter || !AIController->GetBlackboardComponent())
 	{
 		return;
 	}
@@ -78,98 +79,105 @@ void UXYXUpdateMeleeAIBehavior::UpdateBehavior()
 	}
 	else
 	{
-		auto TmpTarget = Cast<AActor>(AIController->BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
-		IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(TmpTarget);
-		// Check if target is set and if it's alive
-		if (Entity && Entity->Execute_IsEntityAlive(TmpTarget))
+		auto TmpTarget = Cast<AActor>(AIController->GetBlackboardComponent()->GetValueAsObject(TargetKey.SelectedKeyName));
+		if (TmpTarget)
 		{
-			float TmpDistanceToTarget = TmpTarget->GetDistanceTo(ControlledCharacter);
-			float TmpDotProductToTarget = TmpTarget->GetDotProductTo(ControlledCharacter);
-			int32 TmpReceivedHitCount = StatsComp->GetRecentlyReceivedHitsCount();
-			float TmpStaminaPercent = ExtendedStamina->GetCurrentValue() / ExtendedStamina->GetMaxValue() * 100.f;
-			auto TargetEquipment = Cast<UXYXEquipmentManagerComponent>(TmpTarget->GetComponentByClass(UXYXEquipmentManagerComponent::StaticClass()));
-
-			// Is Behind target
-			if (TmpDotProductToTarget <= -0.25f)
+			IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(TmpTarget);
+			// Check if target is set and if it's alive
+			if (Entity && Entity->Execute_IsEntityAlive(TmpTarget))
 			{
-				// Is in attack range
-				if (TmpDistanceToTarget <= AttackBehaviorRange)
+				float TmpDistanceToTarget = TmpTarget->GetDistanceTo(ControlledCharacter);
+				float TmpDotProductToTarget = TmpTarget->GetDotProductTo(ControlledCharacter);
+				int32 TmpReceivedHitCount = StatsComp->GetRecentlyReceivedHitsCount();
+				float TmpStaminaPercent = ExtendedStamina->GetCurrentValue() / ExtendedStamina->GetMaxValue() * 100.f;
+				auto TargetEquipment = Cast<UXYXEquipmentManagerComponent>(TmpTarget->GetComponentByClass(UXYXEquipmentManagerComponent::StaticClass()));
+
+				// Is Behind target
+				if (TmpDotProductToTarget <= -0.25f)
 				{
-					SetBehavior(EAIBehavior::EMeleeAttack);
+					// Is in attack range
+					if (TmpDistanceToTarget <= AttackBehaviorRange)
+					{
+						SetBehavior(EAIBehavior::EMeleeAttack);
+					}
+					else
+					{
+						SetBehavior(EAIBehavior::EApproach);
+					}
 				}
 				else
 				{
-					SetBehavior(EAIBehavior::EApproach);
-				}
-			}
-			else
-			{
-				// Is in attack range
-				if (TmpDistanceToTarget <= AttackBehaviorRange)
-				{
-					// If is close to target for at least 3 ticks
-					if (TicksNearTarget >= 3.0f)
+					// Is in attack range
+					if (TmpDistanceToTarget <= AttackBehaviorRange)
 					{
-						SetBehavior(EAIBehavior::EMeleeAttack);
-						// Reset Ticks Near Target with some chance to avoid non stop attacking
-						if (UKismetMathLibrary::RandomBoolWithWeight(0.4f))
+						// If is close to target for at least 3 ticks
+						if (TicksNearTarget >= 3.0f)
 						{
-							TicksNearTarget = 0.f;
+							SetBehavior(EAIBehavior::EMeleeAttack);
+							// Reset Ticks Near Target with some chance to avoid non stop attacking
+							if (UKismetMathLibrary::RandomBoolWithWeight(0.4f))
+							{
+								TicksNearTarget = 0.f;
+							}
+						}
+						else
+						{
+							TicksNearTarget += 1.f;
+							// Whether AI should attack or strafe around blocking
+							if (bIsOutOfStamina || TmpStaminaPercent <= 40.f || UKismetMathLibrary::RandomBoolWithWeight(0.1f))
+							{
+								SetBehavior(EAIBehavior::EMeleeAttack);
+							}
+							else
+							{
+								if (TargetEquipment)
+								{
+									// Does target use Magic or Range combat type
+									if (TargetEquipment->GetCombatType() == ECombatType::EMagic ||
+										TargetEquipment->GetCombatType() == ECombatType::ERanged)
+									{
+										SetBehavior(EAIBehavior::EMeleeAttack);
+									}
+									else
+									{
+										SetBehavior(EAIBehavior::EStrafeAround);
+									}
+								}
+								else
+								{
+									SetBehavior(EAIBehavior::EStrafeAround);
+								}
+							}
 						}
 					}
 					else
 					{
-						TicksNearTarget += 1.f;
-						// Whether AI should attack or strafe around blocking
-						if (bIsOutOfStamina || TmpStaminaPercent <= 40.f || UKismetMathLibrary::RandomBoolWithWeight(0.1f))
+						TicksNearTarget = 0.f;
+						if (TmpDistanceToTarget >= 2000.f)
 						{
-							SetBehavior(EAIBehavior::EMeleeAttack);
+							SetBehavior(EAIBehavior::EApproach);
 						}
 						else
 						{
 							if (TargetEquipment)
 							{
-								// Does target use Magic or Range combat type
-								if (TargetEquipment->GetCombatType() == ECombatType::EMagic || 
-									TargetEquipment->GetCombatType() == ECombatType::ERanged)
+								// Is target in Combat
+								if (TargetEquipment->GetIsInCombat())
 								{
-									SetBehavior(EAIBehavior::EMeleeAttack);
+									// Does target use Magic or Range combat type
+									if (TargetEquipment->GetCombatType() == ECombatType::EMagic ||
+										TargetEquipment->GetCombatType() == ECombatType::ERanged)
+									{
+										SetBehavior(EAIBehavior::EApproach);
+									}
+									else
+									{
+										SetBehavior(EAIBehavior::EStrafeAround);
+									}
 								}
 								else
-								{
-									SetBehavior(EAIBehavior::EStrafeAround);
-								}
-							}
-							else
-							{
-								SetBehavior(EAIBehavior::EStrafeAround);
-							}
-						}
-					}
-				}
-				else
-				{
-					TicksNearTarget = 0.f;
-					if (TmpDistanceToTarget >= 2000.f)
-					{
-						SetBehavior(EAIBehavior::EApproach);
-					}
-					else
-					{
-						if (TargetEquipment)
-						{
-							// Is target in Combat
-							if (TargetEquipment->GetIsInCombat())
-							{
-								// Does target use Magic or Range combat type
-								if (TargetEquipment->GetCombatType() == ECombatType::EMagic || 
-									TargetEquipment->GetCombatType() == ECombatType::ERanged)
 								{
 									SetBehavior(EAIBehavior::EApproach);
-								}
-								else
-								{
-									SetBehavior(EAIBehavior::EStrafeAround);
 								}
 							}
 							else
@@ -177,18 +185,23 @@ void UXYXUpdateMeleeAIBehavior::UpdateBehavior()
 								SetBehavior(EAIBehavior::EApproach);
 							}
 						}
-						else
-						{
-							SetBehavior(EAIBehavior::EApproach);
-						}
 					}
 				}
 			}
 		}
 		else
 		{
-			// TODO Patrol
-			SetBehavior(EAIBehavior::EIdle);
+			if (ControlledCharacter->PatrolComp)
+			{
+				if (ControlledCharacter->PatrolComp->IsPatrolPathValid())
+				{
+					SetBehavior(EAIBehavior::EPatrol);
+				}
+				else
+				{
+					SetBehavior(EAIBehavior::EIdle);
+				}
+			}
 		}
 	}
 
@@ -196,7 +209,7 @@ void UXYXUpdateMeleeAIBehavior::UpdateBehavior()
 
 void UXYXUpdateMeleeAIBehavior::UpdateActivities()
 {
-	if (!AIController || !ControlledCharacter || !AIController->BlackboardComp)
+	if (!AIController || !ControlledCharacter || !AIController->GetBlackboardComponent())
 	{
 		return;
 	}
@@ -208,7 +221,7 @@ void UXYXUpdateMeleeAIBehavior::UpdateActivities()
 	}
 
 	// Turn On/Off blocking
-	auto TmpSelection = (EAIBehavior)AIController->BlackboardComp->GetValueAsEnum(BehaviorKey.SelectedKeyName);
+	auto TmpSelection = (EAIBehavior)AIController->GetBlackboardComponent()->GetValueAsEnum(BehaviorKey.SelectedKeyName);
 
 	switch(TmpSelection)
 	{
@@ -237,9 +250,9 @@ void UXYXUpdateMeleeAIBehavior::UpdateActivities()
 
 void UXYXUpdateMeleeAIBehavior::SetBehavior(EAIBehavior Behavior)
 {
-	if (AIController && AIController->BlackboardComp)
+	if (AIController && AIController->GetBlackboardComponent())
 	{
-		AIController->BlackboardComp->SetValue<UBlackboardKeyType_Enum>(BehaviorKey.SelectedKeyName, (uint8)Behavior);
+		AIController->GetBlackboardComponent()->SetValue<UBlackboardKeyType_Enum>(BehaviorKey.SelectedKeyName, (uint8)Behavior);
 	}
 }
 

@@ -72,7 +72,7 @@ public:
 	UFUNCTION()
 		EMovementState GetMovementState() { return MovementState; }
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = XYX)
 		void SetMovementState(EMovementState State);
 
 	UFUNCTION()

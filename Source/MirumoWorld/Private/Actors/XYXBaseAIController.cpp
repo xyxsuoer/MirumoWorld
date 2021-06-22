@@ -68,12 +68,13 @@ void AXYXBaseAIController::OnPossess(APawn* InPawn)
 		}
 
 		BlackboardComp->InitializeBlackboard(*bbData);
+		AActor* SelfActor = Cast<AActor>(PossesedAI);
+		BlackboardComp->SetValueAsObject(TEXT("SelfActor"), SelfActor);
+
 		Blackboard = BlackboardComp;
 
-		//RunBehaviorTree(PossesedAI->BehaviorTree);
+		RunBehaviorTree(PossesedAI->BehaviorTree);
 
-		BehaviorComp->StartTree(*(PossesedAI->BehaviorTree));
-		
 		UWorld* World = GetWorld();
 		check(World);
 

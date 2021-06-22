@@ -257,7 +257,7 @@ public:
 	UFUNCTION()
 		void ApplyHitImpulseToCharacter(AActor* HitActor, FVector HitNormal, float ImpulsePower);
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = XYX)
 		float MeleeAttack(EMeleeAttackType Type);
 
 	UFUNCTION()
@@ -266,7 +266,7 @@ public:
 	UFUNCTION()
 		void ResetMeleeAttackCounter();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = XYX)
 		float Roll(EDirection Direction);
 
 	UFUNCTION()

@@ -34,10 +34,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
 		bool bReverseDirection = false;
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = XYX)
 		void UpdatePatrolIndex();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable, Category = XYX)
 		FVector GetSplinePointLocation(int32 InPointIndex);
 
 	UFUNCTION()
