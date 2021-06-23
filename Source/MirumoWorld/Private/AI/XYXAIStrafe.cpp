@@ -7,14 +7,23 @@
 #include "Components/XYXRotatingComponent.h"
 #include "BehaviorTree/BTFunctionLibrary.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "BehaviorTree/Blackboard/BlackboardKeyType_Enum.h"
+#include "Kismet/KismetMathLibrary.h"
 
 UXYXAIStrafe::UXYXAIStrafe()
 {
-
+	bNotifyBecomeRelevant = true;
+	bNotifyCeaseRelevant = true;
 }
 
 void UXYXAIStrafe::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
+	Super::OnCeaseRelevant(OwnerComp, NodeMemory);
+
+	AIController = Cast<AXYXBaseAIController>(OwnerComp.GetAIOwner());
+	if (AIController)
+		ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
+
 	if (AIController)
 	{
 		auto NewFocus = Cast<AActor>(AIController->BlackboardComp->GetValueAsObject(TargetKey.SelectedKeyName));
@@ -30,11 +39,14 @@ void UXYXAIStrafe::OnBecomeRelevant(UBehaviorTreeComponent& OwnerComp, uint8* No
 
 void UXYXAIStrafe::OnCeaseRelevant(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	//AIController = Cast<AXYXBaseAIController>(OwnerComp.GetAIOwner());
+	Super::OnCeaseRelevant(OwnerComp, NodeMemory);
+
+	AIController = Cast<AXYXBaseAIController>(OwnerComp.GetAIOwner());
+	if (AIController)
+		ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
+
 	if (AIController) 
 	{
-		//ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
-
 		AIController->ClearFocus(EAIFocusPriority::Gameplay);
 		AIController->StopMovement();
 
@@ -52,26 +64,53 @@ void UXYXAIStrafe::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory
 	Strafe();
 }
 
-void UXYXAIStrafe::OnSearchStart(FBehaviorTreeSearchData& SearchData)
-{
-	Super::OnSearchStart(SearchData);
-
-	AIController = Cast<AXYXBaseAIController>(SearchData.OwnerComp.GetAIOwner());
-	if (AIController)
-		ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
-}
-
 UEnvQuery* UXYXAIStrafe::GetStrafeQuery()
 {
-	return nullptr;
+	UEnvQuery* EnvQueryData = nullptr;
+	
+	if (!AIController || !AIController->GetBlackboardComponent())
+	{
+		return nullptr;
+	}
+
+	AActor* TargetActor = Cast<AActor>(AIController->GetBlackboardComponent()->GetValueAsObject(TargetKey.SelectedKeyName));
+
+	if (!TargetActor || !ControlledCharacter)
+	{
+		return nullptr;
+	}
+
+	FVector TargetRightVector = TargetActor->GetActorRightVector();
+	FVector TargetLocation = TargetActor->GetActorLocation();
+	FVector ControlledCharacterLocation = ControlledCharacter->GetActorLocation();
+	FVector TmpVector = UKismetMathLibrary::GetDirectionUnitVector(TargetLocation, ControlledCharacterLocation);
+
+	float TmpValue = UKismetMathLibrary::Dot_VectorVector(UKismetMathLibrary::Normal(
+		FVector(TargetRightVector.X, TargetRightVector.Y, 0.f), 0.0001f),
+		UKismetMathLibrary::Normal(FVector(TmpVector.X, TmpVector.Y, 0.f), 0.0001f));
+
+	if (TmpValue >= -0.01)
+	{
+		EnvQueryData = QueryStrafeLeft;
+	}
+	else
+	{
+		EnvQueryData = QueryStrafeRight;
+	}
+
+	return EnvQueryData;
 }
 
 void UXYXAIStrafe::Strafe()
 {
+	UEnvQuery* TmpQuery = bUseRandomDirection ? 
+		(UKismetMathLibrary::RandomBoolWithWeight(0.5f) ? QueryStrafeLeft : QueryStrafeRight) 
+		: GetStrafeQuery();
 
+	if (ControlledCharacter)
+	{
+		ControlledCharacter->SetMyQuery(TmpQuery);
+		ControlledCharacter->RunEQS();
+	}
 }
 
-void UXYXAIStrafe::HandleOnQueryFinished()
-{
-
-}

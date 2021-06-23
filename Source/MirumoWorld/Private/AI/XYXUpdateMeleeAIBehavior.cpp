@@ -19,7 +19,7 @@
 
 UXYXUpdateMeleeAIBehavior::UXYXUpdateMeleeAIBehavior()
 {
-	
+	bCreateNodeInstance = true;
 }
 
 void UXYXUpdateMeleeAIBehavior::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
@@ -31,7 +31,7 @@ void UXYXUpdateMeleeAIBehavior::TickNode(UBehaviorTreeComponent& OwnerComp, uint
 void UXYXUpdateMeleeAIBehavior::OnSearchStart(FBehaviorTreeSearchData& SearchData)
 {
 	AIController = Cast<AXYXBaseAIController>(SearchData.OwnerComp.GetAIOwner());
-	if(AIController)
+	if (AIController)
 		ControlledCharacter = Cast<AXYXBaseNPC>(AIController->PossesedAI);
 	if (ControlledCharacter)
 	{
@@ -39,12 +39,12 @@ void UXYXUpdateMeleeAIBehavior::OnSearchStart(FBehaviorTreeSearchData& SearchDat
 		UXYXExtendedStatComponent* ExtendedStamina = ControlledCharacter->GetExtendedStamina();
 		if (StateComp)
 		{
-			StateComp->OnStateChanged.AddDynamic(this, &UXYXUpdateMeleeAIBehavior::HandleOnStateChanged);
+			StateComp->OnStateChanged.AddUniqueDynamic(this, &UXYXUpdateMeleeAIBehavior::HandleOnStateChanged);
 		}
 
 		if (ExtendedStamina)
 		{
-			ExtendedStamina->OnValueChanged.AddDynamic(this, &UXYXUpdateMeleeAIBehavior::HandleOnStaminaValueChanged);
+			ExtendedStamina->OnValueChanged.AddUniqueDynamic(this, &UXYXUpdateMeleeAIBehavior::HandleOnStaminaValueChanged);
 		}
 	}
 

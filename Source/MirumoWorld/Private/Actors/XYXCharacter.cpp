@@ -1291,6 +1291,7 @@ void AXYXCharacter::SprintLoop()
 	if (MovementSpeedComp && ExtendedStamina && StateManagerComp &&
 		MovementSpeedComp->GetMovementState() == EMovementState::ESprint &&
 		ExtendedStamina->GetCurrentValue() >= SprintStaminaCost &&
+		HasMovementInput() &&
 		!StateManagerComp->GetActivityValue(EActivity::EIsLookingForward))
 	{
 		if (IsIdleAndNotFalling() && UKismetMathLibrary::VSize(this->GetVelocity()) > 10.f)

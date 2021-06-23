@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EnvironmentQuery/Contexts/EnvQueryContext_BlueprintBase.h"
+#include "EnvironmentQuery/EnvQueryContext.h"
 #include "XYXEQSContextStrafeRight.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class MIRUMOWORLD_API UXYXEQSContextStrafeRight : public UEnvQueryContext_BlueprintBase
+class MIRUMOWORLD_API UXYXEQSContextStrafeRight : public UEnvQueryContext
 {
 	GENERATED_BODY()
 
@@ -18,10 +18,6 @@ public:
 
 	UXYXEQSContextStrafeRight();
 
-	virtual UWorld* GetWorld() const override;
-
 	virtual void ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQueryContextData& ContextData) const override;
 
-	void ProvideSingleLocation(UObject* QuerierObject, AActor* QuerierActor, FVector& ResultingLocation) const;
-	
 };

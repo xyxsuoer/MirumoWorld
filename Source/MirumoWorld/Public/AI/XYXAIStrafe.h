@@ -25,24 +25,22 @@ public:
 
 	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
-	virtual void OnSearchStart(FBehaviorTreeSearchData& SearchData) override;
-
 	UFUNCTION()
 		UEnvQuery* GetStrafeQuery();
 
 	UFUNCTION()
 		void Strafe();
 
-	UFUNCTION()
-		void HandleOnQueryFinished();
-
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		FBlackboardKeySelector TargetKey;
 
-	UPROPERTY(BlueprintReadWrite, Category = XYX)
-		UEnvQuery* QueryTemplate;
+	UPROPERTY(EditAnywhere, Category = XYX)
+		UEnvQuery* QueryStrafeLeft;
+
+	UPROPERTY(EditAnywhere, Category = XYX)
+		UEnvQuery* QueryStrafeRight;
 
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		class AXYXBaseNPC* ControlledCharacter;
@@ -52,4 +50,5 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
 		bool bUseRandomDirection = false;
+
 };

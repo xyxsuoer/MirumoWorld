@@ -9,7 +9,11 @@
 #include <Interfaces/XYXInterfaceTargetable.h>
 #include <Interfaces/XYXInterfaceEntity.h>
 #include <Interfaces/XYXInterfaceMontageManagerComp.h>
+#include "EnvironmentQuery/EnvQueryTypes.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 #include "XYXBaseNPC.generated.h"
+
+
 
 UCLASS()
 class MIRUMOWORLD_API AXYXBaseNPC : public ACharacter,
@@ -150,14 +154,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = XYX)
 		class UWidgetComponent* StatsBarWidget;
 
-	//UPROPERTY(EditAnywhere, Category = XYX)
-	//	TSubclassOf<class UXYXUserWidgetAIStatBar> WBStatsBarClass;
-
-	//UPROPERTY(BlueprintReadWrite, Category = XYX)
-	//	class UXYXUserWidgetAIStatBar* StatsBarWidget;
-
 	UPROPERTY()
 		FTimerHandle ResetMeleeAttackCounterTimer;
+
+	UPROPERTY()
+		UEnvQuery* MyQuery; // set the query in editor
+
+	FEnvQueryRequest MyQueryRequest;
+
 
 public:
  
@@ -295,5 +299,14 @@ public:
 
 	UFUNCTION()
 		void InitializeStatsWidget();
+
+	UFUNCTION()
+		void SetMyQuery(UEnvQuery* InQuery);
+
+	// The function that gets called when querry finished
+		void MyQueryFinished(TSharedPtr<struct FEnvQueryResult> Result);
+
+	UFUNCTION()
+		void RunEQS();
 
 };

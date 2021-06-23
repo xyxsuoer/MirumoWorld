@@ -7,7 +7,6 @@
 #include "Actors/XYXBaseAIController.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
-#include "EnvironmentQuery/Contexts/EnvQueryContext_BlueprintBase.h"
 #include "AIHelpers.h"
 
 
@@ -16,41 +15,24 @@ UXYXEQSContextStrafeTarget::UXYXEQSContextStrafeTarget()
 
 }
 
-UWorld* UXYXEQSContextStrafeTarget::GetWorld() const
-{
-	UEnvQueryManager* EnvQueryManager = Cast<UEnvQueryManager>(GetOuter());
-	if (EnvQueryManager)
-	{
-		return EnvQueryManager->GetWorld();
-	}
-
-	return nullptr;
-}
-
 void UXYXEQSContextStrafeTarget::ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQueryContextData& ContextData) const
 {
+	Super::ProvideContext(QueryInstance, ContextData);
+
 	UObject* QuerierObject = QueryInstance.Owner.Get();
-	if ((QuerierObject == nullptr) || (CallMode == InvalidCallMode))
+	AActor* QuerierActor = Cast<AActor>(QuerierObject);
+	if (!QuerierObject || !QuerierActor)
 	{
 		return;
 	}
 
-	// NOTE: QuerierActor is redundant with QuerierObject and should be removed in the future.  It's here for now for
-	// backwards compatibility.
-	AActor* QuerierActor = Cast<AActor>(QuerierObject);
-	AActor* ResultingActor = NULL;
-	ProvideSingleActor(QuerierObject, QuerierActor, ResultingActor);
-	UEnvQueryItemType_Actor::SetContextHelper(ContextData, ResultingActor);
-	
-}
-
-void UXYXEQSContextStrafeTarget::ProvideSingleActor(UObject* QuerierObject, AActor* QuerierActor, AActor*& ResultingActor) const
-{
-	auto AIController = Cast<AXYXBaseAIController>(UAIBlueprintHelperLibrary::GetAIController(QuerierActor));
-	if (AIController && AIController->Target)
+	AXYXBaseAIController* AIController = Cast<AXYXBaseAIController>(QuerierActor->GetInstigatorController());
+	if (AIController && AIController->GetSeeingPawn())
 	{
-		ResultingActor = AIController->Target;
+		UEnvQueryItemType_Actor::SetContextHelper(ContextData, AIController->GetSeeingPawn());
 	}
-
-	ResultingActor = QuerierActor;
+	else
+	{
+		UEnvQueryItemType_Actor::SetContextHelper(ContextData, QuerierActor);
+	}
 }

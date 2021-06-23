@@ -6,7 +6,6 @@
 #include "Actors/XYXBaseAIController.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
-#include "EnvironmentQuery/Contexts/EnvQueryContext_BlueprintBase.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_Point.h"
 #include "AIHelpers.h"
 
@@ -15,42 +14,25 @@ UXYXEQSContextStrafeRight::UXYXEQSContextStrafeRight()
 
 }
 
-UWorld* UXYXEQSContextStrafeRight::GetWorld() const
-{
-	UEnvQueryManager* EnvQueryManager = Cast<UEnvQueryManager>(GetOuter());
-	if (EnvQueryManager)
-	{
-		return EnvQueryManager->GetWorld();
-	}
-
-	return nullptr;
-}
-
 void UXYXEQSContextStrafeRight::ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQueryContextData& ContextData) const
 {
+	Super::ProvideContext(QueryInstance, ContextData);
+
 	UObject* QuerierObject = QueryInstance.Owner.Get();
-	if ((QuerierObject == nullptr) || (CallMode == InvalidCallMode))
+	AActor* QuerierActor = Cast<AActor>(QuerierObject);
+	if (!QuerierObject || !QuerierActor)
 	{
 		return;
 	}
 
-	// NOTE: QuerierActor is redundant with QuerierObject and should be removed in the future.  It's here for now for
-	// backwards compatibility.
-	AActor* QuerierActor = Cast<AActor>(QuerierObject);
-	FVector ResultingLocation = FAISystem::InvalidLocation;
-	ProvideSingleLocation(QuerierObject, QuerierActor, ResultingLocation);
-	UEnvQueryItemType_Point::SetContextHelper(ContextData, ResultingLocation);
-}
-
-void UXYXEQSContextStrafeRight::ProvideSingleLocation(UObject* QuerierObject, AActor* QuerierActor, FVector& ResultingLocation) const
-{
-	auto AIController = Cast<AXYXBaseAIController>(UAIBlueprintHelperLibrary::GetAIController(QuerierActor));
-	if (QuerierActor && AIController && AIController->Target)
+	AXYXBaseAIController* AIController = Cast<AXYXBaseAIController>(QuerierActor->GetInstigatorController());
+	if (AIController && AIController->GetSeeingPawn())
 	{
-		FVector TargetLocation = AIController->Target->GetActorLocation();
+		FVector TargetLocation = AIController->GetSeeingPawn()->GetActorLocation();
 		FVector QuerierActorLocation = QuerierActor->GetActorLocation();
 		FRotator  TmpRotator = UKismetMathLibrary::FindLookAtRotation(QuerierActorLocation, TargetLocation);
 		FRotator NewRotator = FRotator(0.f, 0.f, TmpRotator.Yaw + 90.f);
-		ResultingLocation = UKismetMathLibrary::Conv_RotatorToVector(NewRotator) * 300.f + QuerierActorLocation;
-	}
+		FVector ResultingLocation = UKismetMathLibrary::Conv_RotatorToVector(NewRotator) * 300.f + QuerierActorLocation;
+		UEnvQueryItemType_Point::SetContextHelper(ContextData, ResultingLocation);
+	}	
 }

@@ -95,14 +95,6 @@ void AXYXBaseAIController::OnUnPossess()
 	BehaviorComp->StopTree();
 }
 
-void AXYXBaseAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
-{
-	if (PossesedAI && PossesedAI->GetPatrolComponent())
-	{
-		PossesedAI->GetPatrolComponent()->UpdatePatrolIndex();
-	}
-}
-
 void AXYXBaseAIController::HandleOnInCombatChanged(bool bValue)
 {
 	SetIsInCombat(bValue);
@@ -196,4 +188,9 @@ void AXYXBaseAIController::UpdateSenseTarget()
 		check(World);
 		UAISense_Damage::ReportDamageEvent(World, ControlledPawn, Target, 1.f, ControlledPawn->GetActorLocation(), ControlledPawn->GetActorLocation());
 	}
+}
+
+AActor* AXYXBaseAIController::GetSeeingPawn()
+{
+	return Target;
 }

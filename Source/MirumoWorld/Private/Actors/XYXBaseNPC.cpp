@@ -29,6 +29,8 @@
 #include "Items/DisplayedItems/XYXDisplayedItem.h"
 #include "UI/XYXUserWidgetAIStatBar.h"
 #include "Components/XYXPatrolComponent.h"
+#include "AI/XYXUpdateMeleeAIBehavior.h"
+
 
 // Sets default values
 AXYXBaseNPC::AXYXBaseNPC()
@@ -945,5 +947,30 @@ void AXYXBaseNPC::InitializeStatsWidget()
 			WBAIStatsBars->InitializeHealth(ExtendedHealth);
 			WBAIStatsBars->InitializeStamina(ExtendedStamina);
 		}
+	}
+}
+
+void AXYXBaseNPC::SetMyQuery(UEnvQuery* InQuery)
+{
+	MyQueryRequest = FEnvQueryRequest(InQuery, this);
+}
+
+void AXYXBaseNPC::RunEQS()
+{
+	MyQueryRequest.Execute(EEnvQueryRunMode::SingleResult, this, &AXYXBaseNPC::MyQueryFinished);
+}
+
+void AXYXBaseNPC::MyQueryFinished(TSharedPtr<struct FEnvQueryResult> Result)
+{
+	TArray<FVector> OutLocations;
+	Result->GetAllAsLocations(OutLocations);
+	if (Result->IsSuccsessful() && BaseAIController)
+	{
+		BaseAIController->MoveToLocation(Result->GetItemAsLocation(0));
+	}
+	else
+	{
+		if (BaseAIController)
+			BaseAIController->StopMovement();
 	}
 }
