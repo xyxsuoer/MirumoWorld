@@ -35,6 +35,7 @@
 #include "Items/DisplayedItems/XYXDisplayedItem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/AudioComponent.h"
+#include "Particles/ParticleSystem.h"
 
 
 
@@ -465,7 +466,7 @@ FRotator AXYXCharacter::GetDesiredRotation_Implementation()
 	return OutRotator;
 }
 
-bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType)
+bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType, FVector HitPoint)
 {
 	UWorld* World = GetWorld();
 	check(World);
@@ -511,7 +512,12 @@ bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackRes
 				{
 					UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
 					UXYXFunctionLibrary::PlayBlockSound(GameInstance, this, HitData.DamageCauser, this->GetActorLocation());
-					
+
+					if (ImpactSparksPS)
+					{
+						UGameplayStatics::SpawnEmitterAtLocation(this, ImpactSparksPS, HitPoint, FRotator::ZeroRotator, FVector::OneVector, true);
+					}
+
 					Block();
 
 					// If there is still some stamina left after blocked hit, try to apply Impact effect on attacker
@@ -532,6 +538,12 @@ bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackRes
 					ResultType = EAttackResult::EBlocked;
 					return TmpResult;
 				}
+			}
+
+			if (ImpactBloodPS)
+			{
+				HitPoint += HitData.HitFromDirection * 21.f;
+				UGameplayStatics::SpawnEmitterAtLocation(this, ImpactBloodPS, HitPoint, FRotator::ZeroRotator, FVector::OneVector, true);
 			}
 
 			ResultType = EAttackResult::ESuccess;
@@ -2099,7 +2111,7 @@ void AXYXCharacter::HandleOnHit(FHitResult HitResult)
 	if (TmpHitActor)
 	{
 		EAttackResult ResultType;
-		bool CanAttacked =  TmpHitActor->Execute_TakeAttackDamage(HitResult.GetActor(), MakeMeleeHitData(HitResult.GetActor()), ResultType);
+		bool CanAttacked =  TmpHitActor->Execute_TakeAttackDamage(HitResult.GetActor(), MakeMeleeHitData(HitResult.GetActor()), ResultType, HitResult.Location);
 		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 15000.f);
 		if (CanAttacked)
 		{

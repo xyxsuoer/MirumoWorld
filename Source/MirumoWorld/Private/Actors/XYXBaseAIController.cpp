@@ -114,7 +114,7 @@ void AXYXBaseAIController::UpdateTarget()
 	TArray<AActor*> KnownActors;
 	TArray<AActor*> TmpPerceivedActors;
 	TArray<AActor*> TmpEnemyActors;
-	PerceptionComponent->GetKnownPerceivedActors(UAISense_Sight::StaticClass(), KnownActors);
+	PerceptionComponent->GetKnownPerceivedActors(nullptr, KnownActors);
 	for (auto&& e : KnownActors)
 	{
 		IXYXInterfaceEntity* Entity = Cast<IXYXInterfaceEntity>(e);

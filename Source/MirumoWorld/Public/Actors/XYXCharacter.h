@@ -260,6 +260,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		class UXYXUserWidgetInGame* WBInGame;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
+		class UParticleSystem* ImpactBloodPS;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
+		class UParticleSystem* ImpactSparksPS;
+
 	// Movement Input
 	virtual void MoveRight(float Val);
 
@@ -330,8 +336,8 @@ public:
 		virtual FRotator GetDesiredRotation_Implementation() override;
 
 		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
-			bool TakeAttackDamage(FHitData HitData, EAttackResult& ResultType);
-		virtual bool TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType) override;
+			bool TakeAttackDamage(FHitData HitData, EAttackResult& ResultType, FVector HitPoint);
+		virtual bool TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType, FVector HitPoint) override;
 
 		UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 			bool CanEffectBeApplied(EEffectType Type, AActor* Applier);

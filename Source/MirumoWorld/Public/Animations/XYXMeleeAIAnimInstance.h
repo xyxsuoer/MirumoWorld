@@ -57,7 +57,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = ACF)
 		class UXYXStateManagerComponent* StateManagerComp;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = XYX)
+	UPROPERTY(BlueprintReadWrite, Category = XYX)
 		EWeaponType CurWeaponType = EWeaponType::ENone;
 
 public:

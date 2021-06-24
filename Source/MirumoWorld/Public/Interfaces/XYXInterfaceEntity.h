@@ -34,7 +34,7 @@ public:
 		FName GetHeadSocket();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
-		bool TakeAttackDamage(FHitData HitData, EAttackResult& ResultType);
+		bool TakeAttackDamage(FHitData HitData, EAttackResult& ResultType, FVector HitPoint);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = XYX)
 		FRotator GetDesiredRotation();

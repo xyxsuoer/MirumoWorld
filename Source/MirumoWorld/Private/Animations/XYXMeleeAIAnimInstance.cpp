@@ -23,6 +23,8 @@ void UXYXMeleeAIAnimInstance::NativeInitializeAnimation()
 			EquipmentComp->OnInCombatChanged.AddDynamic(this, &UXYXMeleeAIAnimInstance::HandleOnInCombatChanged);
 		if(StateManagerComp)
 			StateManagerComp->OnActivityChanged.AddDynamic(this, &UXYXMeleeAIAnimInstance::HandleOnActivityChanged);
+
+		CurWeaponType = CharacterReference->CurWeaponType;
 	}
 }
 

@@ -30,7 +30,8 @@ void UXYXANGetBackstabDmg::Notify(class USkeletalMeshComponent* MeshComp, class 
 				if (TmpActor)
 				{
 					EAttackResult ResultType;
-					bool CanAttacked = TmpActor->Execute_TakeAttackDamage(CharacterOwner, HitData, ResultType);
+					FVector CurHitPoint = 42.f * HitData.HitFromDirection + CharacterOwner->GetActorLocation();
+					bool CanAttacked = TmpActor->Execute_TakeAttackDamage(CharacterOwner, HitData, ResultType, CurHitPoint);
 					if (CanAttacked)
 					{
 						UWorld* World = CharacterOwner->GetWorld();

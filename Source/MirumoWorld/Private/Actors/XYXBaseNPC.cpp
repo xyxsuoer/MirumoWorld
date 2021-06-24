@@ -30,6 +30,9 @@
 #include "UI/XYXUserWidgetAIStatBar.h"
 #include "Components/XYXPatrolComponent.h"
 #include "AI/XYXUpdateMeleeAIBehavior.h"
+#include "Particles/ParticleSystem.h"
+#include "Kismet/GameplayStatics.h"
+
 
 
 // Sets default values
@@ -159,7 +162,7 @@ FRotator AXYXBaseNPC::GetDesiredRotation_Implementation()
 	return TmpRotator;
 }
 
-bool AXYXBaseNPC::TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType)
+bool AXYXBaseNPC::TakeAttackDamage_Implementation(FHitData HitData, EAttackResult& ResultType, FVector HitPoint)
 {
 	UWorld* World = GetWorld();
 	check(World);
@@ -210,6 +213,11 @@ bool AXYXBaseNPC::TakeAttackDamage_Implementation(FHitData HitData, EAttackResul
 					UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
 					UXYXFunctionLibrary::PlayBlockSound(GameInstance, this, HitData.DamageCauser, this->GetActorLocation());
 
+					if (ImpactSparksPS)
+					{
+						UGameplayStatics::SpawnEmitterAtLocation(this, ImpactSparksPS, HitPoint, FRotator::ZeroRotator, FVector::OneVector, true);
+					}
+
 					Block();
 
 					// If there is still some stamina left after blocked hit, try to apply Impact effect on attacker
@@ -230,6 +238,12 @@ bool AXYXBaseNPC::TakeAttackDamage_Implementation(FHitData HitData, EAttackResul
 					ResultType = EAttackResult::EBlocked;
 					return TmpResult;
 				}
+			}
+
+			if (ImpactBloodPS)
+			{
+				HitPoint += HitData.HitFromDirection * 21.f;
+				UGameplayStatics::SpawnEmitterAtLocation(this, ImpactBloodPS, HitPoint, FRotator::ZeroRotator, FVector::OneVector, true);
 			}
 
 			ResultType = EAttackResult::ESuccess;
@@ -477,6 +491,21 @@ void AXYXBaseNPC::Death()
 	if (StateManagerComp)
 	{
 		StateManagerComp->SetState(EState::EDead);
+
+		UGameplayStatics::SetGlobalTimeDilation(this, 0.15);
+
+		UWorld* World = GetWorld();
+		check(World);
+
+		FTimerDelegate TimerCallback;
+		TimerCallback.BindLambda([=]
+			{
+				UGameplayStatics::SetGlobalTimeDilation(this, 1.f);
+			}
+		);
+
+		FTimerHandle TmpHandle;
+		World->GetTimerManager().SetTimer(TmpHandle, TimerCallback, 0.1f, false);
 
 		HandleMeshOnDeath();
 
@@ -810,7 +839,7 @@ void AXYXBaseNPC::HandleOnHit(FHitResult HitResult)
 	if (TmpHitActor)
 	{
 		EAttackResult ResultType;
-		bool CanAttacked = TmpHitActor->Execute_TakeAttackDamage(HitResult.GetActor(), MakeMeleeHitData(HitResult.GetActor()), ResultType);
+		bool CanAttacked = TmpHitActor->Execute_TakeAttackDamage(HitResult.GetActor(), MakeMeleeHitData(HitResult.GetActor()), ResultType, HitResult.Location);
 		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 15000.f);
 		if (CanAttacked)
 		{

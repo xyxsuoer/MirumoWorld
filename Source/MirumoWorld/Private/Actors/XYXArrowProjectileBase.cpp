@@ -122,7 +122,7 @@ void AXYXArrowProjectileBase::OnArrowHit(FHitResult Hit)
 				TmpData.Damage = TmpDamage;
 				TmpData.DamageCauser = GetOwner();
 				EAttackResult ResultType;
-				bool Result = TmpHitObj->Execute_TakeAttackDamage(TmpHitActor, TmpData, ResultType);
+				bool Result = TmpHitObj->Execute_TakeAttackDamage(TmpHitActor, TmpData, ResultType, Hit.Location);
 				if (ResultType != EAttackResult::EFailed)
 				{
 					if (Result)
