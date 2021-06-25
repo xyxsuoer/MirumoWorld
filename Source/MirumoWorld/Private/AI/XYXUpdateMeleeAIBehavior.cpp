@@ -67,7 +67,7 @@ void UXYXUpdateMeleeAIBehavior::UpdateBehavior()
 	auto StatsComp = ControlledCharacter->GetStatsManagerComponent();
 	auto StateComp = ControlledCharacter->GetStateManagerComponent();
 	auto ExtendedStamina = ControlledCharacter->GetExtendedStamina();
-	if (!StatsComp || !ExtendedStamina)
+	if (!StatsComp || !ExtendedStamina || !StateComp)
 	{
 		return;
 	}

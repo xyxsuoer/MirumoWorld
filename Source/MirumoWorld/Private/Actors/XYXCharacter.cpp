@@ -367,11 +367,7 @@ bool AXYXCharacter::DoesHoldBowString_Implementation()
 	if (IsIdleAndNotFalling() && EquipmentComp->GetIsInCombat() &&
 		EquipmentComp->GetCombatType() == ECombatType::ERanged)
 	{
-		if (EquipmentComp->bActionShootOrAimShoot)
-		{
-		
-		}
-		else
+		if (!EquipmentComp->bActionShootOrAimShoot)
 		{
 			return true;
 		}
@@ -513,7 +509,7 @@ bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackRes
 					UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
 					UXYXFunctionLibrary::PlayBlockSound(GameInstance, this, HitData.DamageCauser, this->GetActorLocation());
 
-					if (ImpactSparksPS)
+					if (ImpactSparksPS && EquipmentComp && EquipmentComp->GetCombatType() != ECombatType::EUnarmed)
 					{
 						UGameplayStatics::SpawnEmitterAtLocation(this, ImpactSparksPS, HitPoint, FRotator::ZeroRotator, FVector::OneVector, true);
 					}
@@ -2112,7 +2108,7 @@ void AXYXCharacter::HandleOnHit(FHitResult HitResult)
 	{
 		EAttackResult ResultType;
 		bool CanAttacked =  TmpHitActor->Execute_TakeAttackDamage(HitResult.GetActor(), MakeMeleeHitData(HitResult.GetActor()), ResultType, HitResult.Location);
-		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 15000.f);
+		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 20000.f);
 		if (CanAttacked)
 		{
 			UWorld* World = GetWorld();
@@ -2220,7 +2216,7 @@ FHitData AXYXCharacter::MakeMeleeHitData(AActor* HitActor)
 
 void AXYXCharacter::ApplyHitImpulseToCharacter(AActor* HitActor, FVector HitNormal, float ImpulsePower)
 {
-	auto XYXCharacter = Cast<AXYXCharacter>(HitActor);
+	auto XYXCharacter = Cast<ACharacter>(HitActor);
 	if (XYXCharacter && XYXCharacter->GetMesh() &&
 		XYXCharacter->GetMesh()->IsAnySimulatingPhysics())
 	{

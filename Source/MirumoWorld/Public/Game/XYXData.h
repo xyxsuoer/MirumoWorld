@@ -204,7 +204,7 @@ UENUM(BlueprintType)
 enum class EAttackResult : uint8
 {
 	ESuccess											UMETA(DisplayName = "EIdle"),								// 成功
-	EFailed												UMETA(DisplayName = "EPatrol"),							// 失败
+	EFailed												UMETA(DisplayName = "EFailed"),							// 失败
 	EBlocked											UMETA(DisplayName = "EMeleeAttack"),					// 被格挡
 	EParried											UMETA(DisplayName = "ERangeAttack")					// 被招架 
 };

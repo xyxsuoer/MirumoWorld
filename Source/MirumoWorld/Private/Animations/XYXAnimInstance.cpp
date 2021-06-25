@@ -11,6 +11,7 @@
 #include "Components/XYXStateManagerComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 #include "Kismet/GameplayStatics.h"
+#include "Interfaces/XYXInterfaceArcher.h"
 
 void UXYXAnimInstance::NativeInitializeAnimation()
 {
@@ -145,7 +146,11 @@ void UXYXAnimInstance::StoreCharacterInfo()
 
 		bIsInSlowMotion = XYXCharacter->GetIsInSlowMotion();
 		BlockAlpha = XYXCharacter->GetBlockAlpha();
-		AimAlpha = XYXCharacter->GetAimAlpha();
+		IXYXInterfaceArcher* ArcherCharacter = Cast<IXYXInterfaceArcher>(XYXCharacter);
+		if (ArcherCharacter)
+		{
+			AimAlpha = ArcherCharacter->Execute_GetAimAlpha(XYXCharacter);
+		}
 		if (XYXCharacter->GetMovementSpeedComponent()) 
 		{
 			MovementState = XYXCharacter->GetMovementSpeedComponent()->GetMovementState();

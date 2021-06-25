@@ -23,9 +23,6 @@ protected:
 public:	
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
-		TSubclassOf<class AXYXPatrolPath> PatrolPathClass;
-
-	UPROPERTY(BlueprintReadOnly, Category = XYX)
 		class AXYXPatrolPath* PatrolPath;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)

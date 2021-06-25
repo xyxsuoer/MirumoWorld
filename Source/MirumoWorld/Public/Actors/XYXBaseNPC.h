@@ -67,7 +67,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXExtendedStatComponent* ExtendedStamina;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = XYX)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
 		class UXYXPatrolComponent* PatrolComp;
 
 	UFUNCTION(BlueprintPure, Category = XYX)
@@ -170,6 +170,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = XYX)
 		class UParticleSystem* ImpactSparksPS;
+
+	UPROPERTY()
+		FVector CurHitFromDirection;
 
 
 public:

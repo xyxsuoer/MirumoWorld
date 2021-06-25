@@ -22,11 +22,6 @@ void UXYXPatrolComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (UKismetSystemLibrary::IsValidClass(PatrolPathClass))
-	{
-		PatrolPath = NewObject<AXYXPatrolPath>(this, PatrolPathClass);
-	}
-
 }
 
 
