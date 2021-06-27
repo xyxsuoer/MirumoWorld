@@ -509,7 +509,7 @@ bool AXYXCharacter::TakeAttackDamage_Implementation(FHitData HitData, EAttackRes
 					UXYXGameInstance* GameInstance = Cast<UXYXGameInstance>(World->GetGameInstance());
 					UXYXFunctionLibrary::PlayBlockSound(GameInstance, this, HitData.DamageCauser, this->GetActorLocation());
 
-					if (ImpactSparksPS && EquipmentComp && EquipmentComp->GetCombatType() != ECombatType::EUnarmed)
+					if (ImpactSparksPS && EquipmentComp && EquipmentComp->GetCombatType() == ECombatType::EMelee)
 					{
 						UGameplayStatics::SpawnEmitterAtLocation(this, ImpactSparksPS, HitPoint, FRotator::ZeroRotator, FVector::OneVector, true);
 					}
@@ -2108,7 +2108,7 @@ void AXYXCharacter::HandleOnHit(FHitResult HitResult)
 	{
 		EAttackResult ResultType;
 		bool CanAttacked =  TmpHitActor->Execute_TakeAttackDamage(HitResult.GetActor(), MakeMeleeHitData(HitResult.GetActor()), ResultType, HitResult.Location);
-		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 20000.f);
+		ApplyHitImpulseToCharacter(HitResult.GetActor(), HitResult.Normal, 40000.f);
 		if (CanAttacked)
 		{
 			UWorld* World = GetWorld();
@@ -2244,7 +2244,7 @@ bool AXYXCharacter::CanBeStunned()
 		return false;
 	}
 
-	return true;
+	return UKismetMathLibrary::RandomBoolWithWeight(0.4f);
 }
 
 bool AXYXCharacter::CanBeInterrupted()

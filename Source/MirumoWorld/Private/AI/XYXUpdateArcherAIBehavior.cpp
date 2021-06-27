@@ -128,18 +128,18 @@ void UXYXUpdateArcherAIBehavior::UpdateBehavior()
 					}
 				}
 			}
-			else
+		}
+		else
+		{
+			if (ControlledCharacter->PatrolComp)
 			{
-				if (ControlledCharacter->PatrolComp)
+				if (ControlledCharacter->PatrolComp->IsPatrolPathValid())
 				{
-					if (ControlledCharacter->PatrolComp->IsPatrolPathValid())
-					{
-						SetBehavior(EAIBehavior::EPatrol);
-					}
-					else
-					{
-						SetBehavior(EAIBehavior::EIdle);
-					}
+					SetBehavior(EAIBehavior::EPatrol);
+				}
+				else
+				{
+					SetBehavior(EAIBehavior::EIdle);
 				}
 			}
 		}
