@@ -68,6 +68,9 @@ AXYXBaseNPC::AXYXBaseNPC()
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
 
+	if(GetCharacterMovement())
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+
 }
 
 // Called when the game starts or when spawned
